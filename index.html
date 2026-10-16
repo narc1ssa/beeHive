@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Пасека — Beekeeping Strategy</title>
+<style>
+  :root{
+    --bg:#fff7e6;
+    --panel:#ffffff;
+    --accent:#f5a623;
+    --accent2:#7ed321;
+    --text:#3a2a1a;
+    --muted:#8a7a6a;
+    --border:#f0d9a8;
+    --shadow:0 6px 18px rgba(0,0,0,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+    background:linear-gradient(180deg,#fff3d6 0%,#ffe8b3 100%);
+    color:var(--text);
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+  }
+  header.topbar{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px 16px;
+    align-items:center;
+    justify-content:space-between;
+    padding:10px 16px;
+    background:#fff;
+    border-bottom:3px solid var(--accent);
+    box-shadow:var(--shadow);
+    position:sticky;
+    top:0;
+    z-index:10;
+  }
+  .brand{font-size:20px;font-weight:800;color:var(--accent)}
+  .resources{display:flex;flex-wrap:wrap;gap:8px}
+  .res{
+    display:flex;align-items:center;gap:6px;
+    background:#fff7e6;border:1px solid var(--border);
+    padding:6px 10px;border-radius:12px;font-weight:600;
+    font-size:14px;
+  }
+  .res .icon{font-size:18px}
+  .res .val{min-width:40px;text-align:right}
+
+  main.layout{
+    display:grid;
+    grid-template-columns:1fr 260px;
+    gap:12px;
+    padding:12px;
+    flex:1;
+  }
+  .field-wrap{
+    background:#fff;border:2px solid var(--border);border-radius:16px;
+    padding:12px;box-shadow:var(--shadow);
+    display:flex;flex-direction:column;
+  }
+  .field-title{font-weight:700;margin-bottom:8px;color:var(--accent)}
+  .field{
+    display:grid;
+    grid-template-columns:repeat(6,1fr);
+    grid-template-rows:repeat(4,1fr);
+    gap:8px;
+    flex:1;
+    min-height:320px;
+  }
+  .cell{
+    background:linear-gradient(180deg,#eaf7d9,#d6efb8);
+    border:2px dashed #b9d99a;
+    border-radius:12px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:34px;
+    position:relative;
+    transition:transform .2s,background .2s;
+    cursor:default;
+  }
+  .cell:hover{transform:scale(1.03)}
+  .cell.hive{background:linear-gradient(180deg,#ffe9c7,#ffd699);border-style:solid;border-color:var(--accent)}
+  .cell.flower{background:linear-gradient(180deg,#ffe0f0,#ffc9e3);border-style:solid;border-color:#e86aa8}
+  .cell .badge{
+    position:absolute;bottom:2px;right:4px;font-size:10px;
+    background:rgba(0,0,0,.4);color:#fff;padding:1px 4px;border-radius:6px;
+  }
+
+  .bottombar{
+    display:flex;flex-wrap:wrap;gap:8px;
+    padding:12px 16px;
+    background:#fff;border-top:3px solid var(--accent);
+    box-shadow:0 -4px 12px rgba(0,0,0,.06);
+  }
+  .btn{
+    flex:1;min-width:140px;
+    padding:10px 14px;border:none;border-radius:12px;
+    font-size:14px;font-weight:700;cursor:pointer;
+    color:#fff;background:var(--accent);
+    box-shadow:0 4px 0 #c9851a;
+    transition:transform .08s,filter .2s;
+  }
+  .btn:active{transform:translateY(2px);box-shadow:0 2px 0 #c9851a}
+  .btn:hover{filter:brightness(1.08)}
+  .btn.green{background:var(--accent2);box-shadow:0 4px 0 #5fa818}
+  .btn.blue{background:#4a90e2;box-shadow:0 4px 0 #2f6bb0}
+  .btn.purple{background:#9b59b6;box-shadow:0 4px 0 #7a4490}
+  .btn:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.4)}
+
+  .side{
+    display:flex;flex-direction:column;gap:12px;
+  }
+  .card{
+    background:#fff;border:2px solid var(--border);border-radius:16px;
+    padding:12px;box-shadow:var(--shadow);
+  }
+  .card h3{font-size:15px;margin-bottom:8px;color:var(--accent)}
+  .progress-wrap{background:#eee;border-radius:10px;overflow:hidden;height:16px;margin:6px 0}
+  .progress-bar{height:100%;background:linear-gradient(90deg,#f5a623,#f7c948);transition:width .4s}
+  .stat{display:flex;justify-content:space-between;font-size:13px;margin:4px 0}
+  .stat .k{color:var(--muted)}
+  .log{
+    max-height:120px;overflow:auto;font-size:12px;
+    background:#fff7e6;border-radius:8px;padding:6px;
+  }
+  .log div{padding:2px 0;border-bottom:1px dashed #f0d9a8}
+  .toast{
+    position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+    background:#3a2a1a;color:#fff;padding:8px 16px;border-radius:10px;
+    opacity:0;transition:opacity .3s;pointer-events:none;z-index:20;
+  }
+  .toast.show{opacity:1}
+
+  @media(max-width:720px){
+    main.layout{grid-template-columns:1fr}
+    .side{order:2}
+  }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">🐝 Пасека</div>
+  <div class="resources">
+    <div class="res"><span class="icon">🍯</span><span>Мед</span><span class="val" id="r-honey">0</span></div>
+    <div class="res"><span class="icon">🪙</span><span>Монеты</span><span class="val" id="r-coins">0</span></div>
+    <div class="res"><span class="icon">🏠</span><span>Ульи</span><span class="val" id="r-hives">0</span></div>
+    <div class="res"><span class="icon">🌻</span><span>Цветы</span><span class="val" id="r-flowers">0</span></div>
+    <div class="res"><span class="icon">👷</span><span>Рабочие</span><span class="val" id="r-workers">0</span></div>
+    <div class="res"><span class="icon">📅</span><span id="r-day">День 1</span><span class="val" id="r-season">Весна</span></div>
+  </div>
+</header>
+
+<main class="layout">
+  <section class="field-wrap">
+    <div class="field-title">Игровое поле пасеки</div>
+    <div class="field" id="field"></div>
+  </section>
+  <aside class="side">
+    <div class="card">
+      <h3>🎯 Цель сезона</h3>
+      <div class="stat"><span class="k">Нужно меда</span><span id="target">100</span></div>
+      <div class="stat"><span class="k">Собрано</span><span id="seasonHoney">0</span></div>
+      <div class="progress-wrap"><div class="progress-bar" id="progress" style="width:0%"></div></div>
+      <div class="stat"><span class="k">Награда</span><span id="reward">50 🪙</span></div>
+    </div>
+    <div class="card">
+      <h3>📊 Состояние пасеки</h3>
+      <div class="stat"><span class="k">Производство/сек</span><span id="prod">0</span></div>
+      <div class="stat"><span class="k">Множитель цветов</span><span id="mult">x1.0</span></div>
+      <div class="stat"><span class="k">Авто-сбор</span><span id="auto">выкл</span></div>
+      <div class="stat"><span class="k">Сезон</span><span id="seasonName">Весна</span></div>
+    </div>
+    <div class="card">
+      <h3>📜 Журнал</h3>
+      <div class="log" id="log"></div>
+    </div>
+  </aside>
+</main>
+
+<div class="bottombar">
+  <button class="btn" id="btn-hive">🏠 Построить улей (50🪙)</button>
+  <button class="btn green" id="btn-flower">🌻 Посадить цветы (20🪙)</button>
+  <button class="btn blue" id="btn-worker">👷 Нанять работника (30🪙)</button>
+  <button class="btn purple" id="btn-collect">🍯 Собрать мед</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SEASONS = ['Весна','Лето','Осень','Зима'];
+const CELL_COUNT = 24;
+const SAVE_KEY = 'pasaka_save_v1';
+
+const state = {
+  honey: 0,
+  coins: 100,
+  hives: 0,
+  flowers: 0,
+  workers: 0,
+  seasonHoney: 0,
+  seasonTarget: 100,
+  seasonIndex: 0,
+  totalSeconds: 0,
+  cells: new Array(CELL_COUNT).fill(null),
+};
+
+function load(){
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(raw){
+      const d = JSON.parse(raw);
+      Object.assign(state, d);
+      if(!Array.isArray(state.cells) || state.cells.length !== CELL_COUNT){
+        state.cells = new Array(CELL_COUNT).fill(null);
+      }
+    }
+  }catch(e){ console.warn('load fail',e); }
+}
+function save(){
+  try{ localStorage.setItem(SAVE_KEY, JSON.stringify(state)); }catch(e){}
+}
+
+function productionPerSec(){
+  const base = state.hives * (1 + state.flowers*0.25);
+  const workerBoost = 1 + state.workers*0.1;
+  // winter penalty
+  const seasonMult = (SEASONS[state.seasonIndex%4]==='Зима') ? 0.5 : 1;
+  return base * workerBoost * seasonMult;
+}
+
+function firstEmptyCell(){
+  for(let i=0;i<state.cells.length;i++) if(!state.cells[i]) return i;
+  return -1;
+}
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(()=>t.classList.remove('show'),1800);
+}
+function log(msg){
+  const l = document.getElementById('log');
+  const d = document.createElement('div');
+  d.textContent = new Date().toLocaleTimeString()+' — '+msg;
+  l.prepend(d);
+  while(l.children.length>30) l.removeChild(l.lastChild);
+}
+
+function renderField(){
+  const field = document.getElementById('field');
+  field.innerHTML = '';
+  for(let i=0;i<CELL_COUNT;i++){
+    const c = document.createElement('div');
+    const val = state.cells[i];
+    c.className = 'cell' + (val ? ' '+val : '');
+    if(val==='hive') c.innerHTML = '🏠<span class="badge">Улей</span>';
+    else if(val==='flower') c.innerHTML = '🌻<span class="badge">Цветок</span>';
+    else c.innerHTML = '·';
+    field.appendChild(c);
+  }
+}
+
+function renderUI(){
+  document.getElementById('r-honey').textContent = Math.floor(state.honey);
+  document.getElementById('r-coins').textContent = Math.floor(state.coins);
+  document.getElementById('r-hives').textContent = state.hives;
+  document.getElementById('r-flowers').textContent = state.flowers;
+  document.getElementById('r-workers').textContent = state.workers;
+  const day = Math.floor(state.totalSeconds/10)+1;
+  document.getElementById('r-day').textContent = 'День '+day;
+  const season = SEASONS[state.seasonIndex%4];
+  document.getElementById('r-season').textContent = season;
+  document.getElementById('seasonName').textContent = season;
+  document.getElementById('target').textContent = state.seasonTarget;
+  document.getElementById('seasonHoney').textContent = Math.floor(state.seasonHoney);
+  const pct = Math.min(100, (state.seasonHoney/state.seasonTarget)*100);
+  document.getElementById('progress').style.width = pct+'%';
+  document.getElementById('reward').textContent = (50 + state.seasonIndex*10)+' 🪙';
+  const prod = productionPerSec();
+  document.getElementById('prod').textContent = prod.toFixed(2);
+  const mult = 1 + state.flowers*0.25;
+  document.getElementById('mult').textContent = 'x'+mult.toFixed(2);
+  document.getElementById('auto').textContent = state.workers>0 ? 'каждые 5с' : 'выкл';
+  // button states
+  document.getElementById('btn-hive').disabled = state.coins < 50 || firstEmptyCell()<0;
+  document.getElementById('btn-flower').disabled = state.coins < 20 || firstEmptyCell()<0;
+  document.getElementById('btn-worker').disabled = state.coins < 30;
+}
+
+function buildHive(){
+  if(state.coins<50){ toast('Недостаточно монет'); return; }
+  const idx = firstEmptyCell();
+  if(idx<0){ toast('Нет места на поле'); return; }
+  state.coins -= 50;
+  state.hives++;
+  state.cells[idx]='hive';
+  log('Построен новый улей');
+  toast('🏠 Улей построен!');
+  renderField(); renderUI(); save();
+}
+function plantFlower(){
+  if(state.coins<20){ toast('Недостаточно монет'); return; }
+  const idx = firstEmptyCell();
+  if(idx<0){ toast('Нет места на поле'); return; }
+  state.coins -= 20;
+  state.flowers++;
+  state.cells[idx]='flower';
+  log('Посажены цветы');
+  toast('🌻 Цветы посажены!');
+  renderField(); renderUI(); save();
+}
+function hireWorker(){
+  if(state.coins<30){ toast('Недостаточно монет'); return; }
+  state.coins -= 30;
+  state.workers++;
+  log('Нанят рабочий');
+  toast('👷 Рабочий нанят!');
+  renderUI(); save();
+}
+function collectHoney(){
+  if(state.honey < 1){ toast('Нет меда для сбора'); return; }
+  const amt = Math.floor(state.honey);
+  const coins = Math.round(amt*1.5);
+  state.coins += coins;
+  state.honey -= amt;
+  log('Собрано '+amt+' меда → '+coins+' монет');
+  toast('🍯 Собрано '+amt+' меда!');
+  renderUI(); save();
+}
+
+function gameTick(){
+  const prod = productionPerSec();
+  state.honey += prod;
+  state.seasonHoney += prod;
+  state.totalSeconds++;
+
+  // worker auto-collect every 5s
+  if(state.workers>0 && state.totalSeconds % 5 === 0){
+    if(state.honey >= 1){
+      const amt = Math.floor(state.honey*0.5);
+      if(amt>0){
+        state.coins += Math.round(amt*1.5);
+        state.honey -= amt;
+        log('Рабочие собрали '+amt+' меда');
+      }
+    }
+  }
+
+  // season goal check
+  if(state.seasonHoney >= state.seasonTarget){
+    const reward = 50 + state.seasonIndex*10;
+    state.coins += reward;
+    state.seasonIndex++;
+    state.seasonHoney = 0;
+    state.seasonTarget = 100 + state.seasonIndex*50;
+    log('Сезон завершён! Награда '+reward+' монет');
+    toast('🎉 Сезон завершён! +'+reward+'🪙');
+  }
+
+  renderUI();
+  // periodic save
+  if(state.totalSeconds % 5 === 0) save();
+}
+
+// init
+load();
+renderField();
+renderUI();
+log('Добро пожаловать на пасеку!');
+setInterval(gameTick, 1000);
+
+document.getElementById('btn-hive').addEventListener('click', buildHive);
+document.getElementById('btn-flower').addEventListener('click', plantFlower);
+document.getElementById('btn-worker').addEventListener('click', hireWorker);
+document.getElementById('btn-collect').addEventListener('click', collectHoney);
+
+// reset save on double-click brand? no
+</script>
+</body>
+</html>
