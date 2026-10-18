@@ -1,384 +1,1257 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Пасека — Beekeeping Strategy</title>
-<style>
-  :root{
-    --bg:#fff7e6;
-    --panel:#ffffff;
-    --accent:#f5a623;
-    --accent2:#7ed321;
-    --text:#3a2a1a;
-    --muted:#8a7a6a;
-    --border:#f0d9a8;
-    --shadow:0 6px 18px rgba(0,0,0,.08);
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{
-    font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
-    background:linear-gradient(180deg,#fff3d6 0%,#ffe8b3 100%);
-    color:var(--text);
-    min-height:100vh;
-    display:flex;
-    flex-direction:column;
-  }
-  header.topbar{
-    display:flex;
-    flex-wrap:wrap;
-    gap:8px 16px;
-    align-items:center;
-    justify-content:space-between;
-    padding:10px 16px;
-    background:#fff;
-    border-bottom:3px solid var(--accent);
-    box-shadow:var(--shadow);
-    position:sticky;
-    top:0;
-    z-index:10;
-  }
-  .brand{font-size:20px;font-weight:800;color:var(--accent)}
-  .resources{display:flex;flex-wrap:wrap;gap:8px}
-  .res{
-    display:flex;align-items:center;gap:6px;
-    background:#fff7e6;border:1px solid var(--border);
-    padding:6px 10px;border-radius:12px;font-weight:600;
-    font-size:14px;
-  }
-  .res .icon{font-size:18px}
-  .res .val{min-width:40px;text-align:right}
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#38200e">
+  <title>Пасека — стратегия и управление</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --gold: #ffc83f;
+      --gold-bright: #ffe775;
+      --gold-dark: #a75a12;
+      --wood: #45270f;
+      --wood-deep: #271608;
+      --cream: #fff3cd;
+      --green: #66bd31;
+      --rail-width: clamp(218px, 15.1vw, 236px);
+      --header-height: 108px;
+      --footer-height: 104px;
+      --shadow: 0 4px 9px rgba(24, 13, 4, .48), inset 0 1px 0 rgba(255, 232, 161, .45);
+    }
 
-  main.layout{
-    display:grid;
-    grid-template-columns:1fr 260px;
-    gap:12px;
-    padding:12px;
-    flex:1;
-  }
-  .field-wrap{
-    background:#fff;border:2px solid var(--border);border-radius:16px;
-    padding:12px;box-shadow:var(--shadow);
-    display:flex;flex-direction:column;
-  }
-  .field-title{font-weight:700;margin-bottom:8px;color:var(--accent)}
-  .field{
-    display:grid;
-    grid-template-columns:repeat(6,1fr);
-    grid-template-rows:repeat(4,1fr);
-    gap:8px;
-    flex:1;
-    min-height:320px;
-  }
-  .cell{
-    background:linear-gradient(180deg,#eaf7d9,#d6efb8);
-    border:2px dashed #b9d99a;
-    border-radius:12px;
-    display:flex;align-items:center;justify-content:center;
-    font-size:34px;
-    position:relative;
-    transition:transform .2s,background .2s;
-    cursor:default;
-  }
-  .cell:hover{transform:scale(1.03)}
-  .cell.hive{background:linear-gradient(180deg,#ffe9c7,#ffd699);border-style:solid;border-color:var(--accent)}
-  .cell.flower{background:linear-gradient(180deg,#ffe0f0,#ffc9e3);border-style:solid;border-color:#e86aa8}
-  .cell .badge{
-    position:absolute;bottom:2px;right:4px;font-size:10px;
-    background:rgba(0,0,0,.4);color:#fff;padding:1px 4px;border-radius:6px;
-  }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; }
+    body {
+      overflow: hidden;
+      color: #fff8e3;
+      background: #70c84a;
+      font-family: "Trebuchet MS", "Segoe UI", Arial, sans-serif;
+      user-select: none;
+    }
+    button { font: inherit; }
+    button:focus-visible { outline: 3px solid #fff3a5; outline-offset: 2px; }
 
-  .bottombar{
-    display:flex;flex-wrap:wrap;gap:8px;
-    padding:12px 16px;
-    background:#fff;border-top:3px solid var(--accent);
-    box-shadow:0 -4px 12px rgba(0,0,0,.06);
-  }
-  .btn{
-    flex:1;min-width:140px;
-    padding:10px 14px;border:none;border-radius:12px;
-    font-size:14px;font-weight:700;cursor:pointer;
-    color:#fff;background:var(--accent);
-    box-shadow:0 4px 0 #c9851a;
-    transition:transform .08s,filter .2s;
-  }
-  .btn:active{transform:translateY(2px);box-shadow:0 2px 0 #c9851a}
-  .btn:hover{filter:brightness(1.08)}
-  .btn.green{background:var(--accent2);box-shadow:0 4px 0 #5fa818}
-  .btn.blue{background:#4a90e2;box-shadow:0 4px 0 #2f6bb0}
-  .btn.purple{background:#9b59b6;box-shadow:0 4px 0 #7a4490}
-  .btn:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.4)}
+    .game-shell {
+      position: relative;
+      width: 100vw;
+      height: 100dvh;
+      min-height: 620px;
+      overflow: hidden;
+      isolation: isolate;
+      background:
+        radial-gradient(ellipse at 11% 8%, rgba(255,255,255,.46) 0 4%, transparent 14%),
+        radial-gradient(ellipse at 72% 4%, rgba(255,255,255,.28) 0 3%, transparent 15%),
+        linear-gradient(180deg, #61c7e8 0%, #9ce5ed 9%, #b8e986 12%, #7dc94c 18%, #4caa37 100%);
+    }
 
-  .side{
-    display:flex;flex-direction:column;gap:12px;
-  }
-  .card{
-    background:#fff;border:2px solid var(--border);border-radius:16px;
-    padding:12px;box-shadow:var(--shadow);
-  }
-  .card h3{font-size:15px;margin-bottom:8px;color:var(--accent)}
-  .progress-wrap{background:#eee;border-radius:10px;overflow:hidden;height:16px;margin:6px 0}
-  .progress-bar{height:100%;background:linear-gradient(90deg,#f5a623,#f7c948);transition:width .4s}
-  .stat{display:flex;justify-content:space-between;font-size:13px;margin:4px 0}
-  .stat .k{color:var(--muted)}
-  .log{
-    max-height:120px;overflow:auto;font-size:12px;
-    background:#fff7e6;border-radius:8px;padding:6px;
-  }
-  .log div{padding:2px 0;border-bottom:1px dashed #f0d9a8}
-  .toast{
-    position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
-    background:#3a2a1a;color:#fff;padding:8px 16px;border-radius:10px;
-    opacity:0;transition:opacity .3s;pointer-events:none;z-index:20;
-  }
-  .toast.show{opacity:1}
+    /* В репозитории лежит исходный игровой скриншот. Используем его как игровую карту,
+       а интерфейс поверх него собран из настоящих HTML-элементов и остаётся интерактивным. */
+    .scene-art {
+      position: absolute;
+      z-index: -1;
+      inset: calc(var(--header-height) + 8px) var(--rail-width) var(--footer-height) 0;
+      background-image: url("1791982448698-01a13a78-c201-702e-9a5b-126d88ecc218.png");
+      background-repeat: no-repeat;
+      background-size: 100vw 100vh;
+      background-position: left calc(0px - var(--header-height) - 8px);
+      box-shadow: inset 0 10px 20px rgba(31, 92, 29, .08);
+    }
+    .scene-art::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(180deg, rgba(255,246,196,.04), transparent 25%, transparent 80%, rgba(45,84,23,.12));
+    }
 
-  @media(max-width:720px){
-    main.layout{grid-template-columns:1fr}
-    .side{order:2}
-  }
-</style>
+    .topbar {
+      position: absolute;
+      z-index: 8;
+      inset: 0 0 auto;
+      height: var(--header-height);
+      display: grid;
+      grid-template-columns: 360px minmax(0, 1fr) 232px;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 7px 8px 13px;
+      background:
+        radial-gradient(ellipse at 12% 100%, rgba(52,145,59,.72), transparent 30%),
+        radial-gradient(ellipse at 88% 93%, rgba(62,150,52,.55), transparent 24%),
+        linear-gradient(180deg, rgba(62,193,230,.3), rgba(100,194,100,.12));
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      height: 100%;
+      color: #fff6d5;
+      text-decoration: none;
+      filter: drop-shadow(0 2px 1px rgba(52,28,6,.6));
+    }
+    .brand-mark { width: 106px; height: 96px; flex: 0 0 106px; margin-right: 6px; }
+    .brand-copy { min-width: 0; padding-top: 2px; }
+    .brand h1 {
+      margin: 0;
+      color: #fff7db;
+      font-size: clamp(27px, 2.45vw, 39px);
+      line-height: .96;
+      letter-spacing: .6px;
+      font-weight: 1000;
+      -webkit-text-stroke: 1.15px #572c10;
+      text-shadow: 2px 3px 0 #54290f, 0 0 8px rgba(255,237,170,.35);
+    }
+    .brand p {
+      margin: 5px 0 0;
+      color: #fff5d3;
+      font-size: 14px;
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: .3px;
+      text-shadow: 1px 2px 2px #48230c;
+      white-space: nowrap;
+    }
+
+    .resource-strip {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .resource-card, .tool-button, .nav-tab, .wood-card, .action-button, .speed-button {
+      border: 2px solid #dca344;
+      color: #fff3d2;
+      background: linear-gradient(145deg, #755027 0%, #4d2f16 37%, #34200f 100%);
+      box-shadow: var(--shadow), 0 2px 3px rgba(44,23,5,.56);
+    }
+    .resource-card {
+      min-width: 0;
+      height: 82px;
+      padding: 6px 8px;
+      border-radius: 23px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+    .resource-card::before, .wood-card::before, .action-button::before, .tool-button::before {
+      content: "";
+      position: absolute;
+      inset: 3px;
+      border: 1px solid rgba(255,220,126,.27);
+      border-radius: inherit;
+      pointer-events: none;
+    }
+    .resource-card::after {
+      content: "";
+      position: absolute;
+      inset: 0 14% auto;
+      height: 1px;
+      background: rgba(255,241,196,.36);
+    }
+    .res-icon {
+      width: 43px;
+      height: 46px;
+      flex: 0 0 43px;
+      display: grid;
+      place-items: center;
+      font-size: 34px;
+      filter: drop-shadow(0 2px 1px #241305);
+    }
+    .res-copy { min-width: 0; text-align: left; line-height: 1.12; }
+    .res-label {
+      display: block;
+      overflow: hidden;
+      color: #ffd963;
+      font-size: 13px;
+      font-weight: 1000;
+      letter-spacing: .25px;
+      text-shadow: 1px 1px 1px #48250d;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .res-value {
+      display: block;
+      margin-top: 4px;
+      color: #fff9e8;
+      font-size: clamp(16px, 1.42vw, 22px);
+      font-weight: 900;
+      line-height: 1;
+      text-shadow: 1px 2px 1px rgba(31,15,4,.82);
+      white-space: nowrap;
+    }
+    .res-value small { font-size: 12px; font-weight: 700; }
+    .resource-card.date-card { gap: 6px; }
+    .date-card .res-icon { font-size: 34px; }
+    .date-card .res-label { font-size: 10px; }
+    .date-card .res-value { font-size: 12px; margin-top: 6px; letter-spacing: .3px; }
+
+    .top-tools { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 7px; }
+    .tool-button {
+      position: relative;
+      height: 80px;
+      padding: 5px 3px 6px;
+      border-radius: 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 2px;
+      cursor: pointer;
+      text-transform: uppercase;
+      color: #fff1c8;
+      font-size: 10px;
+      font-weight: 900;
+      line-height: 1;
+      transition: transform .14s, filter .14s;
+    }
+    .tool-button:hover { transform: translateY(-2px); filter: brightness(1.16); }
+    .tool-button .tool-icon { font-size: 32px; line-height: 1; color: #ffe08a; text-shadow: 1px 2px 2px #231203; }
+
+    .main-nav {
+      position: absolute;
+      z-index: 9;
+      left: 15px;
+      top: calc(var(--header-height) + 8px);
+      width: min(895px, calc(100vw - var(--rail-width) - 28px));
+      height: 93px;
+      display: flex;
+      gap: 9px;
+      align-items: stretch;
+    }
+    .nav-tab {
+      min-width: 0;
+      flex: 1 1 0;
+      position: relative;
+      border-radius: 22px;
+      padding: 6px 6px 7px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 1px;
+      cursor: pointer;
+      text-transform: uppercase;
+      font-size: 13px;
+      line-height: 1.03;
+      font-weight: 1000;
+      text-align: center;
+      text-shadow: 1px 2px 1px rgba(20,10,4,.88);
+      transition: transform .14s, filter .14s, background .16s;
+    }
+    .nav-tab:hover { transform: translateY(-2px); filter: brightness(1.15); }
+    .nav-tab .nav-icon { display: block; font-size: 35px; line-height: 1; filter: drop-shadow(0 2px 1px rgba(25,12,2,.55)); }
+    .nav-tab .nav-icon svg { display: block; width: 39px; height: 39px; }
+    .nav-tab.active {
+      border-color: #ffe07a;
+      color: #42220b;
+      background: linear-gradient(145deg, #ffe975, #f7b92c 65%, #e99b12);
+      box-shadow: 0 4px 8px rgba(63,38,5,.5), inset 0 2px 0 #fff5b4, inset 0 -3px 0 #c88112;
+      text-shadow: 0 1px 0 rgba(255,255,255,.36);
+    }
+    .nav-tab.active::before {
+      content: "";
+      position: absolute;
+      inset: 3px;
+      border: 1px solid rgba(255,255,255,.48);
+      border-radius: 17px;
+      pointer-events: none;
+    }
+
+    .right-rail {
+      position: absolute;
+      z-index: 10;
+      top: 109px;
+      right: 0;
+      bottom: 7px;
+      width: var(--rail-width);
+      display: grid;
+      grid-template-rows: 136px 228px minmax(210px, 1fr) 130px;
+      gap: 7px;
+    }
+    .wood-card {
+      position: relative;
+      min-height: 0;
+      overflow: hidden;
+      padding: 10px 12px;
+      border-radius: 22px;
+      background: linear-gradient(155deg, rgba(105,69,30,.98), rgba(59,36,16,.99) 43%, rgba(42,25,11,.99));
+    }
+    .wood-card h2, .wood-card h3 {
+      margin: 0;
+      color: #ffd554;
+      font-weight: 1000;
+      text-transform: uppercase;
+      line-height: 1.05;
+      text-shadow: 1px 2px 1px #46230d;
+    }
+    .wood-card h2 { font-size: 15px; margin: 1px 0 7px; }
+    .wood-card h3 { font-size: 15px; margin-bottom: 8px; }
+    .goal-card { padding: 10px 12px 8px; }
+    .goal-main { display: grid; grid-template-columns: 48px 1fr; align-items: center; gap: 8px; }
+    .goal-jar { font-size: 39px; line-height: 1; filter: drop-shadow(0 2px 2px #251303); text-align: center; }
+    .goal-caption { font-size: 13px; line-height: 1.12; color: #fff4d8; }
+    .goal-progress-text { margin-top: 3px; font-size: 19px; line-height: 1; font-weight: 900; white-space: nowrap; }
+    .goal-progress-text small { font-size: 13px; font-weight: 800; }
+    .progress-track {
+      height: 15px;
+      margin: 6px 0 2px 47px;
+      overflow: hidden;
+      border: 2px solid #80551c;
+      border-radius: 99px;
+      background: #24180c;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,.65);
+    }
+    .progress-fill {
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(180deg, #b5ec5b, #67bc34 58%, #459826);
+      box-shadow: inset 0 1px 0 rgba(242,255,172,.65), 0 0 6px rgba(111,209,53,.55);
+      transition: width .35s ease;
+    }
+    .goal-days { text-align: right; padding-right: 3px; color: #fff2ce; font-size: 12px; font-weight: 800; }
+
+    .info-card { padding: 10px 12px; }
+    .info-head { display: grid; grid-template-columns: 104px 1fr; align-items: center; gap: 8px; min-height: 98px; }
+    .beekeeper-portrait {
+      height: 96px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      filter: drop-shadow(0 3px 2px rgba(20,10,2,.62));
+    }
+    .beekeeper-portrait svg { height: 100%; width: 94px; }
+    .role-label { color: #ffd14a; font-size: 13px; font-weight: 1000; text-transform: uppercase; }
+    .keeper-name { margin-top: 5px; font-size: 14px; font-weight: 800; line-height: 1.2; }
+    .info-line { margin: 4px 0; font-size: 13px; line-height: 1.18; }
+    .info-line strong { color: #fff8df; }
+    .mood-line { margin-top: 4px; white-space: nowrap; }
+    .efficiency-row { margin-top: 6px; display: flex; justify-content: space-between; font-size: 12px; font-weight: 800; }
+    .tiny-track { height: 13px; margin-top: 4px; border: 2px solid #79501b; border-radius: 20px; background: #27180a; overflow: hidden; }
+    .tiny-fill { height: 100%; width: 92%; border-radius: inherit; background: linear-gradient(#b5ed5f, #56b72a); box-shadow: 0 0 5px #7ad33c; transition: width .25s; }
+
+    .apiary-card { padding: 10px 12px 9px; }
+    .apiary-card h3 { display: flex; align-items: center; gap: 5px; }
+    .status-row { display: grid; grid-template-columns: 31px 1fr; gap: 5px; align-items: center; min-height: 40px; }
+    .status-icon { color: #ffd54b; font-size: 25px; text-align: center; filter: drop-shadow(0 1px 1px rgba(0,0,0,.5)); }
+    .status-copy { font-size: 12px; line-height: 1.15; }
+    .status-copy strong { display: block; margin-top: 2px; color: #9fea68; font-size: 13px; }
+    .happiness-line { margin: 2px 0 5px; font-size: 12px; line-height: 1.15; }
+    .happiness-line strong { color: #a2eb65; }
+    .apiary-button {
+      display: block;
+      width: 100%;
+      min-height: 34px;
+      margin-top: 7px;
+      border: 2px solid #bf842c;
+      border-radius: 11px;
+      color: #ffe4a0;
+      background: linear-gradient(#75501f,#492c12);
+      box-shadow: inset 0 1px 0 rgba(255,232,161,.3), 0 2px 3px rgba(0,0,0,.3);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 1000;
+      text-transform: uppercase;
+      transition: filter .12s, transform .12s;
+    }
+    .apiary-button:hover { filter: brightness(1.2); transform: translateY(-1px); }
+
+    .speed-card { padding: 9px 11px 7px; text-align: center; }
+    .speed-card h3 { margin: 0 0 6px; }
+    .speed-controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .speed-button {
+      height: 43px;
+      border-radius: 12px;
+      color: #ffebbd;
+      font-size: 23px;
+      line-height: 1;
+      cursor: pointer;
+      transition: filter .12s, transform .12s;
+    }
+    .speed-button:hover { filter: brightness(1.2); transform: translateY(-1px); }
+    .speed-button.active { color: #39200b; border-color: #ffe17d; background: linear-gradient(#ffe361,#f1ac17); box-shadow: inset 0 2px 0 #fff4a9, 0 2px 4px #251304; }
+    .clock { margin-top: 4px; color: #fff4d4; font-size: 22px; line-height: 1; font-weight: 1000; text-shadow: 1px 2px 2px #2b1708; }
+    .time-note { margin-top: 2px; color: #fff1d0; font-size: 12px; font-weight: 700; }
+
+    .action-bar {
+      position: absolute;
+      z-index: 11;
+      left: max(270px, calc(50% - 378px));
+      bottom: 0;
+      width: min(790px, calc(100vw - var(--rail-width) - 290px));
+      height: var(--footer-height);
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0,1fr));
+      gap: 9px;
+      align-items: stretch;
+      padding: 3px 0 0;
+    }
+    .action-button {
+      position: relative;
+      min-width: 0;
+      height: 100%;
+      padding: 5px 4px 7px;
+      border-radius: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 0;
+      cursor: pointer;
+      color: #fff0c5;
+      text-align: center;
+      text-transform: uppercase;
+      transition: transform .13s, filter .13s, box-shadow .13s;
+    }
+    .action-button:hover:not(:disabled) { transform: translateY(-4px); filter: brightness(1.16); }
+    .action-button:active:not(:disabled) { transform: translateY(1px); }
+    .action-button:disabled { cursor: not-allowed; filter: grayscale(.6) brightness(.73); opacity: .82; }
+    .action-icon { display: grid; place-items: center; height: 49px; font-size: 40px; line-height: 1; filter: drop-shadow(0 2px 2px rgba(22,10,1,.7)); }
+    .action-icon svg { display: block; width: 47px; height: 47px; overflow: visible; }
+    .action-label { font-size: 11px; line-height: 1.03; font-weight: 1000; text-shadow: 1px 2px 1px #251303; }
+    .action-cost { display: block; margin-top: 3px; color: #ffd250; font-size: 10px; line-height: 1; font-weight: 900; text-transform: none; }
+    .action-cost img { vertical-align: -2px; }
+
+    .map-layer {
+      position: absolute;
+      z-index: 2;
+      inset: var(--header-height) var(--rail-width) var(--footer-height) 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .map-bee {
+      position: absolute;
+      z-index: 2;
+      left: var(--x);
+      top: var(--y);
+      font-size: 19px;
+      filter: drop-shadow(0 2px 1px rgba(45,26,4,.55));
+      animation: buzz 4s ease-in-out infinite alternate;
+      animation-delay: var(--delay,0s);
+    }
+    @keyframes buzz { from { transform: translate(-3px,2px) rotate(-9deg); } to { transform: translate(12px,-7px) rotate(11deg); } }
+    .placed-object {
+      position: absolute;
+      left: var(--x);
+      top: var(--y);
+      width: 55px;
+      height: 68px;
+      transform: translate(-50%,-50%);
+      filter: drop-shadow(0 3px 2px rgba(36,20,6,.58));
+      animation: pop-in .28s cubic-bezier(.2,1.35,.5,1) both;
+    }
+    .placed-object.flower-patch { width: 64px; height: 39px; }
+    .placed-object svg { display: block; width: 100%; height: 100%; overflow: visible; }
+    @keyframes pop-in { from { opacity: 0; scale: .45; } to { opacity: 1; scale: 1; } }
+
+    .toast {
+      position: absolute;
+      z-index: 30;
+      bottom: calc(var(--footer-height) + 13px);
+      left: 50%;
+      transform: translate(-50%, 10px);
+      max-width: min(480px, 90vw);
+      padding: 10px 19px;
+      border: 2px solid #e8b64e;
+      border-radius: 999px;
+      color: #fff5d7;
+      background: linear-gradient(145deg,#543316,#2c1a0a);
+      box-shadow: 0 6px 18px rgba(30,15,3,.52), inset 0 1px 0 rgba(255,227,157,.35);
+      font-size: 14px;
+      font-weight: 900;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s, transform .2s;
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%,0); }
+
+    dialog {
+      width: min(530px, calc(100vw - 28px));
+      max-height: min(78vh, 620px);
+      padding: 0;
+      overflow: visible;
+      border: 3px solid #dfa43c;
+      border-radius: 23px;
+      color: #fff0cc;
+      background: linear-gradient(155deg,#684522,#3e2713 50%,#2e1c0d);
+      box-shadow: 0 15px 55px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,234,168,.45);
+    }
+    dialog::backdrop { background: rgba(21,26,12,.58); backdrop-filter: blur(3px); }
+    .dialog-inner { padding: 21px 23px 22px; }
+    .dialog-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 11px; }
+    .dialog-title { margin: 0; color: #ffd657; font-size: 22px; font-weight: 1000; text-shadow: 1px 2px 1px #2a1608; }
+    .dialog-close { width: 34px; height: 34px; border: 1px solid #dda63e; border-radius: 50%; color: #fff2cf; background: #4a2b11; cursor: pointer; font-size: 22px; }
+    .dialog-content { max-height: 55vh; overflow: auto; font-size: 15px; line-height: 1.55; }
+    .dialog-content p { margin: 8px 0; }
+    .dialog-content ul { margin: 8px 0; padding-left: 22px; }
+    .dialog-actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 17px; }
+    .dialog-action {
+      min-height: 40px;
+      padding: 8px 13px;
+      border: 2px solid #e9b446;
+      border-radius: 12px;
+      color: #452609;
+      background: linear-gradient(#ffe66c,#f3af20);
+      box-shadow: inset 0 1px 0 #fff4ac, 0 3px 0 #9b5811;
+      cursor: pointer;
+      font-weight: 1000;
+    }
+    .dialog-action.secondary { color: #fff1ca; background: linear-gradient(#704921,#43280f); }
+    .dialog-action.danger { color: #fff4e8; background: linear-gradient(#ba5030,#7b2716); }
+    .dialog-action:hover { filter: brightness(1.1); }
+    .save-note { color: #b8ed8b; font-size: 13px; font-weight: 800; }
+
+    @media (max-width: 1260px) {
+      :root { --rail-width: 220px; }
+      .topbar { grid-template-columns: 290px minmax(0,1fr) 205px; gap: 8px; padding-right: 9px; }
+      .brand-mark { width: 86px; flex-basis: 86px; }
+      .brand h1 { font-size: 32px; }
+      .brand p { font-size: 12px; }
+      .resource-strip { gap: 5px; }
+      .resource-card { gap: 4px; padding: 5px 4px; border-radius: 19px; }
+      .res-icon { width: 34px; flex-basis: 34px; font-size: 28px; }
+      .res-label { font-size: 11px; }
+      .res-value { font-size: 17px; }
+      .top-tools { gap: 5px; }
+      .tool-button { font-size: 9px; }
+      .main-nav { width: min(870px, calc(100vw - var(--rail-width) - 24px)); gap: 7px; }
+      .nav-tab { font-size: 11px; }
+      .nav-tab .nav-icon { font-size: 31px; }
+      .wood-card { padding-left: 9px; padding-right: 9px; }
+      .info-head { grid-template-columns: 88px 1fr; gap: 4px; }
+      .beekeeper-portrait svg { width: 82px; }
+      .action-bar { left: max(255px, calc(50% - 378px)); width: min(780px, calc(100vw - var(--rail-width) - 270px)); gap: 7px; }
+      .action-label { font-size: 10px; }
+    }
+
+    @media (max-width: 980px) {
+      :root { --header-height: 145px; --footer-height: 94px; --rail-width: 0px; }
+      .game-shell { min-height: 640px; }
+      .topbar { height: var(--header-height); grid-template-columns: 250px 1fr; grid-template-rows: 65px 65px; gap: 4px 8px; padding: 5px 9px; }
+      .brand { grid-row: 1; height: 65px; }
+      .brand-mark { width: 66px; height: 62px; flex-basis: 66px; }
+      .brand h1 { font-size: 28px; }
+      .brand p { font-size: 10px; margin-top: 3px; }
+      .resource-strip { grid-column: 1 / -1; grid-row: 2; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 5px; }
+      .resource-card { height: 61px; padding: 4px; border-radius: 15px; }
+      .res-icon { width: 28px; height: 34px; flex-basis: 28px; font-size: 24px; }
+      .res-label { font-size: 9px; }
+      .res-value { font-size: 15px; margin-top: 2px; }
+      .date-card .res-icon { font-size: 24px; }
+      .date-card .res-label { font-size: 8px; }
+      .date-card .res-value { font-size: 9px; }
+      .top-tools { grid-column: 2; grid-row: 1; justify-self: end; width: 220px; }
+      .tool-button { height: 57px; border-radius: 14px; font-size: 8px; }
+      .tool-button .tool-icon { font-size: 24px; }
+      .main-nav { top: 151px; left: 8px; width: calc(100vw - 16px); height: 75px; gap: 5px; overflow-x: auto; }
+      .nav-tab { flex: 0 0 106px; border-radius: 15px; font-size: 10px; }
+      .nav-tab .nav-icon { font-size: 27px; }
+      .nav-tab .nav-icon svg { width: 32px; height: 32px; }
+      .scene-art { inset: 145px 0 var(--footer-height); background-size: 100vw 100vh; background-position: left -17vh; }
+      .map-layer { inset: 145px 0 var(--footer-height); }
+      .right-rail { top: 235px; right: 8px; bottom: calc(var(--footer-height) + 7px); width: 210px; grid-template-rows: 105px 170px minmax(145px,1fr); gap: 5px; }
+      .right-rail .speed-card { display: none; }
+      .right-rail .goal-card { padding: 8px 9px; }
+      .right-rail .goal-card h2 { font-size: 12px; margin-bottom: 3px; }
+      .right-rail .goal-jar { font-size: 30px; }
+      .right-rail .progress-track { height: 11px; margin-top: 4px; }
+      .right-rail .goal-days { font-size: 10px; }
+      .right-rail .info-card, .right-rail .apiary-card { padding: 8px 9px; }
+      .right-rail .info-card h3, .right-rail .apiary-card h3 { font-size: 12px; margin-bottom: 4px; }
+      .right-rail .info-head { min-height: 72px; grid-template-columns: 70px 1fr; }
+      .right-rail .beekeeper-portrait { height: 70px; }
+      .right-rail .beekeeper-portrait svg { width: 65px; }
+      .right-rail .info-line, .right-rail .keeper-name { font-size: 11px; }
+      .right-rail .efficiency-row, .right-rail .happiness-line { font-size: 10px; }
+      .right-rail .status-row { min-height: 31px; grid-template-columns: 26px 1fr; }
+      .right-rail .status-copy { font-size: 10px; }
+      .right-rail .status-copy strong { font-size: 11px; }
+      .right-rail .status-icon { font-size: 21px; }
+      .right-rail .apiary-button { min-height: 29px; font-size: 10px; margin-top: 4px; }
+      .action-bar { left: 50%; transform: translateX(-50%); width: min(780px, calc(100vw - 240px)); height: var(--footer-height); gap: 6px; }
+      .action-button { border-radius: 14px; }
+      .action-icon { height: 43px; font-size: 34px; }
+      .action-icon svg { width: 39px; height: 39px; }
+      .action-label { font-size: 9px; }
+      .action-cost { font-size: 8px; }
+    }
+
+    @media (max-width: 650px) {
+      :root { --header-height: 145px; --footer-height: 84px; }
+      .game-shell { min-height: 620px; }
+      .topbar { grid-template-columns: 1fr 155px; grid-template-rows: 55px 66px; padding: 4px 6px; }
+      .brand-mark { width: 53px; height: 52px; flex-basis: 53px; margin-right: 2px; }
+      .brand h1 { font-size: 24px; }
+      .brand p { font-size: 8px; }
+      .top-tools { width: 155px; gap: 3px; }
+      .tool-button { height: 48px; padding: 2px; font-size: 7px; }
+      .tool-button .tool-icon { font-size: 19px; }
+      .resource-strip { gap: 3px; }
+      .resource-card { height: 60px; gap: 2px; padding: 3px 2px; border-width: 1px; border-radius: 11px; }
+      .res-icon { width: 19px; flex-basis: 19px; font-size: 18px; }
+      .res-label { font-size: 7px; }
+      .res-value { font-size: 11px; }
+      .res-value small { font-size: 8px; }
+      .date-card .res-icon { font-size: 17px; }
+      .date-card .res-label { font-size: 6px; }
+      .date-card .res-value { font-size: 7px; }
+      .main-nav { top: 150px; height: 64px; }
+      .nav-tab { flex-basis: 87px; padding: 3px; border-radius: 12px; font-size: 8px; }
+      .nav-tab .nav-icon { font-size: 22px; }
+      .nav-tab .nav-icon svg { width: 26px; height: 26px; }
+      .scene-art { inset: 145px 0 var(--footer-height); background-position: center -17vh; background-size: 125vw 100vh; }
+      .map-layer { inset: 145px 0 var(--footer-height); }
+      .right-rail { top: auto; right: 5px; bottom: calc(var(--footer-height) + 5px); width: 165px; height: 176px; max-height: 270px; grid-template-rows: 96px 1fr; gap: 4px; }
+      .right-rail .info-card { display: none; }
+      .right-rail .apiary-card { display: none; }
+      .right-rail .goal-card { padding: 6px; }
+      .right-rail .goal-main { grid-template-columns: 30px 1fr; gap: 3px; }
+      .right-rail .goal-jar { font-size: 23px; }
+      .right-rail .goal-caption { font-size: 9px; }
+      .right-rail .goal-progress-text { font-size: 13px; }
+      .right-rail .goal-progress-text small { font-size: 9px; }
+      .right-rail .progress-track { margin-left: 29px; }
+      .right-rail .goal-days { font-size: 8px; }
+      .right-rail .speed-card { display: block; padding: 6px; }
+      .right-rail .speed-card h3 { font-size: 10px; margin-bottom: 3px; }
+      .right-rail .speed-controls { gap: 3px; }
+      .right-rail .speed-button { height: 29px; font-size: 17px; }
+      .right-rail .clock { font-size: 15px; }
+      .right-rail .time-note { font-size: 8px; }
+      .action-bar { width: calc(100vw - 10px); height: var(--footer-height); gap: 4px; }
+      .action-button { padding: 3px 1px; border-radius: 11px; border-width: 1px; }
+      .action-button::before { inset: 2px; }
+      .action-icon { height: 38px; font-size: 28px; }
+      .action-icon svg { width: 31px; height: 31px; }
+      .action-label { font-size: 7px; }
+      .action-cost { font-size: 7px; margin-top: 2px; }
+      .map-bee { font-size: 14px; }
+      .placed-object { width: 43px; height: 55px; }
+      .placed-object.flower-patch { width: 50px; height: 31px; }
+    }
+
+    @media (max-height: 720px) and (min-width: 981px) {
+      :root { --header-height: 92px; --footer-height: 88px; }
+      .topbar { grid-template-columns: 320px minmax(0,1fr) 220px; }
+      .brand-mark { height: 78px; width: 84px; flex-basis: 84px; }
+      .resource-card { height: 70px; }
+      .tool-button { height: 68px; }
+      .main-nav { top: 98px; height: 78px; }
+      .right-rail { top: 99px; grid-template-rows: 118px 195px minmax(175px,1fr) 112px; }
+      .action-bar { height: var(--footer-height); }
+      .action-icon { height: 42px; font-size: 34px; }
+      .action-label { font-size: 9px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+  </style>
 </head>
 <body>
-<header class="topbar">
-  <div class="brand">🐝 Пасека</div>
-  <div class="resources">
-    <div class="res"><span class="icon">🍯</span><span>Мед</span><span class="val" id="r-honey">0</span></div>
-    <div class="res"><span class="icon">🪙</span><span>Монеты</span><span class="val" id="r-coins">0</span></div>
-    <div class="res"><span class="icon">🏠</span><span>Ульи</span><span class="val" id="r-hives">0</span></div>
-    <div class="res"><span class="icon">🌻</span><span>Цветы</span><span class="val" id="r-flowers">0</span></div>
-    <div class="res"><span class="icon">👷</span><span>Рабочие</span><span class="val" id="r-workers">0</span></div>
-    <div class="res"><span class="icon">📅</span><span id="r-day">День 1</span><span class="val" id="r-season">Весна</span></div>
+  <div class="game-shell" id="game">
+    <div class="scene-art" aria-hidden="true"></div>
+
+    <header class="topbar">
+      <a class="brand" href="#overview" aria-label="Пасека — обзор">
+        <svg class="brand-mark" viewBox="0 0 112 104" role="img" aria-label="Счастливая пчела">
+          <defs>
+            <linearGradient id="logoGold" x2="0" y2="1"><stop stop-color="#fff079"/><stop offset=".52" stop-color="#ffbf27"/><stop offset="1" stop-color="#e47b0c"/></linearGradient>
+            <linearGradient id="logoWing" x2="0" y2="1"><stop stop-color="#fffdf1"/><stop offset="1" stop-color="#cceafa"/></linearGradient>
+            <filter id="logoShadow" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="3" stdDeviation="2" flood-color="#512709" flood-opacity=".72"/></filter>
+          </defs>
+          <g filter="url(#logoShadow)" stroke="#743a0b" stroke-width="3" stroke-linejoin="round">
+            <path d="M56 3 72 13 88 10 92 27 105 38 98 54 103 70 87 79 80 96 62 91 48 101 35 88 17 87 15 69 4 56 13 40 10 23 28 18 39 5Z" fill="url(#logoGold)"/>
+            <path d="M27 43 38 37 45 43 34 49Z" fill="#ffed8a" stroke-width="2"/>
+            <path d="M74 43 84 37 91 43 80 49Z" fill="#ffed8a" stroke-width="2"/>
+            <path d="M34 58 44 53 51 58 40 64Z" fill="#fff3b0" stroke-width="2"/>
+            <path d="M69 59 80 53 87 59 76 65Z" fill="#fff3b0" stroke-width="2"/>
+            <path d="M55 18c-13 0-24 10-24 24 0 17 12 32 25 37 13-5 25-20 25-37 0-14-11-24-26-24Z" fill="#ffd344" stroke-width="3"/>
+            <path d="M42 38c4-11 21-13 29-4 5 6 4 16 1 23-4 7-10 11-17 13-8-4-15-11-16-20-1-4 0-8 3-12Z" fill="#ffdb52" stroke-width="2.5"/>
+            <path d="M43 48h27M44 57h24" fill="none" stroke="#5c310f" stroke-width="6" stroke-linecap="round"/>
+            <ellipse cx="53" cy="47" rx="2.6" ry="3.5" fill="#3b220f" stroke="none"/>
+            <ellipse cx="66" cy="47" rx="2.6" ry="3.5" fill="#3b220f" stroke="none"/>
+            <path d="M54 57q6 6 12 0" fill="none" stroke="#74380d" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M48 28c-3-11-14-10-16-2 0 6 7 10 14 9M67 28c4-11 15-10 17-2 0 6-8 10-15 9" fill="url(#logoWing)" stroke="#8b4c13" stroke-width="2.5"/>
+            <circle cx="48" cy="27" r="2" fill="#9b4d0f" stroke="none"/><circle cx="67" cy="27" r="2" fill="#9b4d0f" stroke="none"/>
+          </g>
+        </svg>
+        <div class="brand-copy">
+          <h1>ПАСЕКА</h1>
+          <p>СТРАТЕГИЯ · УПРАВЛЕНИЕ</p>
+        </div>
+      </a>
+
+      <div class="resource-strip" aria-label="Ресурсы пасеки">
+        <div class="resource-card">
+          <span class="res-icon" aria-hidden="true">🍯</span>
+          <span class="res-copy"><span class="res-label">МЁД</span><strong class="res-value"><span id="honey-count">1 248</span> <small>кг</small></strong></span>
+        </div>
+        <div class="resource-card">
+          <span class="res-icon" aria-hidden="true">🪙</span>
+          <span class="res-copy"><span class="res-label">МОНЕТЫ</span><strong class="res-value" id="coin-count">3 560</strong></span>
+        </div>
+        <div class="resource-card">
+          <span class="res-icon" aria-hidden="true">🐝</span>
+          <span class="res-copy"><span class="res-label">ПЧЕЛОСЕМЬИ</span><strong class="res-value"><span id="hive-count">7</span> / <small id="hive-limit">12</small></strong></span>
+        </div>
+        <div class="resource-card">
+          <span class="res-icon" aria-hidden="true">🧑‍🌾</span>
+          <span class="res-copy"><span class="res-label">РАБОЧИЕ</span><strong class="res-value"><span id="worker-count">2</span> / <small id="worker-limit">4</small></strong></span>
+        </div>
+        <div class="resource-card date-card">
+          <span class="res-icon" aria-hidden="true">🌤️</span>
+          <span class="res-copy"><span class="res-label" id="season-day">ЛЕТО · ДЕНЬ 14</span><strong class="res-value" id="year-label">ГОД 2</strong></span>
+        </div>
+      </div>
+
+      <div class="top-tools" aria-label="Системные кнопки">
+        <button class="tool-button" type="button" data-tool="help"><span class="tool-icon">❔</span><span>Справка</span></button>
+        <button class="tool-button" type="button" data-tool="settings"><span class="tool-icon">⚙️</span><span>Настройки</span></button>
+        <button class="tool-button" type="button" data-tool="exit"><span class="tool-icon">⇥</span><span>Выход</span></button>
+      </div>
+    </header>
+
+    <nav class="main-nav" aria-label="Разделы игры">
+      <button class="nav-tab active" type="button" data-tab="overview"><span class="nav-icon"><svg viewBox="0 0 44 40" aria-hidden="true"><g fill="#ffd541" stroke="#915513" stroke-width="2"><path d="M12 2 21 7v10l-9 5-9-5V7Z"/><path d="M30 2 39 7v10l-9 5-9-5V7Z"/><path d="M21 18 30 23v10l-9 5-9-5V23Z"/></g><path d="M12 6v8m18-8v8m-9 16v-5" stroke="#fff1a0" stroke-width="2" stroke-linecap="round"/></svg></span><span>Обзор</span></button>
+      <button class="nav-tab" type="button" data-tab="apiary"><span class="nav-icon">🐝</span><span>Пасека</span></button>
+      <button class="nav-tab" type="button" data-tab="research"><span class="nav-icon">📖</span><span>Исследования</span></button>
+      <button class="nav-tab" type="button" data-tab="market"><span class="nav-icon">🏪</span><span>Рынок</span></button>
+      <button class="nav-tab" type="button" data-tab="tasks"><span class="nav-icon">📋</span><span>Задачи</span></button>
+      <button class="nav-tab" type="button" data-tab="calendar"><span class="nav-icon">🗓️</span><span>Календарь</span></button>
+    </nav>
+
+    <div class="map-layer" id="map-layer" aria-hidden="true">
+      <span class="map-bee" style="--x:39%;--y:37%;--delay:-.6s">🐝</span>
+      <span class="map-bee" style="--x:62%;--y:28%;--delay:-2.2s">🐝</span>
+      <span class="map-bee" style="--x:76%;--y:53%;--delay:-1.4s">🐝</span>
+      <div id="placed-items"></div>
+    </div>
+
+    <aside class="right-rail" aria-label="Информация о пасеке">
+      <section class="wood-card goal-card">
+        <h2>Цель сезона</h2>
+        <div class="goal-main">
+          <div class="goal-jar" aria-hidden="true">🍯</div>
+          <div>
+            <div class="goal-caption">Произвести мёд:</div>
+            <div class="goal-progress-text"><span id="season-progress">32</span> / <span id="season-target">50</span> <small>кг</small></div>
+          </div>
+        </div>
+        <div class="progress-track" aria-label="Прогресс цели сезона"><div class="progress-fill" id="season-bar"></div></div>
+        <div class="goal-days">Осталось <span id="days-left">16</span> дней</div>
+      </section>
+
+      <section class="wood-card info-card">
+        <h3>Информация <span aria-hidden="true" style="float:right;color:#ffdd72">●</span></h3>
+        <div class="info-head">
+          <div class="beekeeper-portrait" aria-hidden="true">
+            <svg viewBox="0 0 100 110">
+              <defs>
+                <linearGradient id="suit" x2="0" y2="1"><stop stop-color="#fff8e7"/><stop offset="1" stop-color="#d7c4a0"/></linearGradient>
+                <linearGradient id="hood" x2="0" y2="1"><stop stop-color="#f9ebc9"/><stop offset="1" stop-color="#c8ae82"/></linearGradient>
+              </defs>
+              <ellipse cx="52" cy="103" rx="33" ry="5" fill="#241307" opacity=".43"/>
+              <path d="M22 103q2-18 8-26 5-8 22-8t23 8q8 10 9 26Z" fill="url(#suit)" stroke="#75532a" stroke-width="3"/>
+              <path d="M38 75 30 91M66 75l8 16" stroke="#75532a" stroke-width="7" stroke-linecap="round"/>
+              <path d="M35 22q4-15 17-15 17 0 20 17l-4 35q-3 17-17 17-15 0-18-18Z" fill="url(#hood)" stroke="#76552c" stroke-width="3"/>
+              <path d="M31 24q1-17 21-18 19 1 22 17l-6 2H36Z" fill="#fff6db" stroke="#76552c" stroke-width="3"/>
+              <path d="M38 29q13-7 28 0l-2 24q-4 12-13 12-10 0-13-12Z" fill="#c98247" stroke="#71451f" stroke-width="2"/>
+              <path d="M40 42h3M59 42h3" stroke="#40210f" stroke-width="3" stroke-linecap="round"/>
+              <path d="M45 51q5 6 11 0" fill="none" stroke="#783d24" stroke-width="2.3" stroke-linecap="round"/>
+              <path d="M38 33q12 2 27 0" stroke="#fff1cc" stroke-width="3" opacity=".8"/>
+              <path d="M50 70v30M40 81h20" stroke="#b89866" stroke-width="2"/>
+              <path d="M19 61q-8 2-9 13l11 4 7-10ZM81 58q7-1 10 7l-8 9-7-8Z" fill="#dfcba7" stroke="#75532a" stroke-width="2"/>
+              <path d="M88 66q7-5 8-1l-4 8 4 2-7 3-6-6Z" fill="#c98247" stroke="#75431d" stroke-width="1.5"/>
+              <path d="M36 100h13M57 100h14" stroke="#76532b" stroke-width="5" stroke-linecap="round"/>
+              <circle cx="51" cy="79" r="3" fill="#e8a82e"/>
+            </svg>
+          </div>
+          <div>
+            <div class="role-label">Пчеловод</div>
+            <div class="keeper-name">Имя:<br>Алексей</div>
+          </div>
+        </div>
+        <div class="info-line mood-line">Настроение: <strong id="mood">🙂 Спокойное</strong></div>
+        <div class="info-line">Задача: <strong id="task-name">Осмотр ульев</strong></div>
+        <div class="efficiency-row"><span>Эффективность:</span><strong id="efficiency-label">92%</strong></div>
+        <div class="tiny-track"><div class="tiny-fill" id="efficiency-bar"></div></div>
+      </section>
+
+      <section class="wood-card apiary-card">
+        <h3><span aria-hidden="true">🐝</span> Состояние пасеки</h3>
+        <div class="status-row">
+          <span class="status-icon" aria-hidden="true">⬡</span>
+          <div class="status-copy">Сбор мёда:<strong id="harvest-status">Хороший</strong></div>
+        </div>
+        <div class="status-row">
+          <span class="status-icon" aria-hidden="true">🌼</span>
+          <div class="status-copy">Нектар в округе:<strong id="nectar-status">Высокий</strong></div>
+        </div>
+        <div class="status-row">
+          <span class="status-icon" aria-hidden="true">🐝</span>
+          <div class="status-copy">Счастье пчёл:<strong><span id="happiness">86</span>% — <span id="happiness-word">Отличное</span></strong></div>
+        </div>
+        <div class="tiny-track"><div class="tiny-fill" id="happiness-bar"></div></div>
+        <button class="apiary-button" type="button" id="change-task">📝 Сменить задачу</button>
+      </section>
+
+      <section class="wood-card speed-card">
+        <h3>Скорость игры</h3>
+        <div class="speed-controls" role="group" aria-label="Скорость игры">
+          <button class="speed-button" type="button" data-speed="0" aria-label="Пауза" title="Пауза">Ⅱ</button>
+          <button class="speed-button active" type="button" data-speed="1" aria-label="Обычная скорость" title="Обычная скорость">▶</button>
+          <button class="speed-button" type="button" data-speed="2" aria-label="Ускорить" title="Ускорить">≫</button>
+        </div>
+        <div class="clock" id="game-clock">14:32</div>
+        <div class="time-note" id="time-note">День клонится к вечеру</div>
+      </section>
+    </aside>
+
+    <div class="action-bar" aria-label="Действия пасеки">
+      <button class="action-button" type="button" data-action="hive">
+        <span class="action-icon" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M14 24 32 8l18 16Z" fill="#c17b1b" stroke="#57320f" stroke-width="3"/><rect x="18" y="25" width="28" height="29" rx="4" fill="#ffd24b" stroke="#68400f" stroke-width="3"/><path d="M19 35h26M19 44h26" stroke="#d18a1c" stroke-width="4"/><circle cx="32" cy="48" r="3" fill="#57320f"/><path d="M23 54v4m18-4v4" stroke="#68400f" stroke-width="3" stroke-linecap="round"/></svg></span><span class="action-label">Построить<br>улей</span><span class="action-cost" id="hive-cost">50 🪙</span>
+      </button>
+      <button class="action-button" type="button" data-action="flower">
+        <span class="action-icon" aria-hidden="true">🌼</span><span class="action-label">Посадить<br>цветы</span><span class="action-cost" id="flower-cost">20 🪙</span>
+      </button>
+      <button class="action-button" type="button" data-action="worker">
+        <span class="action-icon" aria-hidden="true">🧑‍🌾</span><span class="action-label">Нанять<br>работника</span><span class="action-cost" id="worker-cost">30 🪙</span>
+      </button>
+      <button class="action-button" type="button" data-action="collect">
+        <span class="action-icon" aria-hidden="true">🍯</span><span class="action-label">Собрать<br>мёд</span><span class="action-cost" id="collect-label">Продать запас</span>
+      </button>
+      <button class="action-button" type="button" data-action="water">
+        <span class="action-icon" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M13 31q0-14 17-14t18 12l-5 24H20Z" fill="#b9c9c8" stroke="#4a5047" stroke-width="3"/><path d="M22 26q8-10 19 0M19 37h24" fill="none" stroke="#f4edcf" stroke-width="3"/><path d="M44 30 55 19l6 5-12 13" fill="#d1d8cf" stroke="#4a5047" stroke-width="3" stroke-linejoin="round"/><path d="M20 53v5m21-5v5" stroke="#51432c" stroke-width="4" stroke-linecap="round"/><path d="M55 30q-3 4 0 6m5-5q-3 4 0 6" fill="none" stroke="#69c5ed" stroke-width="2" stroke-linecap="round"/></svg></span><span class="action-label">Полить<br>цветы</span><span class="action-cost" id="water-cost">15 🪙</span>
+      </button>
+      <button class="action-button" type="button" data-action="fence">
+        <span class="action-icon" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M10 55V22l8-8 8 8v33M38 55V22l8-8 8 8v33" fill="#bd782c" stroke="#60340f" stroke-width="3" stroke-linejoin="round"/><path d="M8 32h48v8H8zM8 46h48v7H8z" fill="#d99946" stroke="#60340f" stroke-width="3" stroke-linejoin="round"/><path d="M12 34h40M12 48h40" stroke="#f1bd69" stroke-width="2"/></svg></span><span class="action-label">Дорожки<br>и заборы</span><span class="action-cost" id="fence-cost">80 🪙</span>
+      </button>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <dialog id="game-dialog" aria-labelledby="dialog-title">
+      <div class="dialog-inner">
+        <div class="dialog-title-row"><h2 class="dialog-title" id="dialog-title">Пасека</h2><button class="dialog-close" type="button" id="dialog-close" aria-label="Закрыть">×</button></div>
+        <div class="dialog-content" id="dialog-content"></div>
+        <div class="dialog-actions" id="dialog-actions"></div>
+      </div>
+    </dialog>
   </div>
-</header>
 
-<main class="layout">
-  <section class="field-wrap">
-    <div class="field-title">Игровое поле пасеки</div>
-    <div class="field" id="field"></div>
-  </section>
-  <aside class="side">
-    <div class="card">
-      <h3>🎯 Цель сезона</h3>
-      <div class="stat"><span class="k">Нужно меда</span><span id="target">100</span></div>
-      <div class="stat"><span class="k">Собрано</span><span id="seasonHoney">0</span></div>
-      <div class="progress-wrap"><div class="progress-bar" id="progress" style="width:0%"></div></div>
-      <div class="stat"><span class="k">Награда</span><span id="reward">50 🪙</span></div>
-    </div>
-    <div class="card">
-      <h3>📊 Состояние пасеки</h3>
-      <div class="stat"><span class="k">Производство/сек</span><span id="prod">0</span></div>
-      <div class="stat"><span class="k">Множитель цветов</span><span id="mult">x1.0</span></div>
-      <div class="stat"><span class="k">Авто-сбор</span><span id="auto">выкл</span></div>
-      <div class="stat"><span class="k">Сезон</span><span id="seasonName">Весна</span></div>
-    </div>
-    <div class="card">
-      <h3>📜 Журнал</h3>
-      <div class="log" id="log"></div>
-    </div>
-  </aside>
-</main>
+  <script>
+    (() => {
+      'use strict';
 
-<div class="bottombar">
-  <button class="btn" id="btn-hive">🏠 Построить улей (50🪙)</button>
-  <button class="btn green" id="btn-flower">🌻 Посадить цветы (20🪙)</button>
-  <button class="btn blue" id="btn-worker">👷 Нанять работника (30🪙)</button>
-  <button class="btn purple" id="btn-collect">🍯 Собрать мед</button>
-</div>
+      const SEASONS = ['Весна', 'Лето', 'Осень', 'Зима'];
+      const TASKS = ['Осмотр ульев', 'Подкормка пчёл', 'Проверка матки', 'Сбор нектара'];
+      const SAVE_KEY = 'pasaka_game_v2';
+      const LEGACY_KEY = 'pasaka_save_v1';
+      const START = {
+        honey: 1248, coins: 3560, hives: 7, hiveLimit: 12,
+        flowers: 18, workers: 2, workerLimit: 4,
+        seasonHoney: 32, seasonTarget: 50, seasonIndex: 1,
+        day: 14, year: 2, minutesOfDay: 14 * 60 + 32,
+        totalTicks: 0, autoBuffer: 0, wateredUntil: 0,
+        fenceLevel: 1, upgradeLevel: 0, happiness: 86,
+        taskIndex: 0, speed: 1, builtHives: 0, plantedFlowers: 0
+      };
+      const number = (value, fallback, min = 0, max = 1e9) => {
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? Math.max(min, Math.min(max, parsed)) : fallback;
+      };
+      const cloneStart = () => ({ ...START });
 
-<div class="toast" id="toast"></div>
-
-<script>
-const SEASONS = ['Весна','Лето','Осень','Зима'];
-const CELL_COUNT = 24;
-const SAVE_KEY = 'pasaka_save_v1';
-
-const state = {
-  honey: 0,
-  coins: 100,
-  hives: 0,
-  flowers: 0,
-  workers: 0,
-  seasonHoney: 0,
-  seasonTarget: 100,
-  seasonIndex: 0,
-  totalSeconds: 0,
-  cells: new Array(CELL_COUNT).fill(null),
-};
-
-function load(){
-  try{
-    const raw = localStorage.getItem(SAVE_KEY);
-    if(raw){
-      const d = JSON.parse(raw);
-      Object.assign(state, d);
-      if(!Array.isArray(state.cells) || state.cells.length !== CELL_COUNT){
-        state.cells = new Array(CELL_COUNT).fill(null);
+      function readSave() {
+        try {
+          const current = localStorage.getItem(SAVE_KEY);
+          if (current) return { ...cloneStart(), ...JSON.parse(current) };
+          const legacyRaw = localStorage.getItem(LEGACY_KEY);
+          if (legacyRaw) {
+            const old = JSON.parse(legacyRaw);
+            return {
+              ...cloneStart(),
+              honey: number(old.honey, START.honey),
+              coins: number(old.coins, START.coins),
+              hives: number(old.hives, START.hives, 0, START.hiveLimit),
+              flowers: number(old.flowers, START.flowers, 0, 100),
+              workers: number(old.workers, START.workers, 0, START.workerLimit),
+              seasonHoney: number(old.seasonHoney, START.seasonHoney),
+              seasonTarget: number(old.seasonTarget, START.seasonTarget, 1),
+              seasonIndex: number(old.seasonIndex, START.seasonIndex, 0, 10000),
+              totalTicks: number(old.totalSeconds, 0),
+              builtHives: Math.max(0, number(old.hives, START.hives) - START.hives),
+              plantedFlowers: Math.max(0, number(old.flowers, START.flowers) - START.flowers)
+            };
+          }
+        } catch (error) {
+          console.warn('Не удалось прочитать сохранение пасеки:', error);
+        }
+        return cloneStart();
       }
-    }
-  }catch(e){ console.warn('load fail',e); }
-}
-function save(){
-  try{ localStorage.setItem(SAVE_KEY, JSON.stringify(state)); }catch(e){}
-}
 
-function productionPerSec(){
-  const base = state.hives * (1 + state.flowers*0.25);
-  const workerBoost = 1 + state.workers*0.1;
-  // winter penalty
-  const seasonMult = (SEASONS[state.seasonIndex%4]==='Зима') ? 0.5 : 1;
-  return base * workerBoost * seasonMult;
-}
+      let state = readSave();
+      state.honey = number(state.honey, START.honey);
+      state.coins = number(state.coins, START.coins);
+      state.hives = number(state.hives, START.hives, 0, 12);
+      state.hiveLimit = 12;
+      state.flowers = number(state.flowers, START.flowers, 0, 50);
+      state.workers = number(state.workers, START.workers, 0, 4);
+      state.workerLimit = 4;
+      state.seasonHoney = number(state.seasonHoney, START.seasonHoney);
+      state.seasonTarget = number(state.seasonTarget, START.seasonTarget, 1);
+      state.seasonIndex = number(state.seasonIndex, START.seasonIndex, 0, 10000);
+      state.day = number(state.day, START.day, 1, 30);
+      state.year = number(state.year, START.year, 1, 10000);
+      state.minutesOfDay = number(state.minutesOfDay, START.minutesOfDay, 0, 1439);
+      state.totalTicks = number(state.totalTicks, 0);
+      state.autoBuffer = number(state.autoBuffer, 0);
+      state.wateredUntil = number(state.wateredUntil, 0);
+      state.fenceLevel = number(state.fenceLevel, 1, 1, 4);
+      state.upgradeLevel = number(state.upgradeLevel, 0, 0, 10);
+      state.happiness = number(state.happiness, 86, 40, 99);
+      state.taskIndex = number(state.taskIndex, 0, 0, TASKS.length - 1);
+      state.speed = [0, 1, 2].includes(Number(state.speed)) ? Number(state.speed) : 1;
+      state.builtHives = number(state.builtHives, 0, 0, 10);
+      state.plantedFlowers = number(state.plantedFlowers, 0, 0, 40);
 
-function firstEmptyCell(){
-  for(let i=0;i<state.cells.length;i++) if(!state.cells[i]) return i;
-  return -1;
-}
+      const fmt = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 });
+      const fmtOne = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+      const $ = (id) => document.getElementById(id);
+      const toastEl = $('toast');
+      const dialog = $('game-dialog');
+      let toastTimer = 0;
+      let lastLogAt = 0;
 
-function toast(msg){
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(t._t);
-  t._t = setTimeout(()=>t.classList.remove('show'),1800);
-}
-function log(msg){
-  const l = document.getElementById('log');
-  const d = document.createElement('div');
-  d.textContent = new Date().toLocaleTimeString()+' — '+msg;
-  l.prepend(d);
-  while(l.children.length>30) l.removeChild(l.lastChild);
-}
-
-function renderField(){
-  const field = document.getElementById('field');
-  field.innerHTML = '';
-  for(let i=0;i<CELL_COUNT;i++){
-    const c = document.createElement('div');
-    const val = state.cells[i];
-    c.className = 'cell' + (val ? ' '+val : '');
-    if(val==='hive') c.innerHTML = '🏠<span class="badge">Улей</span>';
-    else if(val==='flower') c.innerHTML = '🌻<span class="badge">Цветок</span>';
-    else c.innerHTML = '·';
-    field.appendChild(c);
-  }
-}
-
-function renderUI(){
-  document.getElementById('r-honey').textContent = Math.floor(state.honey);
-  document.getElementById('r-coins').textContent = Math.floor(state.coins);
-  document.getElementById('r-hives').textContent = state.hives;
-  document.getElementById('r-flowers').textContent = state.flowers;
-  document.getElementById('r-workers').textContent = state.workers;
-  const day = Math.floor(state.totalSeconds/10)+1;
-  document.getElementById('r-day').textContent = 'День '+day;
-  const season = SEASONS[state.seasonIndex%4];
-  document.getElementById('r-season').textContent = season;
-  document.getElementById('seasonName').textContent = season;
-  document.getElementById('target').textContent = state.seasonTarget;
-  document.getElementById('seasonHoney').textContent = Math.floor(state.seasonHoney);
-  const pct = Math.min(100, (state.seasonHoney/state.seasonTarget)*100);
-  document.getElementById('progress').style.width = pct+'%';
-  document.getElementById('reward').textContent = (50 + state.seasonIndex*10)+' 🪙';
-  const prod = productionPerSec();
-  document.getElementById('prod').textContent = prod.toFixed(2);
-  const mult = 1 + state.flowers*0.25;
-  document.getElementById('mult').textContent = 'x'+mult.toFixed(2);
-  document.getElementById('auto').textContent = state.workers>0 ? 'каждые 5с' : 'выкл';
-  // button states
-  document.getElementById('btn-hive').disabled = state.coins < 50 || firstEmptyCell()<0;
-  document.getElementById('btn-flower').disabled = state.coins < 20 || firstEmptyCell()<0;
-  document.getElementById('btn-worker').disabled = state.coins < 30;
-}
-
-function buildHive(){
-  if(state.coins<50){ toast('Недостаточно монет'); return; }
-  const idx = firstEmptyCell();
-  if(idx<0){ toast('Нет места на поле'); return; }
-  state.coins -= 50;
-  state.hives++;
-  state.cells[idx]='hive';
-  log('Построен новый улей');
-  toast('🏠 Улей построен!');
-  renderField(); renderUI(); save();
-}
-function plantFlower(){
-  if(state.coins<20){ toast('Недостаточно монет'); return; }
-  const idx = firstEmptyCell();
-  if(idx<0){ toast('Нет места на поле'); return; }
-  state.coins -= 20;
-  state.flowers++;
-  state.cells[idx]='flower';
-  log('Посажены цветы');
-  toast('🌻 Цветы посажены!');
-  renderField(); renderUI(); save();
-}
-function hireWorker(){
-  if(state.coins<30){ toast('Недостаточно монет'); return; }
-  state.coins -= 30;
-  state.workers++;
-  log('Нанят рабочий');
-  toast('👷 Рабочий нанят!');
-  renderUI(); save();
-}
-function collectHoney(){
-  if(state.honey < 1){ toast('Нет меда для сбора'); return; }
-  const amt = Math.floor(state.honey);
-  const coins = Math.round(amt*1.5);
-  state.coins += coins;
-  state.honey -= amt;
-  log('Собрано '+amt+' меда → '+coins+' монет');
-  toast('🍯 Собрано '+amt+' меда!');
-  renderUI(); save();
-}
-
-function gameTick(){
-  const prod = productionPerSec();
-  state.honey += prod;
-  state.seasonHoney += prod;
-  state.totalSeconds++;
-
-  // worker auto-collect every 5s
-  if(state.workers>0 && state.totalSeconds % 5 === 0){
-    if(state.honey >= 1){
-      const amt = Math.floor(state.honey*0.5);
-      if(amt>0){
-        state.coins += Math.round(amt*1.5);
-        state.honey -= amt;
-        log('Рабочие собрали '+amt+' меда');
+      function save() {
+        try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); }
+        catch (error) { console.warn('Не удалось сохранить пасеку:', error); }
       }
-    }
-  }
 
-  // season goal check
-  if(state.seasonHoney >= state.seasonTarget){
-    const reward = 50 + state.seasonIndex*10;
-    state.coins += reward;
-    state.seasonIndex++;
-    state.seasonHoney = 0;
-    state.seasonTarget = 100 + state.seasonIndex*50;
-    log('Сезон завершён! Награда '+reward+' монет');
-    toast('🎉 Сезон завершён! +'+reward+'🪙');
-  }
+      function seasonName() { return SEASONS[state.seasonIndex % SEASONS.length]; }
+      function productionPerHour() {
+        const flowerBoost = 1 + Math.min(state.flowers, 50) * 0.025;
+        const seasonBoost = seasonName() === 'Зима' ? 0.55 : 1;
+        const waterBoost = state.totalTicks < state.wateredUntil ? 1.35 : 1;
+        const researchBoost = 1 + state.upgradeLevel * 0.12;
+        return state.hives * 0.3 * flowerBoost * seasonBoost * waterBoost * researchBoost;
+      }
+      function productionPerMinute() { return productionPerHour() / 60; }
+      function happiness() {
+        return Math.max(40, Math.min(99, Math.round(state.happiness + Math.min(6, Math.max(0, state.flowers - 18) * 0.3) + (state.fenceLevel - 1) * 2)));
+      }
+      function currency(n) { return fmt.format(Math.floor(n)); }
+      function clockLabel() {
+        const hours = Math.floor(state.minutesOfDay / 60).toString().padStart(2, '0');
+        const minutes = (state.minutesOfDay % 60).toString().padStart(2, '0');
+        return `${hours}:${minutes}`;
+      }
+      function timeMood() {
+        const hour = Math.floor(state.minutesOfDay / 60);
+        if (hour < 5 || hour >= 21) return 'Ночь на пасеке';
+        if (hour < 12) return 'Доброе утро на пасеке';
+        if (hour < 18) return 'День клонится к вечеру';
+        return 'Тёплый вечер на пасеке';
+      }
+      function productionQuality() {
+        if (state.hives === 0) return 'Нужны ульи';
+        if (productionPerHour() >= 2) return 'Хороший';
+        return 'Невысокий';
+      }
 
-  renderUI();
-  // periodic save
-  if(state.totalSeconds % 5 === 0) save();
-}
+      function render() {
+        $('honey-count').textContent = currency(state.honey);
+        $('coin-count').textContent = currency(state.coins);
+        $('hive-count').textContent = state.hives;
+        $('hive-limit').textContent = state.hiveLimit;
+        $('worker-count').textContent = state.workers;
+        $('worker-limit').textContent = state.workerLimit;
+        $('season-day').textContent = `${seasonName().toLocaleUpperCase('ru-RU')} · ДЕНЬ ${state.day}`;
+        $('year-label').textContent = `ГОД ${state.year}`;
+        $('season-progress').textContent = currency(state.seasonHoney);
+        $('season-target').textContent = fmt.format(state.seasonTarget);
+        $('season-bar').style.width = `${Math.min(100, state.seasonHoney / state.seasonTarget * 100)}%`;
+        $('days-left').textContent = Math.max(0, 30 - state.day);
+        $('task-name').textContent = TASKS[state.taskIndex];
+        $('game-clock').textContent = clockLabel();
+        $('time-note').textContent = timeMood();
+        $('harvest-status').textContent = productionQuality();
+        $('nectar-status').textContent = state.flowers >= 12 ? 'Высокий' : state.flowers >= 5 ? 'Средний' : 'Низкий';
+        const happy = happiness();
+        $('happiness').textContent = happy;
+        $('happiness-word').textContent = happy >= 85 ? 'Отличное' : happy >= 70 ? 'Хорошее' : 'Нужно внимание';
+        const efficiency = Math.min(99, 82 + state.workers * 5 + (state.upgradeLevel > 0 ? 2 : 0));
+        $('efficiency-label').textContent = `${efficiency}%`;
+        $('efficiency-bar').style.width = `${efficiency}%`;
+        $('mood').textContent = happy >= 80 ? '🙂 Спокойное' : '😟 Тревожное';
 
-// init
-load();
-renderField();
-renderUI();
-log('Добро пожаловать на пасеку!');
-setInterval(gameTick, 1000);
+        const buildCost = 50 + Math.max(0, state.hives - 7) * 25;
+        const flowerCost = 20 + state.plantedFlowers * 4;
+        const workerCost = 30 + Math.max(0, state.workers - 2) * 25;
+        $('hive-cost').textContent = `${buildCost} 🪙`;
+        $('flower-cost').textContent = `${flowerCost} 🪙`;
+        $('worker-cost').textContent = `${workerCost} 🪙`;
+        $('water-cost').textContent = '15 🪙';
+        $('fence-cost').textContent = `${80 * state.fenceLevel} 🪙`;
+        $('collect-label').textContent = state.honey >= 1 ? `Продать ${currency(state.honey)} кг` : 'Запас пуст';
 
-document.getElementById('btn-hive').addEventListener('click', buildHive);
-document.getElementById('btn-flower').addEventListener('click', plantFlower);
-document.getElementById('btn-worker').addEventListener('click', hireWorker);
-document.getElementById('btn-collect').addEventListener('click', collectHoney);
+        document.querySelector('[data-action="hive"]').disabled = state.coins < buildCost || state.hives >= state.hiveLimit;
+        document.querySelector('[data-action="flower"]').disabled = state.coins < flowerCost || state.flowers >= 50;
+        document.querySelector('[data-action="worker"]').disabled = state.coins < workerCost || state.workers >= state.workerLimit;
+        document.querySelector('[data-action="collect"]').disabled = state.honey < 1;
+        document.querySelector('[data-action="water"]').disabled = state.coins < 15 || state.flowers < 1;
+        document.querySelector('[data-action="fence"]').disabled = state.coins < 80 * state.fenceLevel || state.fenceLevel >= 4;
+        document.querySelectorAll('[data-speed]').forEach(button => {
+          const active = Number(button.dataset.speed) === state.speed;
+          button.classList.toggle('active', active);
+          button.setAttribute('aria-pressed', String(active));
+        });
+        renderPlacedItems();
+      }
 
-// reset save on double-click brand? no
-</script>
+      function showToast(message) {
+        toastEl.textContent = message;
+        toastEl.classList.add('show');
+        window.clearTimeout(toastTimer);
+        toastTimer = window.setTimeout(() => toastEl.classList.remove('show'), 2100);
+      }
+
+      function addLog(message) {
+        const politeLog = document.getElementById('dialog-content');
+        if (politeLog && politeLog.dataset.log === 'true') {
+          const line = document.createElement('p');
+          line.textContent = `${clockLabel()} — ${message}`;
+          politeLog.prepend(line);
+        }
+      }
+
+      function spend(amount) {
+        if (state.coins < amount) {
+          showToast('Не хватает монет — загляните на рынок');
+          return false;
+        }
+        state.coins -= amount;
+        return true;
+      }
+
+      function doAction(action) {
+        if (action === 'hive') {
+          const cost = 50 + Math.max(0, state.hives - 7) * 25;
+          if (state.hives >= state.hiveLimit) return showToast('Все места под ульи заняты');
+          if (!spend(cost)) return;
+          state.hives++;
+          state.builtHives++;
+          addLog('Построен новый улей');
+          showToast('🏠 Новый улей построен!');
+        } else if (action === 'flower') {
+          const cost = 20 + state.plantedFlowers * 4;
+          if (state.flowers >= 50) return showToast('На поляне уже достаточно цветов');
+          if (!spend(cost)) return;
+          state.flowers++;
+          state.plantedFlowers++;
+          state.happiness = Math.min(95, state.happiness + 1);
+          addLog('Посажены медоносные цветы');
+          showToast('🌼 Цветы посажены — нектара стало больше!');
+        } else if (action === 'worker') {
+          const cost = 30 + Math.max(0, state.workers - 2) * 25;
+          if (state.workers >= state.workerLimit) return showToast('В команде уже максимальное число работников');
+          if (!spend(cost)) return;
+          state.workers++;
+          addLog('В команду принят работник');
+          showToast('🧑‍🌾 Новый работник присоединился к пасеке');
+        } else if (action === 'collect') {
+          const amount = Math.floor(state.honey);
+          if (amount < 1) return showToast('В хранилище пока мало мёда');
+          const earnings = Math.round(amount * 1.5);
+          state.honey -= amount;
+          state.coins += earnings;
+          addLog(`Продано ${currency(amount)} кг мёда`);
+          showToast(`🍯 Продано ${currency(amount)} кг мёда · +${currency(earnings)} монет`);
+        } else if (action === 'water') {
+          if (state.flowers < 1) return showToast('Сначала посадите цветы');
+          if (!spend(15)) return;
+          state.wateredUntil = state.totalTicks + 90;
+          state.happiness = Math.min(96, state.happiness + 2);
+          addLog('Цветы политы: производство временно ускорено');
+          showToast('💧 Цветы политы — производство +35% на 90 игровых минут');
+        } else if (action === 'fence') {
+          const cost = 80 * state.fenceLevel;
+          if (state.fenceLevel >= 4) return showToast('Все дорожки и заборы уже обновлены');
+          if (!spend(cost)) return;
+          state.fenceLevel++;
+          state.happiness = Math.min(97, state.happiness + 2);
+          addLog('Обновлены дорожки и заборы');
+          showToast('🪵 Пасека стала уютнее и безопаснее');
+        }
+        render();
+        save();
+      }
+
+      function tick() {
+        if (state.speed === 0) return;
+        for (let step = 0; step < state.speed; step++) {
+          const made = productionPerMinute();
+          state.honey += made;
+          state.seasonHoney += made;
+          state.autoBuffer += made;
+          state.totalTicks++;
+          state.minutesOfDay++;
+          if (state.minutesOfDay >= 1440) {
+            state.minutesOfDay = 0;
+            state.day++;
+            if (state.day > 30) { state.day = 1; }
+          }
+
+          if (state.workers > 0 && state.totalTicks % 5 === 0) {
+            const collected = Math.min(state.autoBuffer, state.workers * 0.12, state.honey);
+            state.autoBuffer = 0;
+            if (collected > 0) {
+              state.honey -= collected;
+              state.coins += collected * 1.5;
+            }
+          }
+
+          if (state.seasonHoney >= state.seasonTarget) {
+            const reward = 100 + state.seasonIndex * 50;
+            state.coins += reward;
+            state.seasonIndex++;
+            if (state.seasonIndex % SEASONS.length === 0) state.year++;
+            state.day = 1;
+            state.minutesOfDay = 8 * 60;
+            state.seasonHoney = 0;
+            state.seasonTarget += 25;
+            showToast(`🎉 Цель сезона выполнена! +${currency(reward)} монет`);
+            addLog(`Новый сезон: ${seasonName()}`);
+          }
+        }
+        render();
+        if (state.totalTicks % 5 === 0) save();
+      }
+
+      const HIVE_SLOTS = [
+        [30, 72], [38, 78], [45, 69], [53, 77], [60, 67],
+        [68, 74], [78, 68], [86, 76], [33, 57], [73, 56]
+      ];
+      const FLOWER_SLOTS = [
+        [28, 48], [36, 62], [43, 72], [49, 54], [57, 76],
+        [65, 59], [72, 70], [82, 53], [88, 63], [39, 43],
+        [55, 47], [77, 43]
+      ];
+      function hiveSvg(index) {
+        const gradientId = `woodBee${index}`;
+        return `<svg viewBox="0 0 72 90" aria-hidden="true"><defs><linearGradient id="${gradientId}" x2="0" y2="1"><stop stop-color="#ffe06b"/><stop offset=".55" stop-color="#e99e20"/><stop offset="1" stop-color="#b96a12"/></linearGradient></defs><ellipse cx="36" cy="83" rx="29" ry="5" fill="#39200c" opacity=".45"/><path d="M13 27 36 8l23 19Z" fill="#8c541b" stroke="#59320e" stroke-width="3"/><rect x="17" y="29" width="38" height="42" rx="4" fill="url(#${gradientId})" stroke="#68400f" stroke-width="3"/><path d="M18 42h36M18 56h36" stroke="#a65c11" stroke-width="4"/><path d="M27 33v35M45 33v35" stroke="#ffe796" stroke-width="2" opacity=".75"/><circle cx="36" cy="64" r="4" fill="#48280d"/><path d="M22 72v9M50 72v9" stroke="#6b4117" stroke-width="4" stroke-linecap="round"/><path d="M28 81h-9M54 81h-9" stroke="#60380f" stroke-width="3" stroke-linecap="round"/></svg>`;
+      }
+      function flowersSvg() {
+        return `<svg viewBox="0 0 100 54" aria-hidden="true"><ellipse cx="50" cy="49" rx="45" ry="4" fill="#32651e" opacity=".35"/><path d="M21 48q4-20 13-26M49 48q0-25 4-34M77 48q-5-21-12-28" fill="none" stroke="#39832b" stroke-width="3"/><g fill="#ffde4b" stroke="#d89116" stroke-width="1.5"><circle cx="34" cy="20" r="7"/><circle cx="53" cy="12" r="7"/><circle cx="66" cy="23" r="7"/></g><g fill="#fff7e7" stroke="#d979aa" stroke-width="1.4"><circle cx="18" cy="36" r="6"/><circle cx="82" cy="38" r="6"/></g><g fill="#a65320"><circle cx="34" cy="20" r="2.3"/><circle cx="53" cy="12" r="2.3"/><circle cx="66" cy="23" r="2.3"/></g><path d="M19 38q7-6 13-1M52 27q-8 1-12 8M72 32q8-6 13-2" fill="none" stroke="#58a734" stroke-width="3" stroke-linecap="round"/></svg>`;
+      }
+      let renderedPlacementKey = null;
+      function renderPlacedItems() {
+        const placementKey = `${state.builtHives}|${state.plantedFlowers}`;
+        if (placementKey === renderedPlacementKey) return;
+        renderedPlacementKey = placementKey;
+        const container = $('placed-items');
+        container.replaceChildren();
+        const newHives = Math.min(state.builtHives, HIVE_SLOTS.length);
+        for (let i = 0; i < newHives; i++) {
+          const item = document.createElement('span');
+          item.className = 'placed-object hive-object';
+          item.style.setProperty('--x', `${HIVE_SLOTS[i][0]}%`);
+          item.style.setProperty('--y', `${HIVE_SLOTS[i][1]}%`);
+          item.innerHTML = hiveSvg(i);
+          container.appendChild(item);
+        }
+        const newFlowers = Math.min(state.plantedFlowers, FLOWER_SLOTS.length);
+        for (let i = 0; i < newFlowers; i++) {
+          const item = document.createElement('span');
+          item.className = 'placed-object flower-patch';
+          item.style.setProperty('--x', `${FLOWER_SLOTS[i][0]}%`);
+          item.style.setProperty('--y', `${FLOWER_SLOTS[i][1]}%`);
+          item.innerHTML = flowersSvg();
+          container.appendChild(item);
+        }
+      }
+
+      const dialogTitle = $('dialog-title');
+      const dialogContent = $('dialog-content');
+      const dialogActions = $('dialog-actions');
+      function openDialog(title, content, actions = []) {
+        dialogTitle.textContent = title;
+        dialogContent.innerHTML = content;
+        dialogContent.dataset.log = 'false';
+        dialogActions.replaceChildren();
+        actions.forEach(action => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = `dialog-action ${action.secondary ? 'secondary' : ''} ${action.danger ? 'danger' : ''}`;
+          button.textContent = action.label;
+          button.addEventListener('click', action.onClick);
+          dialogActions.appendChild(button);
+        });
+        if (!dialog.open) dialog.showModal();
+      }
+      function closeDialog() { if (dialog.open) dialog.close(); }
+
+      function selectTab(tab) {
+        document.querySelectorAll('.nav-tab').forEach(button => button.classList.toggle('active', button.dataset.tab === tab));
+        if (tab === 'overview') { closeDialog(); return; }
+        if (tab === 'apiary') {
+          openDialog('Пасека', `<p>На поляне работают <strong>${state.hives} пчелосемей</strong> и <strong>${state.workers} пчеловодов</strong>.</p><p>Производство: <strong>${fmtOne.format(productionPerHour())} кг мёда в час</strong>. Цветы дают множитель <strong>×${fmtOne.format(1 + state.flowers * .025)}</strong>.</p><p>Постройте новые ульи и посадите медоносы — пасека будет приносить больше мёда.</p>`, [{label:'К пасеке', secondary:true, onClick:closeDialog}]);
+        } else if (tab === 'research') {
+          const cost = 250 + state.upgradeLevel * 200;
+          openDialog('Исследования', `<p>Изучайте уход за пчёлами и улучшайте урожайность каждого улья.</p><p>Уровень технологии: <strong>${state.upgradeLevel}</strong><br>Бонус к производству: <strong>+${state.upgradeLevel * 12}%</strong><br>Следующее улучшение: <strong>${currency(cost)} монет</strong></p>`, [
+            {label:`Исследовать · ${currency(cost)} 🪙`, onClick:() => { if (state.coins < cost) { showToast('Не хватает монет на исследование'); return; } if (state.upgradeLevel >= 10) { showToast('Исследования уже завершены'); return; } state.coins -= cost; state.upgradeLevel++; render(); save(); closeDialog(); showToast('📖 Технология улучшена: +12% к мёду'); }},
+            {label:'Закрыть', secondary:true, onClick:closeDialog}
+          ]);
+        } else if (tab === 'market') {
+          openDialog('Рынок мёда', `<p>Торговцы покупают мёд по курсу <strong>1 кг = 1,5 монеты</strong>.</p><p>В хранилище: <strong>${currency(state.honey)} кг</strong><br>На счету: <strong>${currency(state.coins)} монет</strong></p>`, [
+            {label:'Продать весь запас', onClick:() => { closeDialog(); doAction('collect'); }},
+            {label:'Закрыть', secondary:true, onClick:closeDialog}
+          ]);
+        } else if (tab === 'tasks') {
+          openDialog('Задачи сезона', `<p>Главная цель — произвести <strong>${currency(state.seasonTarget)} кг мёда</strong> за сезон.</p><p>Уже произведено: <strong>${fmtOne.format(state.seasonHoney)} кг</strong> (${Math.floor(Math.min(100, state.seasonHoney / state.seasonTarget * 100))}%).</p><p>За выполненную цель выдаётся денежная награда. Работники продают часть свежего мёда автоматически.</p>`, [{label:'Понятно', secondary:true, onClick:closeDialog}]);
+        } else if (tab === 'calendar') {
+          const nextSeason = SEASONS[(state.seasonIndex + 1) % SEASONS.length];
+          openDialog('Календарь пасеки', `<p><strong>${seasonName()}, день ${state.day}, год ${state.year}</strong></p><p>До конца сезона осталось ${Math.max(0,30-state.day)} дней. Следом наступит <strong>${nextSeason.toLocaleLowerCase('ru-RU')}</strong>.</p><p>Пасека работает круглый год, но зимой производство мёда ниже.</p>`, [{label:'Закрыть календарь', secondary:true, onClick:closeDialog}]);
+        }
+      }
+
+      function openTool(tool) {
+        if (tool === 'help') {
+          openDialog('Справка пчеловода', '<p>Добро пожаловать на цветочную поляну! Пчёлы приносят мёд каждую игровую минуту.</p><ul><li>Стройте ульи, чтобы увеличить количество пчелосемей.</li><li>Сажайте цветы: каждый медонос повышает выработку мёда.</li><li>Работники автоматически продают часть свежего урожая.</li><li>Нажмите «Собрать мёд», чтобы продать запас из хранилища.</li><li>Полив временно ускоряет производство, а ограждения повышают уют пасеки.</li></ul><p>Прогресс сохраняется в браузере автоматически.</p>', [{label:'Начать играть', onClick:closeDialog}]);
+        } else if (tool === 'settings') {
+          openDialog('Настройки', `<p>Сохранение: <span class="save-note">включено · прогресс в этом браузере</span></p><p>Скорость игры и состояние пасеки сохраняются автоматически.</p>`, [
+            {label:'Сбросить прогресс', danger:true, onClick:() => { if (window.confirm('Сбросить сохранение и начать заново?')) { localStorage.removeItem(SAVE_KEY); localStorage.removeItem(LEGACY_KEY); state = cloneStart(); closeDialog(); render(); save(); showToast('Пасека обновлена — хорошего сезона!'); } }},
+            {label:'Закрыть', secondary:true, onClick:closeDialog}
+          ]);
+        } else if (tool === 'exit') {
+          save();
+          state.speed = 0;
+          render();
+          openDialog('До новых встреч!', '<p>Игра поставлена на паузу, а прогресс сохранён.</p><p>Можно закрыть вкладку или вернуться на пасеку позже — всё останется на месте.</p>', [
+            {label:'Вернуться на пасеку', onClick:() => { state.speed = 1; render(); save(); closeDialog(); }},
+            {label:'Продолжить на паузе', secondary:true, onClick:closeDialog}
+          ]);
+        }
+      }
+
+      document.querySelectorAll('.nav-tab').forEach(button => button.addEventListener('click', () => selectTab(button.dataset.tab)));
+      document.querySelectorAll('[data-action]').forEach(button => button.addEventListener('click', () => doAction(button.dataset.action)));
+      document.querySelectorAll('[data-speed]').forEach(button => button.addEventListener('click', () => { state.speed = Number(button.dataset.speed); render(); save(); }));
+      document.querySelectorAll('[data-tool]').forEach(button => button.addEventListener('click', () => openTool(button.dataset.tool)));
+      $('change-task').addEventListener('click', () => { state.taskIndex = (state.taskIndex + 1) % TASKS.length; render(); save(); showToast(`Задача обновлена: ${TASKS[state.taskIndex].toLowerCase()}`); });
+      $('dialog-close').addEventListener('click', closeDialog);
+      dialog.addEventListener('click', event => { if (event.target === dialog) closeDialog(); });
+      document.querySelector('.brand').addEventListener('click', event => { event.preventDefault(); selectTab('overview'); });
+
+      render();
+      try { if (!localStorage.getItem(SAVE_KEY)) save(); } catch (_) { /* localStorage может быть отключён */ }
+      window.setInterval(tick, 1000);
+    })();
+  </script>
 </body>
 </html>
