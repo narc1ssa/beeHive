@@ -421,8 +421,62 @@
       z-index: 2;
       inset: var(--header-height) var(--rail-width) var(--footer-height) 0;
       overflow: hidden;
+      cursor: crosshair;
+      touch-action: manipulation;
+    }
+    .hero-cleanup {
+      position: absolute;
+      z-index: 3;
+      left: 53.7%;
+      top: 69%;
+      width: 130px;
+      height: 136px;
+      transform: translate(-50%, -50%);
+      background-image: url("1791982448698-01a13a78-c201-702e-9a5b-126d88ecc218.png");
+      background-size: 100vw 100vh;
+      background-position: -70.3125vw -50.9259vh;
+      background-repeat: no-repeat;
+      clip-path: polygon(25% 2%, 48% 0%, 70% 3%, 89% 13%, 99% 29%, 95% 47%, 100% 65%, 87% 83%, 69% 96%, 49% 100%, 31% 95%, 13% 84%, 2% 67%, 0 48%, 5% 29%, 13% 12%);
+      filter: drop-shadow(0 2px 3px rgba(35,59,18,.25));
       pointer-events: none;
     }
+    .beekeeper-mover {
+      position: absolute;
+      z-index: 5;
+      left: var(--player-x, 53.7%);
+      top: var(--player-y, 77%);
+      width: 88px;
+      height: 112px;
+      transform: translate(-50%, -100%);
+      filter: drop-shadow(0 3px 3px rgba(33,22,8,.5));
+      transition: left var(--walk-time, 0ms) cubic-bezier(.18,.7,.22,1), top var(--walk-time, 0ms) cubic-bezier(.18,.7,.22,1);
+      pointer-events: none;
+      will-change: left, top;
+    }
+    .player-sprite { display: block; width: 100%; height: 100%; overflow: visible; transform-origin: 50% 100%; }
+    .beekeeper-mover.walking .player-sprite { animation: player-step .18s ease-in-out infinite alternate; }
+    @keyframes player-step { from { transform: translateY(0) rotate(-1deg); } to { transform: translateY(-3px) rotate(1deg); } }
+    .move-marker {
+      position: absolute;
+      z-index: 4;
+      left: 50%;
+      top: 50%;
+      width: 29px;
+      height: 29px;
+      display: grid;
+      place-items: center;
+      border: 2px solid #ffe676;
+      border-radius: 50%;
+      color: #fff4b1;
+      background: rgba(77, 53, 16, .65);
+      box-shadow: 0 0 0 4px rgba(255,224,97,.2), 0 2px 5px rgba(31,17,5,.5);
+      font-size: 16px;
+      opacity: 0;
+      transform: translate(-50%,-50%) scale(.4);
+      pointer-events: none;
+    }
+    .move-marker.pulse { animation: marker-pulse .7s ease-out both; }
+    @keyframes marker-pulse { 0% { opacity: 1; transform: translate(-50%,-50%) scale(.55); } 65% { opacity: .9; transform: translate(-50%,-50%) scale(1.12); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.25); } }
     .map-bee {
       position: absolute;
       z-index: 2;
@@ -430,7 +484,7 @@
       top: var(--y);
       font-size: 19px;
       filter: drop-shadow(0 2px 1px rgba(45,26,4,.55));
-      animation: buzz 4s ease-in-out infinite alternate;
+      animation: buzz .8s ease-in-out infinite alternate;
       animation-delay: var(--delay,0s);
     }
     @keyframes buzz { from { transform: translate(-3px,2px) rotate(-9deg); } to { transform: translate(12px,-7px) rotate(11deg); } }
@@ -443,6 +497,7 @@
       transform: translate(-50%,-50%);
       filter: drop-shadow(0 3px 2px rgba(36,20,6,.58));
       animation: pop-in .28s cubic-bezier(.2,1.35,.5,1) both;
+      pointer-events: none;
     }
     .placed-object.flower-patch { width: 64px; height: 39px; }
     .placed-object svg { display: block; width: 100%; height: 100%; overflow: visible; }
@@ -605,6 +660,9 @@
       .nav-tab .nav-icon { font-size: 22px; }
       .nav-tab .nav-icon svg { width: 26px; height: 26px; }
       .scene-art { inset: 145px 0 var(--footer-height); background-position: center -17vh; background-size: 125vw 100vh; }
+      .hero-cleanup { left: 44.5%; top: 72%; width: 105px; height: 120px; background-size: 125vw 100vh; background-position: -87.89vw -50.9259vh; }
+      .beekeeper-mover { width: 70px; height: 90px; }
+      .move-marker { width: 24px; height: 24px; }
       .map-layer { inset: 145px 0 var(--footer-height); }
       .right-rail { top: auto; right: 5px; bottom: calc(var(--footer-height) + 5px); width: 165px; height: 176px; max-height: 270px; grid-template-rows: 96px 1fr; gap: 4px; }
       .right-rail .info-card { display: none; }
@@ -726,10 +784,39 @@
       <button class="nav-tab" type="button" data-tab="calendar"><span class="nav-icon">🗓️</span><span>Календарь</span></button>
     </nav>
 
-    <div class="map-layer" id="map-layer" aria-hidden="true">
+    <div class="map-layer" id="map-layer" role="region" tabindex="0" aria-label="Игровая карта. Щёлкните по поляне, чтобы переместить пчеловода.">
       <span class="map-bee" style="--x:39%;--y:37%;--delay:-.6s">🐝</span>
       <span class="map-bee" style="--x:62%;--y:28%;--delay:-2.2s">🐝</span>
       <span class="map-bee" style="--x:76%;--y:53%;--delay:-1.4s">🐝</span>
+      <div class="hero-cleanup" aria-hidden="true"></div>
+      <div class="beekeeper-mover" id="player" aria-hidden="true">
+        <svg class="player-sprite" viewBox="0 0 100 128">
+          <ellipse cx="50" cy="122" rx="28" ry="5" fill="#35200e" opacity=".42"/>
+          <g class="player-body">
+            <path d="M37 84 32 108l9 7 8-25M62 84l7 24-10 8-9-26" fill="#eee3c9" stroke="#72532e" stroke-width="3" stroke-linejoin="round"/>
+            <path d="M30 108q-4 4-3 9l14 2 3-5-6-7M61 109l-3 6 4 5 14-3q1-6-5-9Z" fill="#74512a" stroke="#4e351c" stroke-width="2.5" stroke-linejoin="round"/>
+            <path d="M32 59q5-7 18-7h2q14 0 18 8l6 28q-8 8-26 8T25 88Z" fill="#f4ead2" stroke="#76542c" stroke-width="3" stroke-linejoin="round"/>
+            <path d="M50 57v37M37 68h26M39 85h22" fill="none" stroke="#bea77e" stroke-width="2"/>
+            <path d="M31 64 21 77l5 10 10-9M68 63l10 8-5 12-9-7" fill="#e7d8bb" stroke="#76542c" stroke-width="3" stroke-linejoin="round"/>
+            <path d="M20 78q-7-2-8 5l4 8 7 1 4-6Z" fill="#bd7b47" stroke="#754421" stroke-width="2"/>
+            <path d="M76 70q4-7 7-12l4 1-2 7 6-6 3 2-6 9q-4 7-10 5Z" fill="#bd7b47" stroke="#754421" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M39 28q2-17 12-17 12 0 14 18l-3 25q-3 13-12 13-10 0-13-13Z" fill="#d28a54" stroke="#754721" stroke-width="2.5"/>
+            <path d="M42 40h3M58 40h3" stroke="#3e2616" stroke-width="3" stroke-linecap="round"/>
+            <path d="M46 49q5 5 10 0" fill="none" stroke="#744326" stroke-width="2.4" stroke-linecap="round"/>
+            <path d="M35 28q1-20 16-21 18 0 19 22l-6 6-4-11q-8 5-22 1Z" fill="#f6ecd5" stroke="#76542c" stroke-width="3" stroke-linejoin="round"/>
+            <path d="M32 28q18 6 42 0l-2 31q-4 18-19 18-15 0-19-18Z" fill="rgba(247,246,230,.3)" stroke="#9c8257" stroke-width="2.5"/>
+            <path d="M35 36h34M36 43h32M37 50h30M39 57h26" stroke="#ddcfb1" stroke-width="1" opacity=".9"/>
+            <path d="M33 29q18 7 41 0" fill="none" stroke="#fff9e7" stroke-width="5"/>
+            <path d="M42 80h16" stroke="#e0b44e" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="50" cy="80" r="3" fill="#d89b26"/>
+            <path d="M13 83q-7 1-7 8l2 14q7 5 17 0l-2-16q-2-6-10-6Z" fill="#a9b2ae" stroke="#4e5145" stroke-width="2.5"/>
+            <path d="M8 91h14M10 103h13" stroke="#dce4df" stroke-width="2"/>
+            <path d="M9 82q6-8 14-2" fill="none" stroke="#6c5434" stroke-width="2.5"/>
+            <path d="M7 77q-2-5 2-7m7 6q1-6 6-7" fill="none" stroke="#d9e9e8" stroke-width="2" stroke-linecap="round"/>
+          </g>
+        </svg>
+      </div>
+      <div class="move-marker" id="move-marker" aria-hidden="true">✦</div>
       <div id="placed-items"></div>
     </div>
 
@@ -859,7 +946,8 @@
         day: 14, year: 2, minutesOfDay: 14 * 60 + 32,
         totalTicks: 0, autoBuffer: 0, wateredUntil: 0,
         fenceLevel: 1, upgradeLevel: 0, happiness: 86,
-        taskIndex: 0, speed: 1, builtHives: 0, plantedFlowers: 0
+        taskIndex: 0, speed: 1, builtHives: 0, plantedFlowers: 0,
+        playerX: 53.7, playerY: 77
       };
       const number = (value, fallback, min = 0, max = 1e9) => {
         const parsed = Number(value);
@@ -919,6 +1007,8 @@
       state.speed = [0, 1, 2].includes(Number(state.speed)) ? Number(state.speed) : 1;
       state.builtHives = number(state.builtHives, 0, 0, 10);
       state.plantedFlowers = number(state.plantedFlowers, 0, 0, 40);
+      state.playerX = number(state.playerX, START.playerX, 4, 96);
+      state.playerY = number(state.playerY, START.playerY, 20, 90);
 
       const fmt = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 });
       const fmtOne = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -989,6 +1079,8 @@
         $('efficiency-label').textContent = `${efficiency}%`;
         $('efficiency-bar').style.width = `${efficiency}%`;
         $('mood').textContent = happy >= 80 ? '🙂 Спокойное' : '😟 Тревожное';
+        $('player').style.left = `${state.playerX}%`;
+        $('player').style.top = `${state.playerY}%`;
 
         const buildCost = 50 + Math.max(0, state.hives - 7) * 25;
         const flowerCost = 20 + state.plantedFlowers * 4;
@@ -1222,7 +1314,7 @@
 
       function openTool(tool) {
         if (tool === 'help') {
-          openDialog('Справка пчеловода', '<p>Добро пожаловать на цветочную поляну! Пчёлы приносят мёд каждую игровую минуту.</p><ul><li>Стройте ульи, чтобы увеличить количество пчелосемей.</li><li>Сажайте цветы: каждый медонос повышает выработку мёда.</li><li>Работники автоматически продают часть свежего урожая.</li><li>Нажмите «Собрать мёд», чтобы продать запас из хранилища.</li><li>Полив временно ускоряет производство, а ограждения повышают уют пасеки.</li></ul><p>Прогресс сохраняется в браузере автоматически.</p>', [{label:'Начать играть', onClick:closeDialog}]);
+          openDialog('Справка пчеловода', '<p>Добро пожаловать на цветочную поляну! Щёлкните по карте, чтобы переместить пчеловода. Пчёлы приносят мёд каждую игровую минуту.</p><ul><li>Стройте ульи, чтобы увеличить количество пчелосемей.</li><li>Сажайте цветы: каждый медонос повышает выработку мёда.</li><li>Работники автоматически продают часть свежего урожая.</li><li>Нажмите «Собрать мёд», чтобы продать запас из хранилища.</li><li>Полив временно ускоряет производство, а ограждения повышают уют пасеки.</li></ul><p>Прогресс сохраняется в браузере автоматически.</p>', [{label:'Начать играть', onClick:closeDialog}]);
         } else if (tool === 'settings') {
           openDialog('Настройки', `<p>Сохранение: <span class="save-note">включено · прогресс в этом браузере</span></p><p>Скорость игры и состояние пасеки сохраняются автоматически.</p>`, [
             {label:'Сбросить прогресс', danger:true, onClick:() => { if (window.confirm('Сбросить сохранение и начать заново?')) { localStorage.removeItem(SAVE_KEY); localStorage.removeItem(LEGACY_KEY); state = cloneStart(); closeDialog(); render(); save(); showToast('Пасека обновлена — хорошего сезона!'); } }},
@@ -1247,6 +1339,50 @@
       $('dialog-close').addEventListener('click', closeDialog);
       dialog.addEventListener('click', event => { if (event.target === dialog) closeDialog(); });
       document.querySelector('.brand').addEventListener('click', event => { event.preventDefault(); selectTab('overview'); });
+
+      const mapLayer = $('map-layer');
+      const playerElement = $('player');
+      const moveMarker = $('move-marker');
+      let playerWalkTimer = 0;
+      let markerTimer = 0;
+      function setPlayerDestination(x, y) {
+        const rect = mapLayer.getBoundingClientRect();
+        const targetX = Math.max(4, Math.min(96, x));
+        const targetY = Math.max(20, Math.min(90, y));
+        const distance = Math.hypot((targetX - state.playerX) * rect.width / 100, (targetY - state.playerY) * rect.height / 100);
+        const duration = Math.max(240, Math.min(1400, distance * 2.1));
+        playerElement.style.setProperty('--walk-time', `${duration}ms`);
+        state.playerX = targetX;
+        state.playerY = targetY;
+        playerElement.style.left = `${targetX}%`;
+        playerElement.style.top = `${targetY}%`;
+        playerElement.classList.add('walking');
+        moveMarker.style.left = `${targetX}%`;
+        moveMarker.style.top = `${targetY}%`;
+        moveMarker.classList.remove('pulse');
+        void moveMarker.offsetWidth;
+        moveMarker.classList.add('pulse');
+        window.clearTimeout(playerWalkTimer);
+        window.clearTimeout(markerTimer);
+        playerWalkTimer = window.setTimeout(() => playerElement.classList.remove('walking'), duration);
+        markerTimer = window.setTimeout(() => moveMarker.classList.remove('pulse'), 720);
+        save();
+      }
+      mapLayer.addEventListener('pointerdown', event => {
+        if (event.pointerType === 'mouse' && event.button !== 0) return;
+        const rect = mapLayer.getBoundingClientRect();
+        const x = (event.clientX - rect.left) / rect.width * 100;
+        const y = (event.clientY - rect.top) / rect.height * 100;
+        setPlayerDestination(x, y);
+        mapLayer.focus({ preventScroll: true });
+      });
+      mapLayer.addEventListener('keydown', event => {
+        const step = event.shiftKey ? 5 : 2;
+        const moves = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] };
+        if (!moves[event.key]) return;
+        event.preventDefault();
+        setPlayerDestination(state.playerX + moves[event.key][0], state.playerY + moves[event.key][1]);
+      });
 
       render();
       try { if (!localStorage.getItem(SAVE_KEY)) save(); } catch (_) { /* localStorage может быть отключён */ }
