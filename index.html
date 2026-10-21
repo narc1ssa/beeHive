@@ -181,9 +181,56 @@
       to { transform: translateX(-50%) scale(.86, .88); opacity: .72; }
     }
 
+    .workers-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .npc-worker {
+      position: absolute;
+      z-index: 6;
+      left: 41.4%;
+      top: 62.6%;
+      height: 12.2%;
+      aspect-ratio: 928 / 1170;
+      transform: translate(-50%, -95%) scale(var(--depth-scale, .92));
+      transform-origin: 50% 95%;
+      pointer-events: none;
+      will-change: left, top, transform;
+    }
+    .npc-worker.spawning {
+      animation: worker-pop .36s cubic-bezier(.2, 1.4, .45, 1) both;
+    }
+    .npc-worker.leaving {
+      animation: worker-leave .2s ease-in forwards;
+    }
+    @keyframes worker-pop {
+      from { opacity: 0; scale: .35; }
+      to { opacity: 1; scale: 1; }
+    }
+    @keyframes worker-leave {
+      from { opacity: 1; scale: 1; }
+      to { opacity: 0; scale: .3; }
+    }
+    .npc-worker .player-img {
+      animation: worker-tend 1.6s ease-in-out infinite;
+    }
+    .npc-worker.walking .player-img {
+      animation: player-walk .31s ease-in-out infinite alternate;
+      animation-delay: var(--step-phase, 0s);
+    }
+    .npc-worker.walking .player-shadow {
+      animation: shadow-walk .31s ease-in-out infinite alternate;
+      animation-delay: var(--step-phase, 0s);
+    }
+    @keyframes worker-tend {
+      0%, 100% { transform: translateY(0) rotate(-1.2deg); }
+      50% { transform: translateY(-2.5%) rotate(1.6deg); }
+    }
+
     .left-hud {
       position: absolute;
-      z-index: 10;
+      z-index: 42;
       left: 11px;
       bottom: 8px;
       width: 226px;
@@ -245,7 +292,7 @@
 
     .topbar {
       position: absolute;
-      z-index: 8;
+      z-index: 40;
       pointer-events: none;
       inset: 0 0 auto;
       height: var(--header-height);
@@ -391,7 +438,7 @@
     .main-nav {
       pointer-events: none;
       position: absolute;
-      z-index: 9;
+      z-index: 41;
       left: 15px;
       top: calc(var(--header-height) + 8px);
       width: min(895px, calc(100vw - var(--rail-width) - 28px));
@@ -442,7 +489,7 @@
 
     .right-rail {
       position: absolute;
-      z-index: 10;
+      z-index: 42;
       top: 109px;
       right: 0;
       bottom: 7px;
@@ -559,14 +606,14 @@
     .action-bar {
       pointer-events: none;
       position: absolute;
-      z-index: 11;
-      left: max(270px, calc(50% - 378px));
+      z-index: 43;
+      left: max(246px, calc(50% - 468px));
       bottom: 0;
-      width: min(790px, calc(100vw - var(--rail-width) - 290px));
+      width: min(948px, calc(100vw - var(--rail-width) - 256px));
       height: var(--footer-height);
       display: grid;
-      grid-template-columns: repeat(6, minmax(0,1fr));
-      gap: 9px;
+      grid-template-columns: repeat(8, minmax(0,1fr));
+      gap: 7px;
       align-items: stretch;
       padding: 3px 0 0;
     }
@@ -604,17 +651,115 @@
       overflow: hidden;
       pointer-events: none;
     }
-    .map-bee {
+    .bees-layer {
       position: absolute;
-      z-index: 2;
-      left: var(--x);
-      top: var(--y);
-      font-size: 19px;
-      filter: drop-shadow(0 2px 1px rgba(45,26,4,.55));
-      animation: buzz .8s ease-in-out infinite alternate;
-      animation-delay: var(--delay,0s);
+      z-index: 350;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
     }
-    @keyframes buzz { from { transform: translate(-3px,2px) rotate(-9deg); } to { transform: translate(12px,-7px) rotate(11deg); } }
+    .foraging-bee {
+      position: absolute;
+      width: clamp(25px, 2.05vw, 34px);
+      height: clamp(24px, 1.95vw, 32px);
+      transform: translate(-50%, -56%);
+      pointer-events: none;
+      will-change: left, top, transform;
+    }
+    .foraging-bee .bee-shadow {
+      position: absolute;
+      left: 50%;
+      bottom: -5px;
+      width: 56%;
+      height: 20%;
+      border-radius: 50%;
+      background: radial-gradient(rgba(38, 22, 5, .34), rgba(38, 22, 5, .10) 64%, transparent 78%);
+      transform: translateX(-50%) scale(var(--shadow-scale, 1));
+    }
+    .foraging-bee .bee-svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      transform: scaleX(var(--bee-face, 1)) rotate(var(--bee-tilt, 0deg));
+      transform-origin: 50% 50%;
+      filter: drop-shadow(0 2px 2px rgba(42, 24, 5, .48));
+    }
+    .foraging-bee .bee-wing-front {
+      transform-origin: 15px 11px;
+      animation: bee-wing-flap .082s ease-in-out infinite alternate;
+    }
+    .foraging-bee .bee-wing-back {
+      transform-origin: 18.5px 11px;
+      animation: bee-wing-flap .082s ease-in-out -.04s infinite alternate;
+    }
+    @keyframes bee-wing-flap {
+      from { transform: rotate(-23deg) scaleY(1); }
+      to { transform: rotate(16deg) scaleY(.75); }
+    }
+    .foraging-bee .pollen-ball {
+      transform-origin: 18.0px 25.6px;
+      transform: scale(0);
+      opacity: 0;
+      transition: transform .24s cubic-bezier(.22, 1.48, .44, 1), opacity .16s ease;
+    }
+    .foraging-bee.has-pollen .pollen-ball {
+      transform: scale(1);
+      opacity: 1;
+    }
+    .foraging-bee.gathering .bee-svg {
+      animation: bee-sip .34s ease-in-out infinite alternate;
+    }
+    @keyframes bee-sip {
+      from { translate: 0 0; }
+      to { translate: 0 2.5px; }
+    }
+    .popups-layer {
+      position: absolute;
+      z-index: 380;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .honey-cloud-popup {
+      position: absolute;
+      width: clamp(86px, 6.6vw, 118px);
+      aspect-ratio: 132 / 70;
+      transform: translate(-50%, -88%);
+      pointer-events: none;
+      will-change: transform, opacity;
+      filter: drop-shadow(0 4px 6px rgba(42, 22, 4, .42));
+      animation: honey-cloud-float 2.15s cubic-bezier(.2, .88, .32, 1) forwards;
+    }
+    .honey-cloud-popup svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+    .honey-cloud-text {
+      position: absolute;
+      inset: 0 0 18% 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 0 8px;
+      color: #5c2d06;
+      font-size: clamp(11px, .92vw, 14.5px);
+      font-weight: 1000;
+      letter-spacing: -.01em;
+      line-height: 1;
+      white-space: nowrap;
+      text-shadow: 0 1px 0 #fffdf4, 0 0 4px rgba(255, 240, 175, .95);
+    }
+    @keyframes honey-cloud-float {
+      0%   { opacity: 0; transform: translate(-50%, -62%) scale(.34); }
+      15%  { opacity: 1; transform: translate(-50%, -96%) scale(1.10); }
+      28%  { opacity: 1; transform: translate(-50%, -104%) scale(1); }
+      76%  { opacity: 1; transform: translate(-50%, -138%) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -164%) scale(.93); }
+    }
     .placed-object {
       position: absolute;
       left: var(--x);
@@ -629,10 +774,12 @@
     .placed-object.flower-patch { width: 64px; height: 39px; }
     .placed-object svg { display: block; width: 100%; height: 100%; overflow: visible; }
     @keyframes pop-in { from { opacity: 0; scale: .45; } to { opacity: 1; scale: 1; } }
+    .placed-object.removing { animation: pop-out .19s ease-in forwards; }
+    @keyframes pop-out { from { opacity: 1; scale: 1; } to { opacity: 0; scale: .38; } }
 
     .toast {
       position: absolute;
-      z-index: 30;
+      z-index: 60;
       bottom: calc(var(--footer-height) + 13px);
       left: 50%;
       transform: translate(-50%, 10px);
@@ -707,8 +854,8 @@
       .wood-card { padding-left: 9px; padding-right: 9px; }
       .info-head { grid-template-columns: 88px 1fr; gap: 4px; }
       .beekeeper-portrait svg, .beekeeper-portrait img { width: 78px; }
-      .action-bar { left: max(255px, calc(50% - 378px)); width: min(780px, calc(100vw - var(--rail-width) - 270px)); gap: 7px; }
-      .action-label { font-size: 10px; }
+      .action-bar { left: max(244px, calc(50% - 420px)); width: min(860px, calc(100vw - var(--rail-width) - 256px)); gap: 6px; }
+      .action-label { font-size: 9.5px; }
     }
 
     @media (max-width: 980px) {
@@ -755,11 +902,11 @@
       .right-rail .status-copy strong { font-size: 11px; }
       .right-rail .status-icon { font-size: 21px; }
       .right-rail .apiary-button { min-height: 29px; font-size: 10px; margin-top: 4px; }
-      .action-bar { left: 50%; transform: translateX(-50%); width: min(780px, calc(100vw - 240px)); height: var(--footer-height); gap: 6px; }
+      .action-bar { left: 50%; transform: translateX(-50%); width: min(880px, calc(100vw - 228px)); height: var(--footer-height); gap: 4px; }
       .action-button { border-radius: 14px; }
       .action-icon { height: 43px; font-size: 34px; }
       .action-icon svg { width: 39px; height: 39px; }
-      .action-label { font-size: 9px; }
+      .action-label { font-size: 8.5px; }
       .action-cost { font-size: 8px; }
     }
 
@@ -805,14 +952,14 @@
       .right-rail .speed-button { height: 29px; font-size: 17px; }
       .right-rail .clock { font-size: 15px; }
       .right-rail .time-note { font-size: 8px; }
-      .action-bar { width: calc(100vw - 10px); height: var(--footer-height); gap: 4px; }
+      .action-bar { width: calc(100vw - 8px); height: var(--footer-height); gap: 2.5px; }
       .action-button { padding: 3px 1px; border-radius: 11px; border-width: 1px; }
       .action-button::before { inset: 2px; }
-      .action-icon { height: 38px; font-size: 28px; }
-      .action-icon svg { width: 31px; height: 31px; }
-      .action-label { font-size: 7px; }
-      .action-cost { font-size: 7px; margin-top: 2px; }
-      .map-bee { font-size: 14px; }
+      .action-icon { height: 35px; font-size: 24px; }
+      .action-icon svg { width: 27px; height: 27px; }
+      .action-label { font-size: 6px; }
+      .action-cost { font-size: 6.5px; margin-top: 2px; }
+      .foraging-bee { width: 22px; height: 21px; }
       .placed-object { width: 43px; height: 55px; }
       .placed-object.flower-patch { width: 50px; height: 31px; }
     }
@@ -917,6 +1064,7 @@
         <polyline class="trail-line" id="trail-line" points=""></polyline>
       </svg>
       <div class="move-marker" id="move-marker" aria-hidden="true"></div>
+      <div class="workers-layer" id="workers-layer" aria-hidden="true"></div>
       <div class="player-actor" id="player" aria-hidden="true">
         <span class="player-shadow"></span>
         <span class="player-flip" id="player-flip">
@@ -924,11 +1072,10 @@
         </span>
       </div>
       <div class="map-layer" id="map-layer" aria-hidden="true">
-        <span class="map-bee" style="--x:45%;--y:41%;--delay:-.6s">🐝</span>
-        <span class="map-bee" style="--x:59%;--y:36%;--delay:-2.2s">🐝</span>
-        <span class="map-bee" style="--x:72%;--y:55%;--delay:-1.4s">🐝</span>
         <div id="placed-items"></div>
       </div>
+      <div class="bees-layer" id="bees-layer" aria-hidden="true"></div>
+      <div class="popups-layer" id="popups-layer" aria-hidden="true"></div>
     </div>
 
     <aside class="left-hud" aria-label="Совет и карта местности">
@@ -1008,11 +1155,17 @@
       <button class="action-button" type="button" data-action="hive">
         <span class="action-icon" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M14 24 32 8l18 16Z" fill="#c17b1b" stroke="#57320f" stroke-width="3"/><rect x="18" y="25" width="28" height="29" rx="4" fill="#ffd24b" stroke="#68400f" stroke-width="3"/><path d="M19 35h26M19 44h26" stroke="#d18a1c" stroke-width="4"/><circle cx="32" cy="48" r="3" fill="#57320f"/><path d="M23 54v4m18-4v4" stroke="#68400f" stroke-width="3" stroke-linecap="round"/></svg></span><span class="action-label">Построить<br>улей</span><span class="action-cost" id="hive-cost">50 🪙</span>
       </button>
+      <button class="action-button" type="button" data-action="remove-hive">
+        <span class="action-icon" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M12 24 29 9l17 15Z" fill="#b36e18" stroke="#57320f" stroke-width="3"/><rect x="16" y="25" width="26" height="28" rx="4" fill="#f3c13a" stroke="#68400f" stroke-width="3"/><path d="M17 34h24M17 43h24" stroke="#c77e16" stroke-width="3.6"/><circle cx="29" cy="47" r="2.8" fill="#57320f"/><path d="M21 53v4m16-4v4" stroke="#68400f" stroke-width="3" stroke-linecap="round"/><circle cx="46" cy="45" r="12" fill="#d9452f" stroke="#52190c" stroke-width="2.8"/><path d="M40.5 45h11" stroke="#fff7df" stroke-width="4.2" stroke-linecap="round"/></svg></span><span class="action-label">Убрать<br>улей</span><span class="action-cost" id="remove-hive-label">Ульев: 7</span>
+      </button>
       <button class="action-button" type="button" data-action="flower">
         <span class="action-icon" aria-hidden="true">🌼</span><span class="action-label">Посадить<br>цветы</span><span class="action-cost" id="flower-cost">20 🪙</span>
       </button>
       <button class="action-button" type="button" data-action="worker">
         <span class="action-icon" aria-hidden="true">🧑‍🌾</span><span class="action-label">Нанять<br>работника</span><span class="action-cost" id="worker-cost">30 🪙</span>
+      </button>
+      <button class="action-button" type="button" data-action="fire-worker">
+        <span class="action-icon" aria-hidden="true">👋</span><span class="action-label">Уволить<br>работника</span><span class="action-cost" id="fire-worker-label">Нет рабочих</span>
       </button>
       <button class="action-button" type="button" data-action="collect">
         <span class="action-icon" aria-hidden="true">🍯</span><span class="action-label">Собрать<br>мёд</span><span class="action-cost" id="collect-label">Продать запас</span>
@@ -1045,19 +1198,19 @@
       const LEGACY_KEY = 'pasaka_save_v1';
       const START = {
         honey: 1248, coins: 3560, hives: 7, hiveLimit: 12,
-        flowers: 18, workers: 2, workerLimit: 4,
+        flowers: 18, workers: 0, workerLimit: 12,
         seasonHoney: 32, seasonTarget: 50, seasonIndex: 1,
         day: 14, year: 2, minutesOfDay: 14 * 60 + 32,
         totalTicks: 0, autoBuffer: 0, wateredUntil: 0,
         fenceLevel: 1, upgradeLevel: 0, happiness: 86,
         taskIndex: 0, speed: 1, builtHives: 0, plantedFlowers: 0,
-        playerX: 41.4, playerY: 62.6, playerFace: 1
+        playerX: 41.4, playerY: 62.6, playerFace: 1, hiredWorkers: []
       };
       const number = (value, fallback, min = 0, max = 1e9) => {
         const parsed = Number(value);
         return Number.isFinite(parsed) ? Math.max(min, Math.min(max, parsed)) : fallback;
       };
-      const cloneStart = () => ({ ...START });
+      const cloneStart = () => ({ ...START, hiredWorkers: [] });
 
       function readSave() {
         try {
@@ -1093,8 +1246,18 @@
       state.hives = number(state.hives, START.hives, 0, 12);
       state.hiveLimit = 12;
       state.flowers = number(state.flowers, START.flowers, 0, 50);
-      state.workers = number(state.workers, START.workers, 0, 4);
-      state.workerLimit = 4;
+      state.workerLimit = 12;
+      if (!Array.isArray(state.hiredWorkers)) {
+        state.hiredWorkers = [];
+      } else {
+        state.hiredWorkers = state.hiredWorkers.slice(0, 12).map(w => ({
+          variant: w && w.variant === 1 ? 1 : 0,
+          x: number(w && w.x, 41.4, 8, 92),
+          y: number(w && w.y, 60.5, 32, 92),
+          face: w && w.face === -1 ? -1 : 1
+        }));
+      }
+      state.workers = state.hiredWorkers.length;
       state.seasonHoney = number(state.seasonHoney, START.seasonHoney);
       state.seasonTarget = number(state.seasonTarget, START.seasonTarget, 1);
       state.seasonIndex = number(state.seasonIndex, START.seasonIndex, 0, 10000);
@@ -1187,10 +1350,12 @@
 
         const buildCost = 50 + Math.max(0, state.hives - 7) * 25;
         const flowerCost = 20 + state.plantedFlowers * 4;
-        const workerCost = 30 + Math.max(0, state.workers - 2) * 25;
+        const workerCost = 30 + state.workers * 20;
         $('hive-cost').textContent = `${buildCost} 🪙`;
+        $('remove-hive-label').textContent = state.hives > 0 ? `Ульев: ${state.hives}` : 'Нет ульев';
         $('flower-cost').textContent = `${flowerCost} 🪙`;
         $('worker-cost').textContent = `${workerCost} 🪙`;
+        $('fire-worker-label').textContent = state.workers > 0 ? `В штате: ${state.workers}` : 'Нет рабочих';
         $('water-cost').textContent = '15 🪙';
         $('fence-cost').textContent = `${80 * state.fenceLevel} 🪙`;
         $('collect-label').textContent = state.honey >= 1 ? `Продать ${currency(state.honey)} кг` : 'Запас пуст';
@@ -1198,6 +1363,8 @@
         document.querySelector('[data-action="hive"]').disabled = state.coins < buildCost || state.hives >= state.hiveLimit;
         document.querySelector('[data-action="flower"]').disabled = state.coins < flowerCost || state.flowers >= 50;
         document.querySelector('[data-action="worker"]').disabled = state.coins < workerCost || state.workers >= state.workerLimit;
+        document.querySelector('[data-action="fire-worker"]').disabled = state.workers < 1;
+        document.querySelector('[data-action="remove-hive"]').disabled = state.hives < 1;
         document.querySelector('[data-action="collect"]').disabled = state.honey < 1;
         document.querySelector('[data-action="water"]').disabled = state.coins < 15 || state.flowers < 1;
         document.querySelector('[data-action="fence"]').disabled = state.coins < 80 * state.fenceLevel || state.fenceLevel >= 4;
@@ -1240,9 +1407,15 @@
           if (state.hives >= state.hiveLimit) return showToast('Все места под ульи заняты');
           if (!spend(cost)) return;
           state.hives++;
-          state.builtHives++;
+          state.builtHives = Math.min(HIVE_SLOTS.length, state.builtHives + 1);
           addLog('Построен новый улей');
           showToast('🏠 Новый улей построен!');
+        } else if (action === 'remove-hive') {
+          if (state.hives < 1) return showToast('На пасеке больше нет активных ульев');
+          state.hives--;
+          if (state.builtHives > 0) state.builtHives--;
+          addLog('Улей убран с пасеки');
+          showToast('🏠 Улей убран с пасеки');
         } else if (action === 'flower') {
           const cost = 20 + state.plantedFlowers * 4;
           if (state.flowers >= 50) return showToast('На поляне уже достаточно цветов');
@@ -1253,12 +1426,19 @@
           addLog('Посажены медоносные цветы');
           showToast('🌼 Цветы посажены — нектара стало больше!');
         } else if (action === 'worker') {
-          const cost = 30 + Math.max(0, state.workers - 2) * 25;
+          const cost = 30 + state.workers * 20;
           if (state.workers >= state.workerLimit) return showToast('В команде уже максимальное число работников');
           if (!spend(cost)) return;
-          state.workers++;
+          spawnHiredWorker();
+          state.workers = state.hiredWorkers.length;
           addLog('В команду принят работник');
-          showToast('🧑‍🌾 Новый работник присоединился к пасеке');
+          showToast('🐝 Нанят работник — он уже обходит ульи!');
+        } else if (action === 'fire-worker') {
+          if (state.workers < 1 || state.hiredWorkers.length < 1) return showToast('На пасеке нет нанятых работников');
+          dismissHiredWorker();
+          state.workers = state.hiredWorkers.length;
+          addLog('Работник уволен');
+          showToast('👋 Работник уволен с пасеки');
         } else if (action === 'collect') {
           const amount = Math.floor(state.honey);
           if (amount < 1) return showToast('В хранилище пока мало мёда');
@@ -1344,30 +1524,43 @@
       function flowersSvg() {
         return `<svg viewBox="0 0 100 54" aria-hidden="true"><ellipse cx="50" cy="49" rx="45" ry="4" fill="#32651e" opacity=".35"/><path d="M21 48q4-20 13-26M49 48q0-25 4-34M77 48q-5-21-12-28" fill="none" stroke="#39832b" stroke-width="3"/><g fill="#ffde4b" stroke="#d89116" stroke-width="1.5"><circle cx="34" cy="20" r="7"/><circle cx="53" cy="12" r="7"/><circle cx="66" cy="23" r="7"/></g><g fill="#fff7e7" stroke="#d979aa" stroke-width="1.4"><circle cx="18" cy="36" r="6"/><circle cx="82" cy="38" r="6"/></g><g fill="#a65320"><circle cx="34" cy="20" r="2.3"/><circle cx="53" cy="12" r="2.3"/><circle cx="66" cy="23" r="2.3"/></g><path d="M19 38q7-6 13-1M52 27q-8 1-12 8M72 32q8-6 13-2" fill="none" stroke="#58a734" stroke-width="3" stroke-linecap="round"/></svg>`;
       }
-      let renderedPlacementKey = null;
+      const placedHiveNodes = [];
+      const placedFlowerNodes = [];
       function renderPlacedItems() {
-        const placementKey = `${state.builtHives}|${state.plantedFlowers}`;
-        if (placementKey === renderedPlacementKey) return;
-        renderedPlacementKey = placementKey;
         const container = $('placed-items');
-        container.replaceChildren();
-        const newHives = Math.min(state.builtHives, HIVE_SLOTS.length);
-        for (let i = 0; i < newHives; i++) {
+        if (!container) return;
+        const targetHives = Math.min(state.builtHives, HIVE_SLOTS.length);
+        while (placedHiveNodes.length < targetHives) {
+          const i = placedHiveNodes.length;
           const item = document.createElement('span');
           item.className = 'placed-object hive-object';
           item.style.setProperty('--x', `${HIVE_SLOTS[i][0]}%`);
           item.style.setProperty('--y', `${HIVE_SLOTS[i][1]}%`);
           item.innerHTML = hiveSvg(i);
           container.appendChild(item);
+          placedHiveNodes.push(item);
         }
-        const newFlowers = Math.min(state.plantedFlowers, FLOWER_SLOTS.length);
-        for (let i = 0; i < newFlowers; i++) {
+        while (placedHiveNodes.length > targetHives) {
+          const removed = placedHiveNodes.pop();
+          if (removed) {
+            removed.classList.add('removing');
+            window.setTimeout(() => { if (removed.parentNode) removed.remove(); }, 190);
+          }
+        }
+        const targetFlowers = Math.min(state.plantedFlowers, FLOWER_SLOTS.length);
+        while (placedFlowerNodes.length < targetFlowers) {
+          const i = placedFlowerNodes.length;
           const item = document.createElement('span');
           item.className = 'placed-object flower-patch';
           item.style.setProperty('--x', `${FLOWER_SLOTS[i][0]}%`);
           item.style.setProperty('--y', `${FLOWER_SLOTS[i][1]}%`);
           item.innerHTML = flowersSvg();
           container.appendChild(item);
+          placedFlowerNodes.push(item);
+        }
+        while (placedFlowerNodes.length > targetFlowers) {
+          const removed = placedFlowerNodes.pop();
+          if (removed && removed.parentNode) removed.remove();
         }
       }
 
@@ -1420,7 +1613,7 @@
           openDialog('Справка пчеловода', '<p>Добро пожаловать на цветочную поляну! Щёлкайте мышкой по карте — пчеловод дойдёт туда прямо по тропинкам пасеки.</p><ul><li>Стройте ульи, чтобы увеличить количество пчелосемей.</li><li>Сажайте цветы: каждый медонос повышает выработку мёда.</li><li>Работники автоматически продают часть свежего урожая.</li><li>Нажмите «Собрать мёд», чтобы продать запас из хранилища.</li><li>Полив временно ускоряет производство, а ограждения повышают уют пасеки.</li></ul><p>Прогресс сохраняется в браузере автоматически.</p>', [{label:'Начать играть', onClick:closeDialog}]);
         } else if (tool === 'settings') {
           openDialog('Настройки', `<p>Сохранение: <span class="save-note">включено · прогресс в этом браузере</span></p><p>Скорость игры и состояние пасеки сохраняются автоматически.</p>`, [
-            {label:'Сбросить прогресс', danger:true, onClick:() => { if (window.confirm('Сбросить сохранение и начать заново?')) { localStorage.removeItem(SAVE_KEY); localStorage.removeItem(LEGACY_KEY); state = cloneStart(); activeRoute = []; playerEl.classList.remove('walking'); applyPlayerVisual(); renderTrailPreview(); closeDialog(); render(); save(); showToast('Пасека обновлена — хорошего сезона!'); } }},
+            {label:'Сбросить прогресс', danger:true, onClick:() => { if (window.confirm('Сбросить сохранение и начать заново?')) { localStorage.removeItem(SAVE_KEY); localStorage.removeItem(LEGACY_KEY); state = cloneStart(); activeRoute = []; hivePollenStats.clear(); resetWorkerActors(); playerEl.classList.remove('walking'); applyPlayerVisual(); renderTrailPreview(); closeDialog(); render(); save(); showToast('Пасека обновлена — хорошего сезона!'); } }},
             {label:'Закрыть', secondary:true, onClick:closeDialog}
           ]);
         } else if (tool === 'exit') {
@@ -1607,7 +1800,7 @@
         const depthScale = (0.68 + 0.46 * (state.playerY / 100)).toFixed(3);
         playerEl.style.setProperty('--depth-scale', depthScale);
         playerFlipEl.style.setProperty('--face-dir', String(state.playerFace));
-        playerEl.style.zIndex = state.playerY > 74 ? '7' : '6';
+        playerEl.style.zIndex = String(Math.round(100 + state.playerY * 2));
       }
 
       function renderTrailPreview() {
@@ -1706,6 +1899,674 @@
         event.preventDefault();
         walkToMapPoint(state.playerX + moves[event.key][0], state.playerY + moves[event.key][1]);
       });
+
+      // --- Спрайты и ИИ нанятых работников (worker1.png и worker2.png) ---
+      const WORKER_SPRITES = [
+        'data:image/png;base64,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',
+        'data:image/png;base64,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'
+      ];
+
+      // Все ульи на карте map.png (4 огороженные группы деревянных ульев + 3 соломенные колоды на севере)
+      const BASE_HIVE_SPOTS = [
+        [39.4, 56.6], [43.8, 54.0],
+        [46.6, 51.0], [52.2, 50.8],
+        [56.2, 56.8], [61.8, 57.8],
+        [47.2, 65.8], [53.6, 66.0],
+        [44.3, 35.5], [53.1, 35.9], [63.6, 36.0]
+      ];
+
+      // Прямоугольники препятствий (крыши/заборы ульев, постройки, пруд), которые работники плавно обходят
+      const OBSTACLE_BOXES = [
+        [35.4, 46.8, 44.2, 55.0],
+        [44.3, 40.8, 54.4, 49.6],
+        [55.3, 47.2, 64.5, 56.1],
+        [45.3, 55.4, 56.0, 64.6],
+        [11.5, 53.0, 24.5, 65.0],
+        [22.0, 69.0, 34.5, 85.0],
+        [36.5, 74.0, 47.0, 86.5],
+        [56.0, 66.5, 68.5, 83.0]
+      ];
+
+      function pushOutOfObstacles(x, y) {
+        let px = Math.max(8, Math.min(88, x));
+        let py = Math.max(33, Math.min(89, y));
+        for (let pass = 0; pass < 3; pass++) {
+          for (let i = 0; i < OBSTACLE_BOXES.length; i++) {
+            const [x1, y1, x2, y2] = OBSTACLE_BOXES[i];
+            if (px > x1 && px < x2 && py > y1 && py < y2) {
+              const dl = px - x1, dr = x2 - px, dt = py - y1, db = y2 - py;
+              const m = Math.min(dl, dr, dt, db);
+              if (m === dl) px = x1 - 0.6;
+              else if (m === dr) px = x2 + 0.6;
+              else if (m === dt) py = y1 - 0.6;
+              else py = y2 + 0.6;
+            }
+          }
+        }
+        return [px, py];
+      }
+
+      function getAllHiveTargets() {
+        const list = BASE_HIVE_SPOTS.slice();
+        const extra = Math.min(state.builtHives, HIVE_SLOTS.length);
+        for (let i = 0; i < extra; i++) {
+          const [sx, sy] = HIVE_SLOTS[i];
+          const wx = sx * 0.86;
+          const wy = 11.5 + sy * 0.77;
+          list.push(pushOutOfObstacles(wx, wy + 2.0));
+        }
+        return list;
+      }
+
+      function segHitsBox(ax, ay, bx, by, x1, y1, x2, y2) {
+        for (let s = 1; s < 12; s++) {
+          const t = s / 12;
+          const px = ax + (bx - ax) * t;
+          const py = ay + (by - ay) * t;
+          if (px > x1 && px < x2 && py > y1 && py < y2) return true;
+        }
+        return false;
+      }
+
+      function detourSegmentAroundBoxes(pts) {
+        let out = pts;
+        for (let pass = 0; pass < 4; pass++) {
+          const next = [out[0]];
+          for (let i = 0; i < out.length - 1; i++) {
+            const [ax, ay] = out[i];
+            const [bx, by] = out[i + 1];
+            let detour = null;
+            for (let k = 0; k < OBSTACLE_BOXES.length; k++) {
+              const [x1, y1, x2, y2] = OBSTACLE_BOXES[k];
+              if (segHitsBox(ax, ay, bx, by, x1, y1, x2, y2)) {
+                const corners = [
+                  [x1 - 1.1, y1 - 1.1], [x2 + 1.1, y1 - 1.1],
+                  [x1 - 1.1, y2 + 1.1], [x2 + 1.1, y2 + 1.1]
+                ];
+                let bestD = Infinity;
+                for (const [cx, cy] of corners) {
+                  const [pcx, pcy] = pushOutOfObstacles(cx, cy);
+                  const d = trailDist(ax, ay, pcx, pcy) + trailDist(pcx, pcy, bx, by);
+                  if (d < bestD) { bestD = d; detour = [pcx, pcy]; }
+                }
+                break;
+              }
+            }
+            if (detour) next.push(detour);
+            next.push([bx, by]);
+          }
+          out = next;
+        }
+        return out.slice(1);
+      }
+
+      function buildChaoticHiveLeg(ax, ay, bx, by) {
+        const dx = bx - ax;
+        const dy = by - ay;
+        const len = Math.hypot(dx, dy) || 1;
+        const nx = -dy / len;
+        const ny = dx / len;
+        const sway1 = (Math.random() - 0.5) * 8.5;
+        const sway2 = (Math.random() - 0.5) * 8.5;
+        const p1 = pushOutOfObstacles(ax + dx * 0.34 + nx * sway1, ay + dy * 0.34 + ny * sway1);
+        const p2 = pushOutOfObstacles(ax + dx * 0.68 + nx * sway2, ay + dy * 0.68 + ny * sway2);
+        return detourSegmentAroundBoxes([[ax, ay], p1, p2, [bx, by]]);
+      }
+
+      const workersLayerEl = $('workers-layer');
+      let variantBag = [];
+      function nextWorkerVariant() {
+        if (variantBag.length === 0) {
+          variantBag = Math.random() < 0.5 ? [0, 1] : [1, 0];
+        }
+        return variantBag.pop();
+      }
+
+      let workerActors = [];
+
+      function assignRandomHiveRoute(actor, avoidIdx) {
+        const targets = getAllHiveTargets();
+        let idx = Math.floor(Math.random() * targets.length);
+        if (targets.length > 1 && idx === avoidIdx) {
+          idx = (idx + 1 + Math.floor(Math.random() * (targets.length - 1))) % targets.length;
+        }
+        actor.hiveIdx = idx;
+        const [hx, hy] = targets[idx];
+        const jitterX = (Math.random() - 0.5) * 2.2;
+        const jitterY = (Math.random() - 0.5) * 1.6;
+        const [tx, ty] = pushOutOfObstacles(hx + jitterX, hy + jitterY);
+        actor.waypoints = buildChaoticHiveLeg(actor.data.x, actor.data.y, tx, ty);
+        actor.wait = 0;
+        actor.el.classList.add('walking');
+      }
+
+      function syncWorkerActorVisual(actor) {
+        const { x, y, face } = actor.data;
+        actor.el.style.left = `${x}%`;
+        actor.el.style.top = `${y}%`;
+        actor.el.style.zIndex = String(Math.round(100 + y * 2));
+        actor.el.style.setProperty('--depth-scale', (0.68 + 0.46 * (y / 100)).toFixed(3));
+        actor.flipEl.style.setProperty('--face-dir', String(face));
+      }
+
+      function mountWorkerActor(workerData, animatePop) {
+        const el = document.createElement('div');
+        el.className = animatePop ? 'npc-worker spawning walking' : 'npc-worker walking';
+        el.style.setProperty('--step-phase', `${(-Math.random() * 0.3).toFixed(2)}s`);
+        const shadow = document.createElement('span');
+        shadow.className = 'player-shadow';
+        const flipEl = document.createElement('span');
+        flipEl.className = 'player-flip';
+        const img = document.createElement('img');
+        img.className = 'player-img';
+        img.src = WORKER_SPRITES[workerData.variant === 1 ? 1 : 0];
+        img.alt = '';
+        img.decoding = 'sync';
+        flipEl.appendChild(img);
+        el.appendChild(shadow);
+        el.appendChild(flipEl);
+        workersLayerEl.appendChild(el);
+        if (animatePop) {
+          window.setTimeout(() => el.classList.remove('spawning'), 420);
+        }
+        const actor = {
+          data: workerData,
+          el,
+          flipEl,
+          speed: 9.2 + Math.random() * 4.2,
+          hiveIdx: -1,
+          waypoints: [],
+          wait: 0
+        };
+        syncWorkerActorVisual(actor);
+        assignRandomHiveRoute(actor, -1);
+        workerActors.push(actor);
+        return actor;
+      }
+
+      function resetWorkerActors() {
+        workerActors = [];
+        variantBag = [];
+        workersLayerEl.replaceChildren();
+      }
+
+      function spawnHiredWorker() {
+        const targets = getAllHiveTargets();
+        const startIdx = Math.floor(Math.random() * targets.length);
+        const [sx, sy] = pushOutOfObstacles(
+          targets[startIdx][0] + (Math.random() - 0.5) * 3,
+          targets[startIdx][1] + (Math.random() - 0.5) * 2
+        );
+        const workerData = {
+          variant: nextWorkerVariant(),
+          x: sx,
+          y: sy,
+          face: Math.random() < 0.5 ? -1 : 1
+        };
+        state.hiredWorkers.push(workerData);
+        const actor = mountWorkerActor(workerData, true);
+        assignRandomHiveRoute(actor, startIdx);
+      }
+
+      function dismissHiredWorker() {
+        if (state.hiredWorkers.length === 0) return;
+        state.hiredWorkers.pop();
+        const actor = workerActors.pop();
+        if (actor && actor.el) {
+          actor.el.classList.remove('walking', 'spawning');
+          actor.el.classList.add('leaving');
+          const el = actor.el;
+          window.setTimeout(() => { if (el.parentNode) el.remove(); }, 200);
+        }
+      }
+
+      // Восстановить всех ранее нанятых работников из сохранения
+      state.hiredWorkers.forEach(w => mountWorkerActor(w, false));
+
+      /* =====================================================================
+         Пчёлы-сборщицы: вылетают из ульев к любым разным цветам по всей карте,
+         собирают пыльцу/нектар и возвращаются в улей с жёлтым кружочком в лапах
+         ===================================================================== */
+      const beesLayerEl = $('bees-layer');
+      const popupsLayerEl = $('popups-layer');
+
+      // Точные координаты каждого улья на map.png: [x%, леток y%, крыша y%]
+      const BEE_MAP_HIVES = [
+        [48.6, 59.8, 55.2], [52.0, 61.0, 56.6],
+        [39.2, 49.6, 45.4], [42.6, 50.8, 46.6],
+        [57.6, 50.2, 45.8], [60.8, 51.6, 47.0],
+        [49.4, 45.2, 41.0], [46.3, 44.2, 39.8], [52.3, 46.2, 42.0],
+        [44.2, 32.0, 28.4], [52.8, 33.2, 30.0], [63.6, 33.4, 29.8]
+      ];
+
+      let honeyCloudSeq = 0;
+      function buildHoneyCloudSvg() {
+        const gid = `honeyCloudFill_${++honeyCloudSeq}`;
+        return `
+        <svg viewBox="0 0 132 70" aria-hidden="true">
+          <defs>
+            <linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#ffffff"/>
+              <stop offset="68%" stop-color="#fff6d6"/>
+              <stop offset="100%" stop-color="#ffe596"/>
+            </linearGradient>
+          </defs>
+          <path d="M30 48 C15 48 9 36 18 26 C16 13 31 6 44 13 C53 3 77 3 86 13 C100 6 116 14 114 27 C124 36 117 48 102 48 Z"
+                fill="url(#${gid})" stroke="#6c3d0e" stroke-width="2.6" stroke-linejoin="round"/>
+          <circle cx="66" cy="56" r="4.6" fill="#fff2c2" stroke="#6c3d0e" stroke-width="2.2"/>
+          <circle cx="66" cy="64.5" r="2.7" fill="#ffe79e" stroke="#6c3d0e" stroke-width="2"/>
+        </svg>`;
+      }
+
+      // Счётчик доставленных жёлтых кружочков по каждому отдельному улью (ключ — индекс улья)
+      const hivePollenStats = new Map();
+
+      const MAP_FLOWER_SPOTS = [
+        // Северо-западный аптекарский цветник у домика
+        [7.2, 46.5], [10.5, 49.0],
+        // Лавандовые кусты по всей пасеке
+        [25.5, 49.0], [26.2, 62.2], [68.5, 89.2],
+        // Подсолнухи у центральной развилки и на юго-востоке
+        [32.0, 56.8], [73.5, 70.5], [73.2, 79.5],
+        // Ромашковые полянки от центра до дальнего правого луга
+        [31.2, 44.5], [87.5, 75.5], [81.0, 86.8], [91.8, 70.2],
+        // Разноцветные полевые цветы и клумбы вдоль тропинок и ручья
+        [26.2, 38.6], [36.6, 39.2], [36.0, 71.2], [41.8, 70.6],
+        [49.5, 30.8], [58.0, 32.5], [68.2, 47.6], [68.0, 58.2],
+        [76.5, 45.8], [78.5, 55.2], [79.5, 69.5], [81.8, 80.5], [88.2, 56.2]
+      ];
+
+      function mapLayerPctToViewport(sx, sy) {
+        return [
+          +(sx * (1 - 294 / 1672)).toFixed(2),
+          +(((56 + (sy / 100) * (941 - 56 - 96)) / 941) * 100).toFixed(2)
+        ];
+      }
+
+      function getAllFlowerTargets() {
+        const list = MAP_FLOWER_SPOTS.slice();
+        const plantedCount = Math.min(state.plantedFlowers, FLOWER_SLOTS.length);
+        for (let i = 0; i < plantedCount; i++) {
+          const [sx, sy] = FLOWER_SLOTS[i];
+          list.push(mapLayerPctToViewport(sx, sy));
+        }
+        return list;
+      }
+
+      const BEE_SVG_MARKUP = `
+        <span class="bee-shadow"></span>
+        <svg class="bee-svg" viewBox="0 0 36 33" aria-hidden="true">
+          <!-- Заднее крылышко -->
+          <ellipse class="bee-wing-back" cx="18.5" cy="7.4" rx="4.6" ry="6.2"
+                   fill="rgba(235,250,255,.88)" stroke="#5b3914" stroke-width="1.2"/>
+          <!-- Задние и передние лапки, держащие пыльцу -->
+          <path d="M13.6 19.8 L11.8 25.0 L14.4 26.2" fill="none" stroke="#432308" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M22.2 19.8 L24.0 25.0 L21.4 26.2" fill="none" stroke="#432308" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/>
+          <!-- Жёлтый кружочек пыльцы прямо в лапках (виден при возвращении в улей) -->
+          <g class="pollen-ball">
+            <circle cx="18.0" cy="25.6" r="5.0" fill="#ffe619" stroke="#9e5606" stroke-width="1.35"/>
+            <circle cx="16.4" cy="24.0" r="1.55" fill="#fffce0"/>
+          </g>
+          <!-- Жало -->
+          <path d="M8.2 15.2 L4.6 15.6 L8.4 17.2 Z" fill="#432308"/>
+          <!-- Полосатое тельце пчёлки -->
+          <ellipse cx="17.6" cy="15.4" rx="9.6" ry="6.7" fill="#ffca28" stroke="#432308" stroke-width="1.6"/>
+          <path d="M13.0 9.4 Q11.8 15.4 13.0 21.4" fill="none" stroke="#4a2608" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M18.0 8.8 Q16.8 15.4 18.0 22.0" fill="none" stroke="#4a2608" stroke-width="2.5" stroke-linecap="round"/>
+          <!-- Передние лапки поверх края кружочка, чтобы пчёлка обхватывала его лапками -->
+          <path d="M15.8 20.6 L14.7 24.4" fill="none" stroke="#432308" stroke-width="1.55" stroke-linecap="round"/>
+          <path d="M20.2 20.6 L21.3 24.4" fill="none" stroke="#432308" stroke-width="1.55" stroke-linecap="round"/>
+          <!-- Переднее крылышко -->
+          <ellipse class="bee-wing-front" cx="15.0" cy="7.0" rx="5.0" ry="6.8"
+                   fill="rgba(255,255,255,.94)" stroke="#5b3914" stroke-width="1.25"/>
+          <!-- Глазик, щёчка и усики -->
+          <circle cx="23.4" cy="13.8" r="1.45" fill="#2c1604"/>
+          <circle cx="23.9" cy="13.3" r="0.5" fill="#ffffff"/>
+          <ellipse cx="22.8" cy="16.5" rx="1.4" ry="0.85" fill="#ff8f6b" opacity=".82"/>
+          <path d="M24.2 10.4 Q26.4 6.8 28.8 7.5" fill="none" stroke="#432308" stroke-width="1.3" stroke-linecap="round"/>
+          <circle cx="29.0" cy="7.6" r="1.05" fill="#432308"/>
+        </svg>`;
+
+      const beeActors = [];
+
+      function pickRandomIndex(length, avoidIdx) {
+        if (length <= 1) return 0;
+        let idx = Math.floor(Math.random() * length);
+        if (idx === avoidIdx) idx = (idx + 1 + Math.floor(Math.random() * (length - 1))) % length;
+        return idx;
+      }
+
+      function getActiveBeeHives() {
+        const list = [];
+        const builtCount = Math.min(state.builtHives, HIVE_SLOTS.length);
+        const mapCount = Math.max(0, Math.min(state.hives - builtCount, BEE_MAP_HIVES.length));
+        for (let i = 0; i < mapCount; i++) {
+          list.push(BEE_MAP_HIVES[i]);
+        }
+        for (let i = 0; i < builtCount; i++) {
+          const [vx, vy] = mapLayerPctToViewport(HIVE_SLOTS[i][0], HIVE_SLOTS[i][1]);
+          list.push([vx, +(vy + 1.1).toFixed(2), +(vy - 3.6).toFixed(2)]);
+        }
+        if (list.length === 0 && state.hives > 0) {
+          list.push(BEE_MAP_HIVES[0]);
+        }
+        return list;
+      }
+
+      function hiveEntrancePoint(hive) {
+        return [
+          hive[0] + (Math.random() - 0.5) * 1.1,
+          hive[1] + (Math.random() - 0.5) * 0.9
+        ];
+      }
+
+      function gramsPerPollenCircle() {
+        const flowerBonus = Math.min(18, Math.floor(state.flowers * 0.4));
+        const researchBonus = state.upgradeLevel * 6;
+        const waterBonus = state.totalTicks < state.wateredUntil ? 12 : 0;
+        return 52 + flowerBonus + researchBonus + waterBonus + Math.round((Math.random() - 0.5) * 8);
+      }
+
+      function spawnHiveHoneyCloud(hiveIdx, grams) {
+        if (!popupsLayerEl) return;
+        const hives = getActiveBeeHives();
+        const anchor = hives[hiveIdx] || BEE_MAP_HIVES[0];
+        const el = document.createElement('div');
+        el.className = 'honey-cloud-popup';
+        el.style.left = `${anchor[0].toFixed(2)}%`;
+        el.style.top = `${anchor[2].toFixed(2)}%`;
+        el.innerHTML = `${buildHoneyCloudSvg()}<span class="honey-cloud-text">🍯 +${grams}гр</span>`;
+        popupsLayerEl.appendChild(el);
+        window.setTimeout(() => { if (el.parentNode) el.remove(); }, 2200);
+      }
+
+      function recordPollenCircleAtHive(hiveIdx) {
+        let entry = hivePollenStats.get(hiveIdx);
+        if (!entry) {
+          entry = { circles: 0, grams: 0 };
+          hivePollenStats.set(hiveIdx, entry);
+        }
+        entry.circles += 1;
+        entry.grams += gramsPerPollenCircle();
+        if (entry.circles >= 5) {
+          const grams = Math.max(50, Math.round(entry.grams / 10) * 10);
+          entry.circles -= 5;
+          entry.grams = 0;
+          const addedKg = grams / 1000;
+          state.honey += addedKg;
+          state.seasonHoney += addedKg;
+          state.autoBuffer += addedKg;
+          render();
+          spawnHiveHoneyCloud(hiveIdx, grams);
+        }
+      }
+
+      function flowerLandingPoint(spot) {
+        return [
+          spot[0] + (Math.random() - 0.5) * 1.9,
+          spot[1] - 1.1 + (Math.random() - 0.5) * 1.5
+        ];
+      }
+
+      function planFlightLeg(bee, sx, sy, tx, ty, arcSign) {
+        bee.sx = sx;
+        bee.sy = sy;
+        bee.tx = tx;
+        bee.ty = ty;
+        const dx = tx - sx;
+        const dy = ty - sy;
+        const dist = Math.max(4, Math.hypot(dx, dy));
+        // Плавная дуга полёта вверх, чтобы пчёлы красиво парили над пасекой
+        const lift = Math.min(8.5, 2.2 + dist * 0.11) + (Math.random() - 0.35) * 2.2;
+        bee.cx = (sx + tx) * 0.5 + (Math.random() - 0.5) * 4.5;
+        bee.cy = (sy + ty) * 0.5 - Math.abs(lift) * (arcSign || 1);
+        const speedPctPerSec = 9.2 + Math.random() * 4.2;
+        bee.duration = Math.max(1.15, dist / speedPctPerSec);
+        bee.progress = 0;
+      }
+
+      function setBeeCarrying(bee, flag) {
+        bee.carrying = flag;
+        bee.el.classList.toggle('has-pollen', flag);
+      }
+
+      function sendBeeToRandomFlower(bee) {
+        const flowers = getAllFlowerTargets();
+        const hives = getActiveBeeHives();
+        const fIdx = pickRandomIndex(flowers.length, bee.flowerIdx);
+        bee.flowerIdx = fIdx;
+        if (hives.length > 0 && (bee.hiveIdx == null || bee.hiveIdx >= hives.length)) {
+          bee.hiveIdx = Math.floor(Math.random() * hives.length);
+        }
+        const [tx, ty] = flowerLandingPoint(flowers[fIdx]);
+        bee.phase = 'to-flower';
+        bee.el.classList.remove('gathering');
+        setBeeCarrying(bee, false);
+        planFlightLeg(bee, bee.x, bee.y, tx, ty, 1);
+      }
+
+      function sendBeeBackToHive(bee) {
+        const hives = getActiveBeeHives();
+        if (hives.length === 0) return;
+        if (bee.hiveIdx == null || bee.hiveIdx >= hives.length || Math.random() < 0.2) {
+          bee.hiveIdx = Math.floor(Math.random() * hives.length);
+        }
+        const [tx, ty] = hiveEntrancePoint(hives[bee.hiveIdx]);
+        bee.phase = 'to-hive';
+        bee.el.classList.remove('gathering');
+        setBeeCarrying(bee, true);
+        planFlightLeg(bee, bee.x, bee.y, tx, ty, 0.85);
+      }
+
+      function syncBeeVisual(bee, nowSec) {
+        const bob = Math.sin(nowSec * bee.bobFreq + bee.bobOffset) * (bee.phase === 'gathering' ? 0.16 : 0.34);
+        const px = bee.x;
+        const py = bee.y + bob;
+        const depthScale = Math.max(0.84, Math.min(1.14, 0.84 + (py / 100) * 0.28));
+        bee.el.style.left = px.toFixed(2) + '%';
+        bee.el.style.top = py.toFixed(2) + '%';
+        bee.el.style.setProperty('--bee-face', String(bee.face));
+        bee.el.style.setProperty('--bee-tilt', (bee.carrying ? 5 * bee.face : -3 * bee.face) + 'deg');
+        bee.el.style.setProperty('--shadow-scale', (bee.phase === 'gathering' ? 1.05 : 0.82).toFixed(2));
+        bee.el.style.transform = `translate(-50%, -56%) scale(${depthScale.toFixed(3)})`;
+      }
+
+      function spawnForagingBee(initialScatter) {
+        if (!beesLayerEl) return null;
+        const hives = getActiveBeeHives();
+        if (hives.length === 0) return null;
+        const flowers = getAllFlowerTargets();
+        const hiveIdx = Math.floor(Math.random() * hives.length);
+        const flowerIdx = Math.floor(Math.random() * flowers.length);
+        const [hx, hy] = hiveEntrancePoint(hives[hiveIdx]);
+        const el = document.createElement('div');
+        el.className = 'foraging-bee';
+        el.innerHTML = BEE_SVG_MARKUP;
+        beesLayerEl.appendChild(el);
+
+        const bee = {
+          el,
+          x: hx,
+          y: hy,
+          sx: hx,
+          sy: hy,
+          cx: hx,
+          cy: hy,
+          tx: hx,
+          ty: hy,
+          face: Math.random() < 0.5 ? -1 : 1,
+          hiveIdx,
+          flowerIdx,
+          phase: 'to-flower',
+          carrying: false,
+          progress: 0,
+          duration: 2,
+          timer: 0,
+          pollenPicked: false,
+          bobFreq: 5.2 + Math.random() * 2.6,
+          bobOffset: Math.random() * Math.PI * 2
+        };
+
+        if (initialScatter) {
+          // Равномерно распределяем стартовый рой: часть летит к разным цветам налегке,
+          // часть уже опыляет цветок, а часть возвращается в ульи с жёлтым кружочком в лапах
+          const roll = Math.random();
+          if (roll < 0.45) {
+            sendBeeToRandomFlower(bee);
+            bee.progress = Math.random() * 0.9;
+          } else if (roll < 0.62) {
+            const [fx, fy] = flowerLandingPoint(flowers[flowerIdx]);
+            bee.x = fx;
+            bee.y = fy;
+            bee.phase = 'gathering';
+            bee.timer = 0.35 + Math.random() * 0.8;
+            bee.pollenPicked = false;
+            bee.el.classList.add('gathering');
+            setBeeCarrying(bee, false);
+          } else {
+            const [fx, fy] = flowerLandingPoint(flowers[flowerIdx]);
+            bee.x = fx;
+            bee.y = fy;
+            sendBeeBackToHive(bee);
+            bee.progress = Math.random() * 0.88;
+          }
+          if (bee.phase === 'to-flower' || bee.phase === 'to-hive') {
+            const t = bee.progress;
+            const inv = 1 - t;
+            bee.x = inv * inv * bee.sx + 2 * inv * t * bee.cx + t * t * bee.tx;
+            bee.y = inv * inv * bee.sy + 2 * inv * t * bee.cy + t * t * bee.ty;
+            const vx = 2 * inv * (bee.cx - bee.sx) + 2 * t * (bee.tx - bee.cx);
+            if (Math.abs(vx) > 0.02) bee.face = vx < 0 ? -1 : 1;
+          }
+        } else {
+          sendBeeToRandomFlower(bee);
+        }
+
+        syncBeeVisual(bee, 0);
+        beeActors.push(bee);
+        return bee;
+      }
+
+      function desiredBeeCount() {
+        return state.hives <= 0 ? 0 : Math.min(28, state.hives * 2);
+      }
+
+      function syncBeeSwarmCount(initialScatter = false) {
+        if (!beesLayerEl) return;
+        const desired = desiredBeeCount();
+        while (beeActors.length < desired) {
+          if (!spawnForagingBee(initialScatter)) break;
+        }
+        while (beeActors.length > desired) {
+          const removed = beeActors.pop();
+          if (removed && removed.el && removed.el.parentNode) removed.el.remove();
+        }
+      }
+
+      function updateForagingBees(dt, nowSec) {
+        const speedMul = state.speed === 0 ? 0 : (state.speed === 2 ? 1.65 : 1);
+        if (speedMul === 0) return;
+        const step = dt * speedMul;
+
+        for (let i = 0; i < beeActors.length; i++) {
+          const bee = beeActors[i];
+          if (bee.phase === 'to-flower' || bee.phase === 'to-hive') {
+            bee.progress = Math.min(1, bee.progress + step / bee.duration);
+            const t = bee.progress;
+            // Мягкое ускорение на взлёте и плавная посадка у цветка / летка улья
+            const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+            const inv = 1 - eased;
+            const nx = inv * inv * bee.sx + 2 * inv * eased * bee.cx + eased * eased * bee.tx;
+            const ny = inv * inv * bee.sy + 2 * inv * eased * bee.cy + eased * eased * bee.ty;
+            const dx = nx - bee.x;
+            if (Math.abs(dx) > 0.004) bee.face = dx < 0 ? -1 : 1;
+            bee.x = nx;
+            bee.y = ny;
+
+            if (bee.progress >= 1) {
+              if (bee.phase === 'to-flower') {
+                bee.phase = 'gathering';
+                bee.timer = 0.85 + Math.random() * 0.65;
+                bee.pollenPicked = false;
+                bee.el.classList.add('gathering');
+              } else {
+                // Прилетела к улью — заносит жёлтый кружочек пыльцы в улей
+                const deliveredPollen = bee.carrying;
+                bee.phase = 'unloading';
+                bee.timer = 0.48 + Math.random() * 0.42;
+                setBeeCarrying(bee, false);
+                if (deliveredPollen) {
+                  recordPollenCircleAtHive(bee.hiveIdx);
+                }
+              }
+            }
+          } else if (bee.phase === 'gathering') {
+            bee.timer -= step;
+            // Во время сбора на цветке в лапках появляется яркий жёлтый кружочек пыльцы
+            if (!bee.pollenPicked && bee.timer <= 0.42) {
+              bee.pollenPicked = true;
+              setBeeCarrying(bee, true);
+            }
+            if (bee.timer <= 0) {
+              sendBeeBackToHive(bee);
+            }
+          } else if (bee.phase === 'unloading') {
+            bee.timer -= step;
+            if (bee.timer <= 0) {
+              sendBeeToRandomFlower(bee);
+            }
+          }
+          syncBeeVisual(bee, nowSec);
+        }
+      }
+
+      syncBeeSwarmCount(true);
+
+      let lastWorkersTickAt = 0;
+      function animateWorkersLoop(now) {
+        const dt = lastWorkersTickAt ? Math.min(0.05, (now - lastWorkersTickAt) / 1000) : 1 / 60;
+        lastWorkersTickAt = now;
+
+        for (let i = 0; i < workerActors.length; i++) {
+          const actor = workerActors[i];
+          if (actor.wait > 0) {
+            actor.wait -= dt;
+            if (actor.wait <= 0) {
+              assignRandomHiveRoute(actor, actor.hiveIdx);
+            }
+            continue;
+          }
+          let rem = actor.speed * dt;
+          while (rem > 0 && actor.waypoints.length > 0) {
+            const [tx, ty] = actor.waypoints[0];
+            const seg = trailDist(actor.data.x, actor.data.y, tx, ty);
+            const dx = tx - actor.data.x;
+            if (Math.abs(dx) > 0.05) actor.data.face = dx < 0 ? -1 : 1;
+            if (seg <= rem) {
+              actor.data.x = tx;
+              actor.data.y = ty;
+              rem -= seg;
+              actor.waypoints.shift();
+            } else {
+              const r = rem / seg;
+              actor.data.x += (tx - actor.data.x) * r;
+              actor.data.y += (ty - actor.data.y) * r;
+              rem = 0;
+            }
+          }
+          syncWorkerActorVisual(actor);
+          if (actor.waypoints.length === 0) {
+            actor.el.classList.remove('walking');
+            actor.wait = 0.65 + Math.random() * 1.35;
+          }
+        }
+        if (beeActors.length !== desiredBeeCount()) {
+          syncBeeSwarmCount(false);
+        }
+        updateForagingBees(dt, now / 1000);
+        window.requestAnimationFrame(animateWorkersLoop);
+      }
+      window.requestAnimationFrame(animateWorkersLoop);
 
       render();
       try { if (!localStorage.getItem(SAVE_KEY)) save(); } catch (_) { /* localStorage может быть отключён */ }
