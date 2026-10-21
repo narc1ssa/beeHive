@@ -2054,7 +2054,7 @@
          Пчёлы-сборщицы: вылетают из ульев к любым разным цветам по всей карте,
          собирают пыльцу/нектар и возвращаются в улей с жёлтым кружочком в лапах
          ===================================================================== */
-      const beesLayerEl = $('#bees-layer');
+      const beesLayerEl = $('bees-layer');
       const MAP_FLOWER_SPOTS = [
         // Северо-западный аптекарский цветник у домика
         [7.2, 46.5], [10.5, 49.0],
@@ -2283,9 +2283,10 @@
       }
 
       function syncBeeSwarmCount(initialScatter = false) {
+        if (!beesLayerEl) return;
         const desired = Math.min(28, Math.max(14, state.hives * 2));
         while (beeActors.length < desired) {
-          spawnForagingBee(initialScatter);
+          if (!spawnForagingBee(initialScatter)) break;
         }
         while (beeActors.length > desired) {
           const removed = beeActors.pop();
