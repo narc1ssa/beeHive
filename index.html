@@ -607,13 +607,13 @@
       pointer-events: none;
       position: absolute;
       z-index: 43;
-      left: max(248px, calc(50% - 432px));
+      left: max(246px, calc(50% - 468px));
       bottom: 0;
-      width: min(888px, calc(100vw - var(--rail-width) - 262px));
+      width: min(948px, calc(100vw - var(--rail-width) - 256px));
       height: var(--footer-height);
       display: grid;
-      grid-template-columns: repeat(7, minmax(0,1fr));
-      gap: 8px;
+      grid-template-columns: repeat(8, minmax(0,1fr));
+      gap: 7px;
       align-items: stretch;
       padding: 3px 0 0;
     }
@@ -728,6 +728,8 @@
     .placed-object.flower-patch { width: 64px; height: 39px; }
     .placed-object svg { display: block; width: 100%; height: 100%; overflow: visible; }
     @keyframes pop-in { from { opacity: 0; scale: .45; } to { opacity: 1; scale: 1; } }
+    .placed-object.removing { animation: pop-out .19s ease-in forwards; }
+    @keyframes pop-out { from { opacity: 1; scale: 1; } to { opacity: 0; scale: .38; } }
 
     .toast {
       position: absolute;
@@ -854,7 +856,7 @@
       .right-rail .status-copy strong { font-size: 11px; }
       .right-rail .status-icon { font-size: 21px; }
       .right-rail .apiary-button { min-height: 29px; font-size: 10px; margin-top: 4px; }
-      .action-bar { left: 50%; transform: translateX(-50%); width: min(840px, calc(100vw - 232px)); height: var(--footer-height); gap: 5px; }
+      .action-bar { left: 50%; transform: translateX(-50%); width: min(880px, calc(100vw - 228px)); height: var(--footer-height); gap: 4px; }
       .action-button { border-radius: 14px; }
       .action-icon { height: 43px; font-size: 34px; }
       .action-icon svg { width: 39px; height: 39px; }
@@ -904,12 +906,12 @@
       .right-rail .speed-button { height: 29px; font-size: 17px; }
       .right-rail .clock { font-size: 15px; }
       .right-rail .time-note { font-size: 8px; }
-      .action-bar { width: calc(100vw - 8px); height: var(--footer-height); gap: 3px; }
+      .action-bar { width: calc(100vw - 8px); height: var(--footer-height); gap: 2.5px; }
       .action-button { padding: 3px 1px; border-radius: 11px; border-width: 1px; }
       .action-button::before { inset: 2px; }
-      .action-icon { height: 36px; font-size: 26px; }
-      .action-icon svg { width: 29px; height: 29px; }
-      .action-label { font-size: 6.5px; }
+      .action-icon { height: 35px; font-size: 24px; }
+      .action-icon svg { width: 27px; height: 27px; }
+      .action-label { font-size: 6px; }
       .action-cost { font-size: 6.5px; margin-top: 2px; }
       .foraging-bee { width: 22px; height: 21px; }
       .placed-object { width: 43px; height: 55px; }
@@ -1106,6 +1108,9 @@
       <button class="action-button" type="button" data-action="hive">
         <span class="action-icon" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M14 24 32 8l18 16Z" fill="#c17b1b" stroke="#57320f" stroke-width="3"/><rect x="18" y="25" width="28" height="29" rx="4" fill="#ffd24b" stroke="#68400f" stroke-width="3"/><path d="M19 35h26M19 44h26" stroke="#d18a1c" stroke-width="4"/><circle cx="32" cy="48" r="3" fill="#57320f"/><path d="M23 54v4m18-4v4" stroke="#68400f" stroke-width="3" stroke-linecap="round"/></svg></span><span class="action-label">Построить<br>улей</span><span class="action-cost" id="hive-cost">50 🪙</span>
       </button>
+      <button class="action-button" type="button" data-action="remove-hive">
+        <span class="action-icon" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M12 24 29 9l17 15Z" fill="#b36e18" stroke="#57320f" stroke-width="3"/><rect x="16" y="25" width="26" height="28" rx="4" fill="#f3c13a" stroke="#68400f" stroke-width="3"/><path d="M17 34h24M17 43h24" stroke="#c77e16" stroke-width="3.6"/><circle cx="29" cy="47" r="2.8" fill="#57320f"/><path d="M21 53v4m16-4v4" stroke="#68400f" stroke-width="3" stroke-linecap="round"/><circle cx="46" cy="45" r="12" fill="#d9452f" stroke="#52190c" stroke-width="2.8"/><path d="M40.5 45h11" stroke="#fff7df" stroke-width="4.2" stroke-linecap="round"/></svg></span><span class="action-label">Убрать<br>улей</span><span class="action-cost" id="remove-hive-label">Ульев: 7</span>
+      </button>
       <button class="action-button" type="button" data-action="flower">
         <span class="action-icon" aria-hidden="true">🌼</span><span class="action-label">Посадить<br>цветы</span><span class="action-cost" id="flower-cost">20 🪙</span>
       </button>
@@ -1300,6 +1305,7 @@
         const flowerCost = 20 + state.plantedFlowers * 4;
         const workerCost = 30 + state.workers * 20;
         $('hive-cost').textContent = `${buildCost} 🪙`;
+        $('remove-hive-label').textContent = state.hives > 0 ? `Ульев: ${state.hives}` : 'Нет ульев';
         $('flower-cost').textContent = `${flowerCost} 🪙`;
         $('worker-cost').textContent = `${workerCost} 🪙`;
         $('fire-worker-label').textContent = state.workers > 0 ? `В штате: ${state.workers}` : 'Нет рабочих';
@@ -1311,6 +1317,7 @@
         document.querySelector('[data-action="flower"]').disabled = state.coins < flowerCost || state.flowers >= 50;
         document.querySelector('[data-action="worker"]').disabled = state.coins < workerCost || state.workers >= state.workerLimit;
         document.querySelector('[data-action="fire-worker"]').disabled = state.workers < 1;
+        document.querySelector('[data-action="remove-hive"]').disabled = state.hives < 1;
         document.querySelector('[data-action="collect"]').disabled = state.honey < 1;
         document.querySelector('[data-action="water"]').disabled = state.coins < 15 || state.flowers < 1;
         document.querySelector('[data-action="fence"]').disabled = state.coins < 80 * state.fenceLevel || state.fenceLevel >= 4;
@@ -1353,9 +1360,15 @@
           if (state.hives >= state.hiveLimit) return showToast('Все места под ульи заняты');
           if (!spend(cost)) return;
           state.hives++;
-          state.builtHives++;
+          state.builtHives = Math.min(HIVE_SLOTS.length, state.builtHives + 1);
           addLog('Построен новый улей');
           showToast('🏠 Новый улей построен!');
+        } else if (action === 'remove-hive') {
+          if (state.hives < 1) return showToast('На пасеке больше нет активных ульев');
+          state.hives--;
+          if (state.builtHives > 0) state.builtHives--;
+          addLog('Улей убран с пасеки');
+          showToast('🏠 Улей убран с пасеки');
         } else if (action === 'flower') {
           const cost = 20 + state.plantedFlowers * 4;
           if (state.flowers >= 50) return showToast('На поляне уже достаточно цветов');
@@ -1464,30 +1477,43 @@
       function flowersSvg() {
         return `<svg viewBox="0 0 100 54" aria-hidden="true"><ellipse cx="50" cy="49" rx="45" ry="4" fill="#32651e" opacity=".35"/><path d="M21 48q4-20 13-26M49 48q0-25 4-34M77 48q-5-21-12-28" fill="none" stroke="#39832b" stroke-width="3"/><g fill="#ffde4b" stroke="#d89116" stroke-width="1.5"><circle cx="34" cy="20" r="7"/><circle cx="53" cy="12" r="7"/><circle cx="66" cy="23" r="7"/></g><g fill="#fff7e7" stroke="#d979aa" stroke-width="1.4"><circle cx="18" cy="36" r="6"/><circle cx="82" cy="38" r="6"/></g><g fill="#a65320"><circle cx="34" cy="20" r="2.3"/><circle cx="53" cy="12" r="2.3"/><circle cx="66" cy="23" r="2.3"/></g><path d="M19 38q7-6 13-1M52 27q-8 1-12 8M72 32q8-6 13-2" fill="none" stroke="#58a734" stroke-width="3" stroke-linecap="round"/></svg>`;
       }
-      let renderedPlacementKey = null;
+      const placedHiveNodes = [];
+      const placedFlowerNodes = [];
       function renderPlacedItems() {
-        const placementKey = `${state.builtHives}|${state.plantedFlowers}`;
-        if (placementKey === renderedPlacementKey) return;
-        renderedPlacementKey = placementKey;
         const container = $('placed-items');
-        container.replaceChildren();
-        const newHives = Math.min(state.builtHives, HIVE_SLOTS.length);
-        for (let i = 0; i < newHives; i++) {
+        if (!container) return;
+        const targetHives = Math.min(state.builtHives, HIVE_SLOTS.length);
+        while (placedHiveNodes.length < targetHives) {
+          const i = placedHiveNodes.length;
           const item = document.createElement('span');
           item.className = 'placed-object hive-object';
           item.style.setProperty('--x', `${HIVE_SLOTS[i][0]}%`);
           item.style.setProperty('--y', `${HIVE_SLOTS[i][1]}%`);
           item.innerHTML = hiveSvg(i);
           container.appendChild(item);
+          placedHiveNodes.push(item);
         }
-        const newFlowers = Math.min(state.plantedFlowers, FLOWER_SLOTS.length);
-        for (let i = 0; i < newFlowers; i++) {
+        while (placedHiveNodes.length > targetHives) {
+          const removed = placedHiveNodes.pop();
+          if (removed) {
+            removed.classList.add('removing');
+            window.setTimeout(() => { if (removed.parentNode) removed.remove(); }, 190);
+          }
+        }
+        const targetFlowers = Math.min(state.plantedFlowers, FLOWER_SLOTS.length);
+        while (placedFlowerNodes.length < targetFlowers) {
+          const i = placedFlowerNodes.length;
           const item = document.createElement('span');
           item.className = 'placed-object flower-patch';
           item.style.setProperty('--x', `${FLOWER_SLOTS[i][0]}%`);
           item.style.setProperty('--y', `${FLOWER_SLOTS[i][1]}%`);
           item.innerHTML = flowersSvg();
           container.appendChild(item);
+          placedFlowerNodes.push(item);
+        }
+        while (placedFlowerNodes.length > targetFlowers) {
+          const removed = placedFlowerNodes.pop();
+          if (removed && removed.parentNode) removed.remove();
         }
       }
 
@@ -2282,9 +2308,13 @@
         return bee;
       }
 
+      function desiredBeeCount() {
+        return state.hives <= 0 ? 0 : Math.min(28, state.hives * 2);
+      }
+
       function syncBeeSwarmCount(initialScatter = false) {
         if (!beesLayerEl) return;
-        const desired = Math.min(28, Math.max(14, state.hives * 2));
+        const desired = desiredBeeCount();
         while (beeActors.length < desired) {
           if (!spawnForagingBee(initialScatter)) break;
         }
@@ -2387,7 +2417,7 @@
             actor.wait = 0.65 + Math.random() * 1.35;
           }
         }
-        if (beeActors.length !== Math.min(28, Math.max(14, state.hives * 2))) {
+        if (beeActors.length !== desiredBeeCount()) {
           syncBeeSwarmCount(false);
         }
         updateForagingBees(dt, now / 1000);
