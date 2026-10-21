@@ -651,17 +651,69 @@
       overflow: hidden;
       pointer-events: none;
     }
-    .map-bee {
+    .bees-layer {
       position: absolute;
-      z-index: 2;
-      left: var(--x);
-      top: var(--y);
-      font-size: 19px;
-      filter: drop-shadow(0 2px 1px rgba(45,26,4,.55));
-      animation: buzz .8s ease-in-out infinite alternate;
-      animation-delay: var(--delay,0s);
+      z-index: 350;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
     }
-    @keyframes buzz { from { transform: translate(-3px,2px) rotate(-9deg); } to { transform: translate(12px,-7px) rotate(11deg); } }
+    .foraging-bee {
+      position: absolute;
+      width: clamp(25px, 2.05vw, 34px);
+      height: clamp(24px, 1.95vw, 32px);
+      transform: translate(-50%, -56%);
+      pointer-events: none;
+      will-change: left, top, transform;
+    }
+    .foraging-bee .bee-shadow {
+      position: absolute;
+      left: 50%;
+      bottom: -5px;
+      width: 56%;
+      height: 20%;
+      border-radius: 50%;
+      background: radial-gradient(rgba(38, 22, 5, .34), rgba(38, 22, 5, .10) 64%, transparent 78%);
+      transform: translateX(-50%) scale(var(--shadow-scale, 1));
+    }
+    .foraging-bee .bee-svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      transform: scaleX(var(--bee-face, 1)) rotate(var(--bee-tilt, 0deg));
+      transform-origin: 50% 50%;
+      filter: drop-shadow(0 2px 2px rgba(42, 24, 5, .48));
+    }
+    .foraging-bee .bee-wing-front {
+      transform-origin: 15px 11px;
+      animation: bee-wing-flap .082s ease-in-out infinite alternate;
+    }
+    .foraging-bee .bee-wing-back {
+      transform-origin: 18.5px 11px;
+      animation: bee-wing-flap .082s ease-in-out -.04s infinite alternate;
+    }
+    @keyframes bee-wing-flap {
+      from { transform: rotate(-23deg) scaleY(1); }
+      to { transform: rotate(16deg) scaleY(.75); }
+    }
+    .foraging-bee .pollen-ball {
+      transform-origin: 18.0px 25.6px;
+      transform: scale(0);
+      opacity: 0;
+      transition: transform .24s cubic-bezier(.22, 1.48, .44, 1), opacity .16s ease;
+    }
+    .foraging-bee.has-pollen .pollen-ball {
+      transform: scale(1);
+      opacity: 1;
+    }
+    .foraging-bee.gathering .bee-svg {
+      animation: bee-sip .34s ease-in-out infinite alternate;
+    }
+    @keyframes bee-sip {
+      from { translate: 0 0; }
+      to { translate: 0 2.5px; }
+    }
     .placed-object {
       position: absolute;
       left: var(--x);
@@ -859,7 +911,7 @@
       .action-icon svg { width: 29px; height: 29px; }
       .action-label { font-size: 6.5px; }
       .action-cost { font-size: 6.5px; margin-top: 2px; }
-      .map-bee { font-size: 14px; }
+      .foraging-bee { width: 22px; height: 21px; }
       .placed-object { width: 43px; height: 55px; }
       .placed-object.flower-patch { width: 50px; height: 31px; }
     }
@@ -972,11 +1024,9 @@
         </span>
       </div>
       <div class="map-layer" id="map-layer" aria-hidden="true">
-        <span class="map-bee" style="--x:45%;--y:41%;--delay:-.6s">🐝</span>
-        <span class="map-bee" style="--x:59%;--y:36%;--delay:-2.2s">🐝</span>
-        <span class="map-bee" style="--x:72%;--y:55%;--delay:-1.4s">🐝</span>
         <div id="placed-items"></div>
       </div>
+      <div class="bees-layer" id="bees-layer" aria-hidden="true"></div>
     </div>
 
     <aside class="left-hud" aria-label="Совет и карта местности">
@@ -2000,6 +2050,304 @@
       // Восстановить всех ранее нанятых работников из сохранения
       state.hiredWorkers.forEach(w => mountWorkerActor(w, false));
 
+      /* =====================================================================
+         Пчёлы-сборщицы: вылетают из ульев к любым разным цветам по всей карте,
+         собирают пыльцу/нектар и возвращаются в улей с жёлтым кружочком в лапах
+         ===================================================================== */
+      const beesLayerEl = $('#bees-layer');
+      const MAP_FLOWER_SPOTS = [
+        // Северо-западный аптекарский цветник у домика
+        [7.2, 46.5], [10.5, 49.0],
+        // Лавандовые кусты по всей пасеке
+        [25.5, 49.0], [26.2, 62.2], [68.5, 89.2],
+        // Подсолнухи у центральной развилки и на юго-востоке
+        [32.0, 56.8], [73.5, 70.5], [73.2, 79.5],
+        // Ромашковые полянки от центра до дальнего правого луга
+        [31.2, 44.5], [87.5, 75.5], [81.0, 86.8], [91.8, 70.2],
+        // Разноцветные полевые цветы и клумбы вдоль тропинок и ручья
+        [26.2, 38.6], [36.6, 39.2], [36.0, 71.2], [41.8, 70.6],
+        [49.5, 30.8], [58.0, 32.5], [68.2, 47.6], [68.0, 58.2],
+        [76.5, 45.8], [78.5, 55.2], [79.5, 69.5], [81.8, 80.5], [88.2, 56.2]
+      ];
+
+      function mapLayerPctToViewport(sx, sy) {
+        return [
+          +(sx * (1 - 294 / 1672)).toFixed(2),
+          +(((56 + (sy / 100) * (941 - 56 - 96)) / 941) * 100).toFixed(2)
+        ];
+      }
+
+      function getAllFlowerTargets() {
+        const list = MAP_FLOWER_SPOTS.slice();
+        const plantedCount = Math.min(state.plantedFlowers, FLOWER_SLOTS.length);
+        for (let i = 0; i < plantedCount; i++) {
+          const [sx, sy] = FLOWER_SLOTS[i];
+          list.push(mapLayerPctToViewport(sx, sy));
+        }
+        return list;
+      }
+
+      const BEE_SVG_MARKUP = `
+        <span class="bee-shadow"></span>
+        <svg class="bee-svg" viewBox="0 0 36 33" aria-hidden="true">
+          <!-- Заднее крылышко -->
+          <ellipse class="bee-wing-back" cx="18.5" cy="7.4" rx="4.6" ry="6.2"
+                   fill="rgba(235,250,255,.88)" stroke="#5b3914" stroke-width="1.2"/>
+          <!-- Задние и передние лапки, держащие пыльцу -->
+          <path d="M13.6 19.8 L11.8 25.0 L14.4 26.2" fill="none" stroke="#432308" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M22.2 19.8 L24.0 25.0 L21.4 26.2" fill="none" stroke="#432308" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/>
+          <!-- Жёлтый кружочек пыльцы прямо в лапках (виден при возвращении в улей) -->
+          <g class="pollen-ball">
+            <circle cx="18.0" cy="25.6" r="5.0" fill="#ffe619" stroke="#9e5606" stroke-width="1.35"/>
+            <circle cx="16.4" cy="24.0" r="1.55" fill="#fffce0"/>
+          </g>
+          <!-- Жало -->
+          <path d="M8.2 15.2 L4.6 15.6 L8.4 17.2 Z" fill="#432308"/>
+          <!-- Полосатое тельце пчёлки -->
+          <ellipse cx="17.6" cy="15.4" rx="9.6" ry="6.7" fill="#ffca28" stroke="#432308" stroke-width="1.6"/>
+          <path d="M13.0 9.4 Q11.8 15.4 13.0 21.4" fill="none" stroke="#4a2608" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M18.0 8.8 Q16.8 15.4 18.0 22.0" fill="none" stroke="#4a2608" stroke-width="2.5" stroke-linecap="round"/>
+          <!-- Передние лапки поверх края кружочка, чтобы пчёлка обхватывала его лапками -->
+          <path d="M15.8 20.6 L14.7 24.4" fill="none" stroke="#432308" stroke-width="1.55" stroke-linecap="round"/>
+          <path d="M20.2 20.6 L21.3 24.4" fill="none" stroke="#432308" stroke-width="1.55" stroke-linecap="round"/>
+          <!-- Переднее крылышко -->
+          <ellipse class="bee-wing-front" cx="15.0" cy="7.0" rx="5.0" ry="6.8"
+                   fill="rgba(255,255,255,.94)" stroke="#5b3914" stroke-width="1.25"/>
+          <!-- Глазик, щёчка и усики -->
+          <circle cx="23.4" cy="13.8" r="1.45" fill="#2c1604"/>
+          <circle cx="23.9" cy="13.3" r="0.5" fill="#ffffff"/>
+          <ellipse cx="22.8" cy="16.5" rx="1.4" ry="0.85" fill="#ff8f6b" opacity=".82"/>
+          <path d="M24.2 10.4 Q26.4 6.8 28.8 7.5" fill="none" stroke="#432308" stroke-width="1.3" stroke-linecap="round"/>
+          <circle cx="29.0" cy="7.6" r="1.05" fill="#432308"/>
+        </svg>`;
+
+      const beeActors = [];
+
+      function pickRandomIndex(length, avoidIdx) {
+        if (length <= 1) return 0;
+        let idx = Math.floor(Math.random() * length);
+        if (idx === avoidIdx) idx = (idx + 1 + Math.floor(Math.random() * (length - 1))) % length;
+        return idx;
+      }
+
+      function hiveEntrancePoint(hive) {
+        // Чуть ниже/рядом с летком улья с небольшим естественным разбросом
+        return [
+          hive[0] + (Math.random() - 0.5) * 1.5,
+          hive[1] - 3.2 + (Math.random() - 0.5) * 1.4
+        ];
+      }
+
+      function flowerLandingPoint(spot) {
+        return [
+          spot[0] + (Math.random() - 0.5) * 1.9,
+          spot[1] - 1.1 + (Math.random() - 0.5) * 1.5
+        ];
+      }
+
+      function planFlightLeg(bee, sx, sy, tx, ty, arcSign) {
+        bee.sx = sx;
+        bee.sy = sy;
+        bee.tx = tx;
+        bee.ty = ty;
+        const dx = tx - sx;
+        const dy = ty - sy;
+        const dist = Math.max(4, Math.hypot(dx, dy));
+        // Плавная дуга полёта вверх, чтобы пчёлы красиво парили над пасекой
+        const lift = Math.min(8.5, 2.2 + dist * 0.11) + (Math.random() - 0.35) * 2.2;
+        bee.cx = (sx + tx) * 0.5 + (Math.random() - 0.5) * 4.5;
+        bee.cy = (sy + ty) * 0.5 - Math.abs(lift) * (arcSign || 1);
+        const speedPctPerSec = 9.2 + Math.random() * 4.2;
+        bee.duration = Math.max(1.15, dist / speedPctPerSec);
+        bee.progress = 0;
+      }
+
+      function setBeeCarrying(bee, flag) {
+        bee.carrying = flag;
+        bee.el.classList.toggle('has-pollen', flag);
+      }
+
+      function sendBeeToRandomFlower(bee) {
+        const flowers = getAllFlowerTargets();
+        const hives = getAllHiveTargets();
+        const fIdx = pickRandomIndex(flowers.length, bee.flowerIdx);
+        bee.flowerIdx = fIdx;
+        if (bee.hiveIdx == null || bee.hiveIdx >= hives.length) {
+          bee.hiveIdx = Math.floor(Math.random() * hives.length);
+        }
+        const [tx, ty] = flowerLandingPoint(flowers[fIdx]);
+        bee.phase = 'to-flower';
+        bee.el.classList.remove('gathering');
+        setBeeCarrying(bee, false);
+        planFlightLeg(bee, bee.x, bee.y, tx, ty, 1);
+      }
+
+      function sendBeeBackToHive(bee) {
+        const hives = getAllHiveTargets();
+        if (bee.hiveIdx == null || bee.hiveIdx >= hives.length || Math.random() < 0.25) {
+          bee.hiveIdx = Math.floor(Math.random() * hives.length);
+        }
+        const [tx, ty] = hiveEntrancePoint(hives[bee.hiveIdx]);
+        bee.phase = 'to-hive';
+        bee.el.classList.remove('gathering');
+        setBeeCarrying(bee, true);
+        planFlightLeg(bee, bee.x, bee.y, tx, ty, 0.85);
+      }
+
+      function syncBeeVisual(bee, nowSec) {
+        const bob = Math.sin(nowSec * bee.bobFreq + bee.bobOffset) * (bee.phase === 'gathering' ? 0.16 : 0.34);
+        const px = bee.x;
+        const py = bee.y + bob;
+        const depthScale = Math.max(0.84, Math.min(1.14, 0.84 + (py / 100) * 0.28));
+        bee.el.style.left = px.toFixed(2) + '%';
+        bee.el.style.top = py.toFixed(2) + '%';
+        bee.el.style.setProperty('--bee-face', String(bee.face));
+        bee.el.style.setProperty('--bee-tilt', (bee.carrying ? 5 * bee.face : -3 * bee.face) + 'deg');
+        bee.el.style.setProperty('--shadow-scale', (bee.phase === 'gathering' ? 1.05 : 0.82).toFixed(2));
+        bee.el.style.transform = `translate(-50%, -56%) scale(${depthScale.toFixed(3)})`;
+      }
+
+      function spawnForagingBee(initialScatter) {
+        if (!beesLayerEl) return null;
+        const hives = getAllHiveTargets();
+        const flowers = getAllFlowerTargets();
+        const hiveIdx = Math.floor(Math.random() * hives.length);
+        const flowerIdx = Math.floor(Math.random() * flowers.length);
+        const [hx, hy] = hiveEntrancePoint(hives[hiveIdx]);
+        const el = document.createElement('div');
+        el.className = 'foraging-bee';
+        el.innerHTML = BEE_SVG_MARKUP;
+        beesLayerEl.appendChild(el);
+
+        const bee = {
+          el,
+          x: hx,
+          y: hy,
+          sx: hx,
+          sy: hy,
+          cx: hx,
+          cy: hy,
+          tx: hx,
+          ty: hy,
+          face: Math.random() < 0.5 ? -1 : 1,
+          hiveIdx,
+          flowerIdx,
+          phase: 'to-flower',
+          carrying: false,
+          progress: 0,
+          duration: 2,
+          timer: 0,
+          pollenPicked: false,
+          bobFreq: 5.2 + Math.random() * 2.6,
+          bobOffset: Math.random() * Math.PI * 2
+        };
+
+        if (initialScatter) {
+          // Равномерно распределяем стартовый рой: часть летит к разным цветам налегке,
+          // часть уже опыляет цветок, а часть возвращается в ульи с жёлтым кружочком в лапах
+          const roll = Math.random();
+          if (roll < 0.45) {
+            sendBeeToRandomFlower(bee);
+            bee.progress = Math.random() * 0.9;
+          } else if (roll < 0.62) {
+            const [fx, fy] = flowerLandingPoint(flowers[flowerIdx]);
+            bee.x = fx;
+            bee.y = fy;
+            bee.phase = 'gathering';
+            bee.timer = 0.35 + Math.random() * 0.8;
+            bee.pollenPicked = false;
+            bee.el.classList.add('gathering');
+            setBeeCarrying(bee, false);
+          } else {
+            const [fx, fy] = flowerLandingPoint(flowers[flowerIdx]);
+            bee.x = fx;
+            bee.y = fy;
+            sendBeeBackToHive(bee);
+            bee.progress = Math.random() * 0.88;
+          }
+          if (bee.phase === 'to-flower' || bee.phase === 'to-hive') {
+            const t = bee.progress;
+            const inv = 1 - t;
+            bee.x = inv * inv * bee.sx + 2 * inv * t * bee.cx + t * t * bee.tx;
+            bee.y = inv * inv * bee.sy + 2 * inv * t * bee.cy + t * t * bee.ty;
+            const vx = 2 * inv * (bee.cx - bee.sx) + 2 * t * (bee.tx - bee.cx);
+            if (Math.abs(vx) > 0.02) bee.face = vx < 0 ? -1 : 1;
+          }
+        } else {
+          sendBeeToRandomFlower(bee);
+        }
+
+        syncBeeVisual(bee, 0);
+        beeActors.push(bee);
+        return bee;
+      }
+
+      function syncBeeSwarmCount(initialScatter = false) {
+        const desired = Math.min(28, Math.max(14, state.hives * 2));
+        while (beeActors.length < desired) {
+          spawnForagingBee(initialScatter);
+        }
+        while (beeActors.length > desired) {
+          const removed = beeActors.pop();
+          if (removed && removed.el && removed.el.parentNode) removed.el.remove();
+        }
+      }
+
+      function updateForagingBees(dt, nowSec) {
+        const speedMul = state.speed === 0 ? 0 : (state.speed === 2 ? 1.65 : 1);
+        if (speedMul === 0) return;
+        const step = dt * speedMul;
+
+        for (let i = 0; i < beeActors.length; i++) {
+          const bee = beeActors[i];
+          if (bee.phase === 'to-flower' || bee.phase === 'to-hive') {
+            bee.progress = Math.min(1, bee.progress + step / bee.duration);
+            const t = bee.progress;
+            // Мягкое ускорение на взлёте и плавная посадка у цветка / летка улья
+            const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+            const inv = 1 - eased;
+            const nx = inv * inv * bee.sx + 2 * inv * eased * bee.cx + eased * eased * bee.tx;
+            const ny = inv * inv * bee.sy + 2 * inv * eased * bee.cy + eased * eased * bee.ty;
+            const dx = nx - bee.x;
+            if (Math.abs(dx) > 0.004) bee.face = dx < 0 ? -1 : 1;
+            bee.x = nx;
+            bee.y = ny;
+
+            if (bee.progress >= 1) {
+              if (bee.phase === 'to-flower') {
+                bee.phase = 'gathering';
+                bee.timer = 0.85 + Math.random() * 0.65;
+                bee.pollenPicked = false;
+                bee.el.classList.add('gathering');
+              } else {
+                // Прилетела к улью — заносит жёлтый кружочек пыльцы в улей
+                bee.phase = 'unloading';
+                bee.timer = 0.48 + Math.random() * 0.42;
+                setBeeCarrying(bee, false);
+              }
+            }
+          } else if (bee.phase === 'gathering') {
+            bee.timer -= step;
+            // Во время сбора на цветке в лапках появляется яркий жёлтый кружочек пыльцы
+            if (!bee.pollenPicked && bee.timer <= 0.42) {
+              bee.pollenPicked = true;
+              setBeeCarrying(bee, true);
+            }
+            if (bee.timer <= 0) {
+              sendBeeBackToHive(bee);
+            }
+          } else if (bee.phase === 'unloading') {
+            bee.timer -= step;
+            if (bee.timer <= 0) {
+              sendBeeToRandomFlower(bee);
+            }
+          }
+          syncBeeVisual(bee, nowSec);
+        }
+      }
+
+      syncBeeSwarmCount(true);
+
       let lastWorkersTickAt = 0;
       function animateWorkersLoop(now) {
         const dt = lastWorkersTickAt ? Math.min(0.05, (now - lastWorkersTickAt) / 1000) : 1 / 60;
@@ -2038,6 +2386,10 @@
             actor.wait = 0.65 + Math.random() * 1.35;
           }
         }
+        if (beeActors.length !== Math.min(28, Math.max(14, state.hives * 2))) {
+          syncBeeSwarmCount(false);
+        }
+        updateForagingBees(dt, now / 1000);
         window.requestAnimationFrame(animateWorkersLoop);
       }
       window.requestAnimationFrame(animateWorkersLoop);
