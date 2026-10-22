@@ -735,6 +735,13 @@
       transform-origin: 18.5px 11px;
       animation: bee-wing-flap .082s ease-in-out -.04s infinite alternate;
     }
+    .bees-layer.slow-season .foraging-bee .bee-wing-front {
+      animation-duration: .175s;
+    }
+    .bees-layer.slow-season .foraging-bee .bee-wing-back {
+      animation-duration: .175s;
+      animation-delay: -.087s;
+    }
     @keyframes bee-wing-flap {
       from { transform: rotate(-23deg) scaleY(1); }
       to { transform: rotate(16deg) scaleY(.75); }
@@ -1452,6 +1459,7 @@
           button.setAttribute('aria-pressed', String(active));
         });
         renderPlacedItems();
+        syncBeeSwarmCount(false);
       }
 
       function showToast(message) {
@@ -2558,7 +2566,8 @@
       }
 
       function syncBeeVisual(bee, nowSec) {
-        const bob = Math.sin(nowSec * bee.bobFreq + bee.bobOffset) * (bee.phase === 'gathering' ? 0.16 : 0.34);
+        const bobRate = bee.bobFreq * (currentSeasonIndex() === 1 ? 1 : 0.55);
+        const bob = Math.sin(nowSec * bobRate + bee.bobOffset) * (bee.phase === 'gathering' ? 0.16 : 0.34);
         const px = bee.x;
         const py = bee.y + bob;
         const depthScale = Math.max(0.84, Math.min(1.14, 0.84 + (py / 100) * 0.28));
@@ -2646,12 +2655,40 @@
         return bee;
       }
 
+      function currentSeasonIndex() {
+        return ((state.seasonIndex % SEASONS.length) + SEASONS.length) % SEASONS.length;
+      }
+
+      // Летняя численность при 1 улье = 5 пчёл, каждый новый улей увеличивает количество пчёл на +20% (×1.2):
+      // 1..12 ульев летом: 5, 6, 7, 9, 10, 12, 15, 18, 22, 26, 31, 37 пчёл
+      function summerBeeCountRaw() {
+        if (state.hives <= 0) return 0;
+        return 5 * Math.pow(1.2, state.hives - 1);
+      }
+
       function desiredBeeCount() {
-        return state.hives <= 0 ? 0 : Math.min(28, state.hives * 2);
+        if (state.hives <= 0) return 0;
+        const sIdx = currentSeasonIndex();
+        if (sIdx === 3) return 0; // Зимой пчёлы не летают
+        const summerRaw = summerBeeCountRaw();
+        if (sIdx === 0 || sIdx === 2) {
+          // Весной и осенью вылетает около 20% от летнего роя
+          return Math.max(1, Math.round(summerRaw * 0.2));
+        }
+        return Math.max(1, Math.round(summerRaw));
+      }
+
+      function seasonBeeSpeedFactor() {
+        const sIdx = currentSeasonIndex();
+        if (sIdx === 3) return 0;
+        if (sIdx === 0 || sIdx === 2) return 0.4; // Весной и осенью пчёлы летают медленно
+        return 1;
       }
 
       function syncBeeSwarmCount(initialScatter = false) {
         if (!beesLayerEl) return;
+        const sIdx = currentSeasonIndex();
+        beesLayerEl.classList.toggle('slow-season', sIdx === 0 || sIdx === 2);
         const desired = desiredBeeCount();
         while (beeActors.length < desired) {
           if (!spawnForagingBee(initialScatter)) break;
@@ -2663,7 +2700,8 @@
       }
 
       function updateForagingBees(dt, nowSec) {
-        const speedMul = state.speed === 0 ? 0 : (state.speed === 2 ? 1.65 : 1);
+        const baseSpeedMul = state.speed === 0 ? 0 : (state.speed === 2 ? 1.65 : 1);
+        const speedMul = baseSpeedMul * seasonBeeSpeedFactor();
         if (speedMul === 0) return;
         const step = dt * speedMul;
 
