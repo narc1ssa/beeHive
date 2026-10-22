@@ -1242,6 +1242,11 @@
       const SEASONS = ['Весна', 'Лето', 'Осень', 'Зима'];
       const SEASON_MAPS = ['map_spring.png', 'map.png', 'map_autumn.png', 'map_winter.png'];
       const SEASON_ICONS = ['🌸', '☀️', '🍂', '❄️'];
+      // 1 игровой год (4 сезона × 30 дней = 120 дней = 172 800 игровых минут) проходит ровно за 10 реальных минут (600 с) на скорости 1×
+      const DAYS_PER_SEASON = 30;
+      const MINUTES_PER_DAY = 1440;
+      const YEAR_REAL_SECONDS = 10 * 60;
+      const GAME_MINUTES_PER_REAL_SEC = (SEASONS.length * DAYS_PER_SEASON * MINUTES_PER_DAY) / YEAR_REAL_SECONDS; // 288 игровых мин/с
       let currentSeasonMapIdx = -1;
       let prevSeasonMapIdx = -1;
 
@@ -1269,7 +1274,7 @@
       const START = {
         honey: 1248, coins: 3560, hives: 7, hiveLimit: 12,
         flowers: 18, workers: 0, workerLimit: 12,
-        seasonHoney: 32, seasonTarget: 50, seasonIndex: 1,
+        seasonHoney: 32, seasonTarget: 50, seasonIndex: 1, seasonRewarded: false,
         day: 14, year: 2, minutesOfDay: 14 * 60 + 32,
         totalTicks: 0, autoBuffer: 0, wateredUntil: 0,
         fenceLevel: 1, upgradeLevel: 0, happiness: 86,
@@ -1333,7 +1338,8 @@
       state.seasonIndex = number(state.seasonIndex, START.seasonIndex, 0, 10000);
       state.day = number(state.day, START.day, 1, 30);
       state.year = number(state.year, START.year, 1, 10000);
-      state.minutesOfDay = number(state.minutesOfDay, START.minutesOfDay, 0, 1439);
+      state.minutesOfDay = Math.floor(number(state.minutesOfDay, START.minutesOfDay, 0, 1439));
+      state.seasonRewarded = Boolean(state.seasonRewarded);
       state.totalTicks = number(state.totalTicks, 0);
       state.autoBuffer = number(state.autoBuffer, 0);
       state.wateredUntil = number(state.wateredUntil, 0);
@@ -1375,8 +1381,9 @@
       }
       function currency(n) { return fmt.format(Math.floor(n)); }
       function clockLabel() {
-        const hours = Math.floor(state.minutesOfDay / 60).toString().padStart(2, '0');
-        const minutes = (state.minutesOfDay % 60).toString().padStart(2, '0');
+        const totalMin = Math.floor(state.minutesOfDay);
+        const hours = Math.floor(totalMin / 60).toString().padStart(2, '0');
+        const minutes = (totalMin % 60).toString().padStart(2, '0');
         return `${hours}:${minutes}`;
       }
       function timeMood() {
@@ -1539,6 +1546,37 @@
         save();
       }
 
+      let lastClockMs = performance.now();
+      let minuteCarry = 0;
+
+      function stepCalendarClock() {
+        const now = performance.now();
+        const elapsedSec = Math.max(0, Math.min(5, (now - lastClockMs) / 1000));
+        lastClockMs = now;
+        if (state.speed === 0 || elapsedSec <= 0) return;
+
+        minuteCarry += elapsedSec * state.speed * GAME_MINUTES_PER_REAL_SEC;
+        const wholeMinutes = Math.floor(minuteCarry + 1e-9);
+        if (wholeMinutes <= 0) return;
+        minuteCarry = Math.max(0, minuteCarry - wholeMinutes);
+        state.minutesOfDay += wholeMinutes;
+
+        while (state.minutesOfDay >= MINUTES_PER_DAY) {
+          state.minutesOfDay -= MINUTES_PER_DAY;
+          state.day += 1;
+          if (state.day > DAYS_PER_SEASON) {
+            state.day = 1;
+            state.seasonIndex += 1;
+            if (state.seasonIndex % SEASONS.length === 0) state.year += 1;
+            state.seasonHoney = 0;
+            state.seasonRewarded = false;
+            addLog(`Наступил новый сезон: ${seasonName()}`);
+            showToast(`${SEASON_ICONS[state.seasonIndex % SEASONS.length]} Наступил сезон: ${seasonName()}`);
+          }
+        }
+        render();
+      }
+
       function tick() {
         if (state.speed === 0) return;
         for (let step = 0; step < state.speed; step++) {
@@ -1547,19 +1585,6 @@
           state.seasonHoney += made;
           state.autoBuffer += made;
           state.totalTicks++;
-          state.minutesOfDay++;
-          if (state.minutesOfDay >= 1440) {
-            state.minutesOfDay = 0;
-            state.day++;
-            if (state.day > 30) {
-              state.day = 1;
-              state.seasonIndex++;
-              if (state.seasonIndex % SEASONS.length === 0) state.year++;
-              state.seasonHoney = 0;
-              addLog(`Наступил новый сезон: ${seasonName()}`);
-              showToast(`${SEASON_ICONS[state.seasonIndex % SEASONS.length]} Наступил сезон: ${seasonName()}`);
-            }
-          }
 
           if (state.workers > 0 && state.totalTicks % 5 === 0) {
             const collected = Math.min(state.autoBuffer, state.workers * 0.12, state.honey);
@@ -1570,17 +1595,13 @@
             }
           }
 
-          if (state.seasonHoney >= state.seasonTarget) {
+          if (!state.seasonRewarded && state.seasonHoney >= state.seasonTarget) {
+            state.seasonRewarded = true;
             const reward = 100 + state.seasonIndex * 50;
             state.coins += reward;
-            state.seasonIndex++;
-            if (state.seasonIndex % SEASONS.length === 0) state.year++;
-            state.day = 1;
-            state.minutesOfDay = 8 * 60;
-            state.seasonHoney = 0;
             state.seasonTarget += 25;
             showToast(`🎉 Цель сезона выполнена! +${currency(reward)} монет`);
-            addLog(`Новый сезон: ${seasonName()}`);
+            addLog(`Цель сезона выполнена (+${currency(reward)} монет)`);
           }
         }
         render();
@@ -1683,7 +1704,7 @@
           openDialog('Задачи сезона', `<p>Главная цель — произвести <strong>${currency(state.seasonTarget)} кг мёда</strong> за сезон.</p><p>Уже произведено: <strong>${fmtOne.format(state.seasonHoney)} кг</strong> (${Math.floor(Math.min(100, state.seasonHoney / state.seasonTarget * 100))}%).</p><p>За выполненную цель выдаётся денежная награда. Работники продают часть свежего мёда автоматически.</p>`, [{label:'Понятно', secondary:true, onClick:closeDialog}]);
         } else if (tab === 'calendar') {
           const nextSeason = SEASONS[(state.seasonIndex + 1) % SEASONS.length];
-          openDialog('Календарь пасеки', `<p><strong>${SEASON_ICONS[state.seasonIndex % SEASONS.length]} ${seasonName()}, день ${state.day}, год ${state.year}</strong></p><p>До конца сезона осталось ${Math.max(0,30-state.day)} дней. Следом наступит <strong>${nextSeason.toLocaleLowerCase('ru-RU')}</strong>.</p><p>Пасека работает круглый год, а фон пасеки меняется вместе со временем года (зимой сбор мёда спокойнее).</p>`, [
+          openDialog('Календарь пасеки', `<p><strong>${SEASON_ICONS[state.seasonIndex % SEASONS.length]} ${seasonName()}, день ${state.day}, год ${state.year}</strong></p><p>До конца сезона осталось ${Math.max(0,30-state.day)} дней. Следом наступит <strong>${nextSeason.toLocaleLowerCase('ru-RU')}</strong>.</p><p>Полный игровой год проходит за <strong>10 минут</strong> (по 2,5 минуты на каждый сезон), а фон пасеки меняется вместе со временем года.</p>`, [
             ...SEASONS.map((label, idx) => ({
               label: `${SEASON_ICONS[idx]} ${label}`,
               secondary: (state.seasonIndex % SEASONS.length) === idx,
@@ -1692,6 +1713,9 @@
                 state.seasonIndex = Math.floor(state.seasonIndex / SEASONS.length) * SEASONS.length + idx;
                 state.year = baseYear;
                 state.day = 1;
+                state.seasonHoney = 0;
+                state.seasonRewarded = false;
+                minuteCarry = 0;
                 render();
                 save();
                 closeDialog();
@@ -1732,6 +1756,8 @@
         if (state.seasonIndex % SEASONS.length === 0) state.year++;
         state.day = 1;
         state.seasonHoney = 0;
+        state.seasonRewarded = false;
+        minuteCarry = 0;
         const sIdx = state.seasonIndex % SEASONS.length;
         addLog(`Новый сезон: ${seasonName()}`);
         render();
@@ -2743,6 +2769,7 @@
 
       render();
       try { if (!localStorage.getItem(SAVE_KEY)) save(); } catch (_) { /* localStorage может быть отключён */ }
+      window.setInterval(stepCalendarClock, 100);
       window.setInterval(tick, 1000);
     })();
   </script>
