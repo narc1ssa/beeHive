@@ -419,6 +419,24 @@
       font-size: 34px;
       filter: drop-shadow(0 2px 1px #241305);
     }
+    .res-icon img {
+      display: block;
+      width: 88%;
+      height: 88%;
+      object-fit: contain;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+    .coin-inline {
+      display: inline-block;
+      width: 1.28em;
+      height: 1.28em;
+      object-fit: contain;
+      vertical-align: -0.22em;
+      margin-left: 1px;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
     .res-copy { min-width: 0; text-align: left; line-height: 1.12; }
     .res-label {
       display: block;
@@ -1064,7 +1082,7 @@
           <span class="res-copy"><span class="res-label">МЁД</span><strong class="res-value"><span id="honey-count">1 248</span> <small>кг</small></strong></span>
         </div>
         <div class="resource-card">
-          <span class="res-icon" aria-hidden="true">🪙</span>
+          <span class="res-icon" aria-hidden="true"><img src="coin.png" alt=""></span>
           <span class="res-copy"><span class="res-label">МОНЕТЫ</span><strong class="res-value" id="coin-count">3 560</strong></span>
         </div>
         <div class="resource-card">
@@ -1199,16 +1217,16 @@
 
     <div class="action-bar" aria-label="Действия пасеки">
       <button class="action-button" type="button" data-action="hive">
-        <span class="action-icon" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M14 24 32 8l18 16Z" fill="#c17b1b" stroke="#57320f" stroke-width="3"/><rect x="18" y="25" width="28" height="29" rx="4" fill="#ffd24b" stroke="#68400f" stroke-width="3"/><path d="M19 35h26M19 44h26" stroke="#d18a1c" stroke-width="4"/><circle cx="32" cy="48" r="3" fill="#57320f"/><path d="M23 54v4m18-4v4" stroke="#68400f" stroke-width="3" stroke-linecap="round"/></svg></span><span class="action-label">Построить<br>улей</span><span class="action-cost" id="hive-cost">50 🪙</span>
+        <span class="action-icon" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M14 24 32 8l18 16Z" fill="#c17b1b" stroke="#57320f" stroke-width="3"/><rect x="18" y="25" width="28" height="29" rx="4" fill="#ffd24b" stroke="#68400f" stroke-width="3"/><path d="M19 35h26M19 44h26" stroke="#d18a1c" stroke-width="4"/><circle cx="32" cy="48" r="3" fill="#57320f"/><path d="M23 54v4m18-4v4" stroke="#68400f" stroke-width="3" stroke-linecap="round"/></svg></span><span class="action-label">Построить<br>улей</span><span class="action-cost" id="hive-cost">50 <img class="coin-inline" src="coin.png" alt=""></span>
       </button>
       <button class="action-button" type="button" data-action="remove-hive">
         <span class="action-icon" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M12 24 29 9l17 15Z" fill="#b36e18" stroke="#57320f" stroke-width="3"/><rect x="16" y="25" width="26" height="28" rx="4" fill="#f3c13a" stroke="#68400f" stroke-width="3"/><path d="M17 34h24M17 43h24" stroke="#c77e16" stroke-width="3.6"/><circle cx="29" cy="47" r="2.8" fill="#57320f"/><path d="M21 53v4m16-4v4" stroke="#68400f" stroke-width="3" stroke-linecap="round"/><circle cx="46" cy="45" r="12" fill="#d9452f" stroke="#52190c" stroke-width="2.8"/><path d="M40.5 45h11" stroke="#fff7df" stroke-width="4.2" stroke-linecap="round"/></svg></span><span class="action-label">Убрать<br>улей</span><span class="action-cost" id="remove-hive-label">Ульев: 7</span>
       </button>
       <button class="action-button" type="button" data-action="flower">
-        <span class="action-icon" aria-hidden="true">🌼</span><span class="action-label">Посадить<br>цветы</span><span class="action-cost" id="flower-cost">20 🪙</span>
+        <span class="action-icon" aria-hidden="true">🌼</span><span class="action-label">Посадить<br>цветы</span><span class="action-cost" id="flower-cost">20 <img class="coin-inline" src="coin.png" alt=""></span>
       </button>
       <button class="action-button" type="button" data-action="worker">
-        <span class="action-icon" aria-hidden="true">🧑‍🌾</span><span class="action-label">Нанять<br>работника</span><span class="action-cost" id="worker-cost">30 🪙</span>
+        <span class="action-icon" aria-hidden="true">🧑‍🌾</span><span class="action-label">Нанять<br>работника</span><span class="action-cost" id="worker-cost">30 <img class="coin-inline" src="coin.png" alt=""></span>
       </button>
       <button class="action-button" type="button" data-action="fire-worker">
         <span class="action-icon" aria-hidden="true">👋</span><span class="action-label">Уволить<br>работника</span><span class="action-cost" id="fire-worker-label">Нет рабочих</span>
@@ -1217,10 +1235,10 @@
         <span class="action-icon" aria-hidden="true">🍯</span><span class="action-label">Собрать<br>мёд</span><span class="action-cost" id="collect-label">Продать запас</span>
       </button>
       <button class="action-button" type="button" data-action="water">
-        <span class="action-icon" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M13 31q0-14 17-14t18 12l-5 24H20Z" fill="#b9c9c8" stroke="#4a5047" stroke-width="3"/><path d="M22 26q8-10 19 0M19 37h24" fill="none" stroke="#f4edcf" stroke-width="3"/><path d="M44 30 55 19l6 5-12 13" fill="#d1d8cf" stroke="#4a5047" stroke-width="3" stroke-linejoin="round"/><path d="M20 53v5m21-5v5" stroke="#51432c" stroke-width="4" stroke-linecap="round"/><path d="M55 30q-3 4 0 6m5-5q-3 4 0 6" fill="none" stroke="#69c5ed" stroke-width="2" stroke-linecap="round"/></svg></span><span class="action-label">Полить<br>цветы</span><span class="action-cost" id="water-cost">15 🪙</span>
+        <span class="action-icon" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M13 31q0-14 17-14t18 12l-5 24H20Z" fill="#b9c9c8" stroke="#4a5047" stroke-width="3"/><path d="M22 26q8-10 19 0M19 37h24" fill="none" stroke="#f4edcf" stroke-width="3"/><path d="M44 30 55 19l6 5-12 13" fill="#d1d8cf" stroke="#4a5047" stroke-width="3" stroke-linejoin="round"/><path d="M20 53v5m21-5v5" stroke="#51432c" stroke-width="4" stroke-linecap="round"/><path d="M55 30q-3 4 0 6m5-5q-3 4 0 6" fill="none" stroke="#69c5ed" stroke-width="2" stroke-linecap="round"/></svg></span><span class="action-label">Полить<br>цветы</span><span class="action-cost" id="water-cost">15 <img class="coin-inline" src="coin.png" alt=""></span>
       </button>
       <button class="action-button" type="button" data-action="fence">
-        <span class="action-icon" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M10 55V22l8-8 8 8v33M38 55V22l8-8 8 8v33" fill="#bd782c" stroke="#60340f" stroke-width="3" stroke-linejoin="round"/><path d="M8 32h48v8H8zM8 46h48v7H8z" fill="#d99946" stroke="#60340f" stroke-width="3" stroke-linejoin="round"/><path d="M12 34h40M12 48h40" stroke="#f1bd69" stroke-width="2"/></svg></span><span class="action-label">Дорожки<br>и заборы</span><span class="action-cost" id="fence-cost">80 🪙</span>
+        <span class="action-icon" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M10 55V22l8-8 8 8v33M38 55V22l8-8 8 8v33" fill="#bd782c" stroke="#60340f" stroke-width="3" stroke-linejoin="round"/><path d="M8 32h48v8H8zM8 46h48v7H8z" fill="#d99946" stroke="#60340f" stroke-width="3" stroke-linejoin="round"/><path d="M12 34h40M12 48h40" stroke="#f1bd69" stroke-width="2"/></svg></span><span class="action-label">Дорожки<br>и заборы</span><span class="action-cost" id="fence-cost">80 <img class="coin-inline" src="coin.png" alt=""></span>
       </button>
     </div>
 
@@ -1428,13 +1446,13 @@
         const buildCost = 50 + Math.max(0, state.hives - 7) * 25;
         const flowerCost = 20 + state.plantedFlowers * 4;
         const workerCost = 30 + state.workers * 20;
-        $('hive-cost').textContent = `${buildCost} 🪙`;
+        $('hive-cost').innerHTML = `${buildCost} <img class="coin-inline" src="coin.png" alt="">`;
         $('remove-hive-label').textContent = state.hives > 0 ? `Ульев: ${state.hives}` : 'Нет ульев';
-        $('flower-cost').textContent = `${flowerCost} 🪙`;
-        $('worker-cost').textContent = `${workerCost} 🪙`;
+        $('flower-cost').innerHTML = `${flowerCost} <img class="coin-inline" src="coin.png" alt="">`;
+        $('worker-cost').innerHTML = `${workerCost} <img class="coin-inline" src="coin.png" alt="">`;
         $('fire-worker-label').textContent = state.workers > 0 ? `В штате: ${state.workers}` : 'Нет рабочих';
-        $('water-cost').textContent = '15 🪙';
-        $('fence-cost').textContent = `${80 * state.fenceLevel} 🪙`;
+        $('water-cost').innerHTML = '15 <img class="coin-inline" src="coin.png" alt="">';
+        $('fence-cost').innerHTML = `${80 * state.fenceLevel} <img class="coin-inline" src="coin.png" alt="">`;
         $('collect-label').textContent = state.honey >= 1 ? `Продать ${currency(state.honey)} кг` : 'Запас пуст';
 
         document.querySelector('[data-action="hive"]').disabled = state.coins < buildCost || state.hives >= state.hiveLimit;
@@ -1676,7 +1694,8 @@
           const button = document.createElement('button');
           button.type = 'button';
           button.className = `dialog-action ${action.secondary ? 'secondary' : ''} ${action.danger ? 'danger' : ''}`;
-          button.textContent = action.label;
+          if (action.html) button.innerHTML = action.html;
+          else button.textContent = action.label;
           button.addEventListener('click', action.onClick);
           dialogActions.appendChild(button);
         });
@@ -1692,7 +1711,7 @@
         } else if (tab === 'research') {
           const cost = 250 + state.upgradeLevel * 200;
           openDialog('Исследования', `<p>Изучайте уход за пчёлами и улучшайте урожайность каждого улья.</p><p>Уровень технологии: <strong>${state.upgradeLevel}</strong><br>Бонус к производству: <strong>+${state.upgradeLevel * 12}%</strong><br>Следующее улучшение: <strong>${currency(cost)} монет</strong></p>`, [
-            {label:`Исследовать · ${currency(cost)} 🪙`, onClick:() => { if (state.coins < cost) { showToast('Не хватает монет на исследование'); return; } if (state.upgradeLevel >= 10) { showToast('Исследования уже завершены'); return; } state.coins -= cost; state.upgradeLevel++; render(); save(); closeDialog(); showToast('📖 Технология улучшена: +12% к мёду'); }},
+            {html:`Исследовать · ${currency(cost)} <img class="coin-inline" src="coin.png" alt="">`, onClick:() => { if (state.coins < cost) { showToast('Не хватает монет на исследование'); return; } if (state.upgradeLevel >= 10) { showToast('Исследования уже завершены'); return; } state.coins -= cost; state.upgradeLevel++; render(); save(); closeDialog(); showToast('📖 Технология улучшена: +12% к мёду'); }},
             {label:'Закрыть', secondary:true, onClick:closeDialog}
           ]);
         } else if (tab === 'market') {
