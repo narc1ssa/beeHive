@@ -90,14 +90,6 @@
       z-index: 2;
       transition: opacity .65s ease;
     }
-    .date-card {
-      cursor: pointer;
-      transition: transform .14s ease, filter .14s ease;
-    }
-    .date-card:hover {
-      filter: brightness(1.07);
-      transform: translateY(-1px);
-    }
 
     .trail-svg {
       position: absolute;
@@ -1083,7 +1075,7 @@
           <span class="res-icon" aria-hidden="true">🧑‍🌾</span>
           <span class="res-copy"><span class="res-label">РАБОЧИЕ</span><strong class="res-value"><span id="worker-count">2</span> / <small id="worker-limit">4</small></strong></span>
         </div>
-        <div class="resource-card date-card" id="date-card" role="button" tabindex="0" title="Нажмите, чтобы переключить время года">
+        <div class="resource-card date-card" id="date-card">
           <span class="res-icon" id="season-icon" aria-hidden="true">☀️</span>
           <span class="res-copy"><span class="res-label" id="season-day">ЛЕТО · ДЕНЬ 14</span><strong class="res-value" id="year-label">ГОД 2</strong></span>
         </div>
@@ -1712,26 +1704,7 @@
           openDialog('Задачи сезона', `<p>Главная цель — произвести <strong>${currency(state.seasonTarget)} кг мёда</strong> за сезон.</p><p>Уже произведено: <strong>${fmtOne.format(state.seasonHoney)} кг</strong> (${Math.floor(Math.min(100, state.seasonHoney / state.seasonTarget * 100))}%).</p><p>За выполненную цель выдаётся денежная награда. Работники продают часть свежего мёда автоматически.</p>`, [{label:'Понятно', secondary:true, onClick:closeDialog}]);
         } else if (tab === 'calendar') {
           const nextSeason = SEASONS[(state.seasonIndex + 1) % SEASONS.length];
-          openDialog('Календарь пасеки', `<p><strong>${SEASON_ICONS[state.seasonIndex % SEASONS.length]} ${seasonName()}, день ${state.day}, год ${state.year}</strong></p><p>До конца сезона осталось ${Math.max(0,30-state.day)} дней. Следом наступит <strong>${nextSeason.toLocaleLowerCase('ru-RU')}</strong>.</p><p>Полный игровой год проходит за <strong>10 минут</strong> (по 2,5 минуты на каждый сезон), а фон пасеки меняется вместе со временем года.</p>`, [
-            ...SEASONS.map((label, idx) => ({
-              label: `${SEASON_ICONS[idx]} ${label}`,
-              secondary: (state.seasonIndex % SEASONS.length) === idx,
-              onClick: () => {
-                const baseYear = state.year;
-                state.seasonIndex = Math.floor(state.seasonIndex / SEASONS.length) * SEASONS.length + idx;
-                state.year = baseYear;
-                state.day = 1;
-                state.seasonHoney = 0;
-                state.seasonRewarded = false;
-                minuteCarry = 0;
-                render();
-                save();
-                closeDialog();
-                showToast(`${SEASON_ICONS[idx]} Время года изменено: ${label}`);
-              }
-            })),
-            {label:'Закрыть', secondary:true, onClick:closeDialog}
-          ]);
+          openDialog('Календарь пасеки', `<p><strong>${SEASON_ICONS[state.seasonIndex % SEASONS.length]} ${seasonName()}, день ${state.day}, год ${state.year}</strong></p><p>До конца сезона осталось ${Math.max(0,30-state.day)} дней. Следом наступит <strong>${nextSeason.toLocaleLowerCase('ru-RU')}</strong>.</p><p>Полный игровой год проходит за <strong>10 минут</strong> (по 2,5 минуты на каждый сезон), а фон пасеки меняется вместе со временем года.</p>`, [{label:'Закрыть календарь', secondary:true, onClick:closeDialog}]);
         }
       }
 
@@ -1759,26 +1732,7 @@
       document.querySelectorAll('[data-speed]').forEach(button => button.addEventListener('click', () => { state.speed = Number(button.dataset.speed); render(); save(); }));
       document.querySelectorAll('[data-tool]').forEach(button => button.addEventListener('click', () => openTool(button.dataset.tool)));
       $('change-task').addEventListener('click', () => { state.taskIndex = (state.taskIndex + 1) % TASKS.length; render(); save(); showToast(`Задача обновлена: ${TASKS[state.taskIndex].toLowerCase()}`); });
-      const cycleSeasonFromHud = () => {
-        state.seasonIndex++;
-        if (state.seasonIndex % SEASONS.length === 0) state.year++;
-        state.day = 1;
-        state.seasonHoney = 0;
-        state.seasonRewarded = false;
-        minuteCarry = 0;
-        const sIdx = state.seasonIndex % SEASONS.length;
-        addLog(`Новый сезон: ${seasonName()}`);
-        render();
-        save();
-        showToast(`${SEASON_ICONS[sIdx]} Наступил сезон: ${seasonName()}`);
-      };
-      $('date-card').addEventListener('click', cycleSeasonFromHud);
-      $('date-card').addEventListener('keydown', event => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          cycleSeasonFromHud();
-        }
-      });
+
       $('dialog-close').addEventListener('click', closeDialog);
       dialog.addEventListener('click', event => { if (event.target === dialog) closeDialog(); });
       document.querySelector('.brand').addEventListener('click', event => { event.preventDefault(); selectTab('overview'); });
