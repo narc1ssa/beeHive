@@ -3088,6 +3088,13 @@
          ===================================================================== */
       const MOUSE_FRAMES = 8;
       const CAT_FRAMES = 12;
+      // Мышь: mouse3.png (без сот в зубах) — когда мышка бежит к улью, ждёт у летка,
+      // убегает с пустыми лапами или её спугнул кот.
+      // mouse_frames.png (с сотами) — когда мышка удирает с украденным мёдом.
+      const MOUSE_SKINS = {
+        plain: { src: 'mouse3_frames.png', frames: 8 },
+        honey: { src: 'mouse_frames.png', frames: 8 }
+      };
       const MOUSE_STAND_MS = 10000;      // сколько мышка стоит у улья
       const MOUSE_MIN_DELAY = 45000;     // пауза между появлениями мышки
       const MOUSE_MAX_DELAY = 90000;
@@ -3142,11 +3149,10 @@
         flip.className = 'critter-flip';
         const img = document.createElement('span');
         img.className = 'critter-img';
-        const src = kind === 'mouse' ? 'mouse_frames.png' : 'cat_frames.png';
-        const total = kind === 'mouse' ? MOUSE_FRAMES : CAT_FRAMES;
-        img.style.backgroundImage = `url("${src}")`;
-        // одна кадровая ячейка = ширина блока, весь лист — total ячеек
-        img.style.backgroundSize = `${total * 100}% 100%`;
+        const skin = kind === 'mouse' ? MOUSE_SKINS.plain : { src: 'cat_frames.png', frames: CAT_FRAMES };
+        img.style.backgroundImage = `url("${skin.src}")`;
+        // одна кадровая ячейка = ширина блока, весь лист — frames ячеек
+        img.style.backgroundSize = `${skin.frames * 100}% 100%`;
         flip.appendChild(img);
         el.appendChild(shadow);
         el.appendChild(flip);
@@ -3160,6 +3166,16 @@
         c.el.style.setProperty('--depth-scale', (0.7 + 0.44 * (c.y / 100)).toFixed(3));
         c.el.style.zIndex = String(Math.round(100 + c.y * 2) + 4);
         c.flip.style.setProperty('--face-dir', String(c.face < 0 ? -1 : 1));
+      }
+
+      // Меняем спрайт-лист мышки: набор кадров и картинку
+      function setMouseSkin(c, skinKey) {
+        const skin = MOUSE_SKINS[skinKey] || MOUSE_SKINS.plain;
+        if (c.skin === skinKey) return;
+        c.skin = skinKey;
+        c.img.style.backgroundImage = `url("${skin.src}")`;
+        c.img.style.backgroundSize = `${skin.frames * 100}% 100%`;
+        setCritterFrame(c, skin.frames, c.frame || 0);
       }
 
       function setCritterFrame(c, frames, index) {
@@ -3244,6 +3260,8 @@
           waypoints: route.slice(1),
           hiveSpot: stand,
           waitLeft: MOUSE_STAND_MS,
+          skin: 'plain',
+          frames: MOUSE_FRAMES,
           frame: 0,
           frameT: 0
         };
@@ -3255,12 +3273,14 @@
         return true;
       }
 
-      function mouseEscape(fastFlight, awayFrom) {
+      // withHoney = true — мышка удирает с украденным мёдом (спрайт mouse_frames.png)
+      function mouseEscape(fastFlight, awayFrom, withHoney) {
         const mouse = critterState.mouse;
         if (!mouse) return;
         hideCatCall();
         mouse.phase = 'fleeing';
         mouse.speed = fastFlight ? MOUSE_FLEE_SPEED : MOUSE_SPEED;
+        setMouseSkin(mouse, withHoney ? 'honey' : 'plain');
         // Если за ней гонится кот — бежим в противоположный край карты
         mouse.waypoints = [awayFrom ? farthestEdgePoint(awayFrom[0], awayFrom[1]) : nearestEdgePoint(mouse.x, mouse.y)];
       }
@@ -3281,7 +3301,7 @@
         }
         render();
         save();
-        mouseEscape(false);
+        mouseEscape(false, null, stolen > 0);
       }
 
       function callCat() {
@@ -3304,8 +3324,9 @@
         setCritterFrame(cat, CAT_FRAMES, 0);
         placeCritter(cat);
         critterState.cat = cat;
-        // Мышка бросается наутёк в противоположный край, кот бросается за ней
-        mouseEscape(true, from);
+        // Мышка бросается наутёк в противоположный край (без мёда — обычный спрайт mouse3.png),
+        // кот бросается за ней
+        mouseEscape(true, from, false);
         showToast('🐱 Кот выбежал на пасеку — держись, мышка!');
         addLog('Кот вызван на защиту ульев');
       }
