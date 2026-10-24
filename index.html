@@ -188,12 +188,28 @@
       pointer-events: none;
       animation: none;
     }
-    .player-actor.watering .player-base-img {
+    .player-feed-img {
+      position: absolute;
+      left: -9.49%;
+      top: -9.3%;
+      width: auto;
+      height: 127.82%;
+      max-width: none;
+      opacity: 0;
+      pointer-events: none;
+      animation: none;
+    }
+    .player-actor.watering .player-base-img,
+    .player-actor.feeding .player-base-img {
       opacity: 0;
       animation: none;
     }
     .player-actor.watering.water-frame-1 #player-water-1,
     .player-actor.watering.water-frame-2 #player-water-2 {
+      opacity: 1;
+    }
+    .player-actor.feeding.feed-frame-1 #player-feed-1,
+    .player-actor.feeding.feed-frame-2 #player-feed-2 {
       opacity: 1;
     }
     .player-actor.walking .player-img {
@@ -864,6 +880,103 @@
     }
     .toast.show { opacity: 1; transform: translate(-50%,0); }
 
+    /* --- Зимний прикорм: ящик сиропа в углу экрана (1 декабря — 31 января) --- */
+    .syrup-corner {
+      position: absolute;
+      z-index: 44;
+      right: calc(var(--rail-width) + 16px);
+      bottom: calc(var(--footer-height) + 10px);
+      width: clamp(104px, 11.5vw, 168px);
+      padding: 0;
+      border: none;
+      background: none;
+      font: inherit;
+      color: inherit;
+      cursor: pointer;
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(16px) scale(.82);
+      transform-origin: 60% 100%;
+      transition: opacity .35s ease, transform .35s cubic-bezier(.2, .9, .3, 1.1), filter .2s ease, visibility .35s;
+      filter: drop-shadow(0 7px 12px rgba(28, 15, 4, .5));
+      -webkit-tap-highlight-color: transparent;
+    }
+    .syrup-corner.is-visible {
+      opacity: 1;
+      visibility: visible;
+      transform: none;
+      pointer-events: auto;
+    }
+    .syrup-corner.is-visible:hover { filter: drop-shadow(0 10px 16px rgba(28, 15, 4, .58)) brightness(1.07); }
+    .syrup-corner.is-visible:active { transform: scale(.96); }
+    .syrup-corner.is-cooling { filter: grayscale(.45) brightness(.86) drop-shadow(0 5px 9px rgba(28, 15, 4, .45)); cursor: progress; }
+    .syrup-corner.is-visible .syrup-img { animation: syrup-bob 2.6s ease-in-out infinite; }
+    .syrup-corner.is-cooling .syrup-img { animation: none; }
+    .syrup-img {
+      display: block;
+      width: 100%;
+      height: auto;
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+    .syrup-glow {
+      position: absolute;
+      left: 50%;
+      top: 46%;
+      width: 88%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle, rgba(255, 226, 122, .55), rgba(255, 196, 60, .18) 55%, transparent 72%);
+      opacity: 0;
+      pointer-events: none;
+    }
+    .syrup-corner.is-visible .syrup-glow { animation: syrup-glow 2.2s ease-in-out infinite; }
+    .syrup-plate {
+      position: absolute;
+      left: 50%;
+      bottom: -9px;
+      transform: translateX(-50%);
+      display: grid;
+      justify-items: center;
+      gap: 1px;
+      padding: 4px 11px 5px;
+      border: 2px solid #e2ac46;
+      border-radius: 12px;
+      background: linear-gradient(150deg, #6a4320, #3a2410);
+      box-shadow: 0 4px 10px rgba(24, 12, 2, .5), inset 0 1px 0 rgba(255, 233, 164, .4);
+      color: #fff3cd;
+      font-size: clamp(9px, .78vw, 11.5px);
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: .2px;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    .syrup-plate small { color: #ffd76f; font-size: .82em; font-weight: 700; letter-spacing: .1px; }
+    @keyframes syrup-bob {
+      0%, 100% { transform: translateY(0) rotate(-1.1deg); }
+      50% { transform: translateY(-7px) rotate(1.1deg); }
+    }
+    @keyframes syrup-glow {
+      0%, 100% { opacity: .35; transform: translate(-50%, -50%) scale(.86); }
+      50% { opacity: .95; transform: translate(-50%, -50%) scale(1.06); }
+    }
+    @media (max-width: 980px) {
+      .syrup-corner {
+        right: auto;
+        left: 12px;
+        width: clamp(88px, 15vw, 128px);
+        bottom: calc(var(--footer-height) + 8px);
+      }
+      .syrup-plate { font-size: 8.5px; padding: 3px 8px 4px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .syrup-corner.is-visible .syrup-img, .syrup-corner.is-visible .syrup-glow { animation: none; }
+    }
+
     dialog {
       width: min(530px, calc(100vw - 28px));
       max-height: min(78vh, 620px);
@@ -1138,6 +1251,8 @@
         <span class="player-flip" id="player-flip">
           <img class="player-img player-water-img" id="player-water-1" src="watering1.png" alt="" decoding="sync">
           <img class="player-img player-water-img" id="player-water-2" src="watering2.png" alt="" decoding="sync">
+          <img class="player-img player-feed-img" id="player-feed-1" src="feed1.png" alt="" decoding="sync">
+          <img class="player-img player-feed-img" id="player-feed-2" src="feed2.png" alt="" decoding="sync">
           <img class="player-img player-base-img" src="data:image/png;base64,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" alt="" decoding="sync">
         </span>
       </div>
@@ -1254,6 +1369,12 @@
       </button>
     </div>
 
+    <button class="syrup-corner" type="button" id="syrup-corner" aria-label="Прикорм пчёл сиропом" aria-hidden="true" tabindex="-1" title="Прикорм пчёл сиропом (1 декабря — 31 января)">
+      <span class="syrup-glow" aria-hidden="true"></span>
+      <img class="syrup-img" src="syrops.png" alt="Ящик сиропа для зимней подкормки пчёл" decoding="sync">
+      <span class="syrup-plate"><strong id="syrup-badge">Покормить пчёл</strong><small>1 декабря — 31 января</small></span>
+    </button>
+
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <dialog id="game-dialog" aria-labelledby="dialog-title">
       <div class="dialog-inner">
@@ -1311,7 +1432,7 @@
         flowers: 18, workers: 0, workerLimit: 12,
         seasonHoney: 32, seasonTarget: 50, seasonIndex: 1, seasonRewarded: false,
         day: 14, year: 2, minutesOfDay: 14 * 60 + 32,
-        totalTicks: 0, autoBuffer: 0, wateredUntil: 0,
+        totalTicks: 0, autoBuffer: 0, wateredUntil: 0, fedUntil: 0, feedReadyAt: 0,
         fenceLevel: 1, upgradeLevel: 0, happiness: 86,
         taskIndex: 0, speed: 1, builtHives: 0, plantedFlowers: 0,
         playerX: 40.4, playerY: 66.6, playerFace: 1, hiredWorkers: []
@@ -1378,6 +1499,8 @@
       state.totalTicks = number(state.totalTicks, 0);
       state.autoBuffer = number(state.autoBuffer, 0);
       state.wateredUntil = number(state.wateredUntil, 0);
+      state.fedUntil = number(state.fedUntil, 0);
+      state.feedReadyAt = number(state.feedReadyAt, 0);
       state.fenceLevel = number(state.fenceLevel, 1, 1, 4);
       state.upgradeLevel = number(state.upgradeLevel, 0, 0, 10);
       state.happiness = number(state.happiness, 86, 40, 99);
@@ -1402,13 +1525,32 @@
         catch (error) { console.warn('Не удалось сохранить пасеку:', error); }
       }
 
-      function seasonName() { return SEASONS[state.seasonIndex % SEASONS.length]; }
+      function seasonIndex() { return ((state.seasonIndex % SEASONS.length) + SEASONS.length) % SEASONS.length; }
+      function seasonName() { return SEASONS[seasonIndex()]; }
+      // Игровой год = 4 сезона по 30 дней, то есть по 3 «месяца» на сезон.
+      // Зима: 1 декабря — 10-й день, январь — 11–20-й, февраль — 21–30-й.
+      const SEASON_MONTHS = [
+        ['Март', 'Апрель', 'Май'],
+        ['Июнь', 'Июль', 'Август'],
+        ['Сентябрь', 'Октябрь', 'Ноябрь'],
+        ['Декабрь', 'Январь', 'Февраль']
+      ];
+      const DAYS_PER_GAME_MONTH = DAYS_PER_SEASON / 3;
+      function currentMonthIndex() {
+        return Math.min(2, Math.floor(Math.max(0, state.day - 1) / DAYS_PER_GAME_MONTH));
+      }
+      function currentMonthName() { return SEASON_MONTHS[seasonIndex()][currentMonthIndex()]; }
+      // Прикорм сиропом доступен с 1 декабря по 31 января (декабрь + январь)
+      function isSyrupWindow() {
+        return seasonIndex() === 3 && currentMonthIndex() <= 1;
+      }
       function productionPerHour() {
         const flowerBoost = 1 + Math.min(state.flowers, 50) * 0.025;
         const seasonBoost = seasonName() === 'Зима' ? 0.55 : 1;
         const waterBoost = state.totalTicks < state.wateredUntil ? 1.35 : 1;
+        const feedBoost = state.totalTicks < state.fedUntil ? 1.2 : 1;
         const researchBoost = 1 + state.upgradeLevel * 0.12;
-        return state.hives * 0.3 * flowerBoost * seasonBoost * waterBoost * researchBoost;
+        return state.hives * 0.3 * flowerBoost * seasonBoost * waterBoost * feedBoost * researchBoost;
       }
       function productionPerMinute() { return productionPerHour() / 60; }
       function happiness() {
@@ -1488,6 +1630,7 @@
         });
         renderPlacedItems();
         syncBeeSwarmCount(false);
+        syncSyrupWidget();
       }
 
       function showToast(message) {
@@ -1742,16 +1885,16 @@
           openDialog('Задачи сезона', `<p>Главная цель — произвести <strong>${currency(state.seasonTarget)} кг мёда</strong> за сезон.</p><p>Уже произведено: <strong>${fmtOne.format(state.seasonHoney)} кг</strong> (${Math.floor(Math.min(100, state.seasonHoney / state.seasonTarget * 100))}%).</p><p>За выполненную цель выдаётся денежная награда. Работники продают часть свежего мёда автоматически.</p>`, [{label:'Понятно', secondary:true, onClick:closeDialog}]);
         } else if (tab === 'calendar') {
           const nextSeason = SEASONS[(state.seasonIndex + 1) % SEASONS.length];
-          openDialog('Календарь пасеки', `<p><strong>${SEASON_ICONS[state.seasonIndex % SEASONS.length]} ${seasonName()}, день ${state.day}, год ${state.year}</strong></p><p>До конца сезона осталось ${Math.max(0,30-state.day)} дней. Следом наступит <strong>${nextSeason.toLocaleLowerCase('ru-RU')}</strong>.</p><p>Полный игровой год проходит за <strong>10 минут</strong> (по 2,5 минуты на каждый сезон), а фон пасеки меняется вместе со временем года.</p>`, [{label:'Закрыть календарь', secondary:true, onClick:closeDialog}]);
+          openDialog('Календарь пасеки', `<p><strong>${SEASON_ICONS[state.seasonIndex % SEASONS.length]} ${seasonName()}, ${currentMonthName().toLocaleLowerCase('ru-RU')}, день ${state.day}, год ${state.year}</strong></p><p>До конца сезона осталось ${Math.max(0,30-state.day)} дней. Следом наступит <strong>${nextSeason.toLocaleLowerCase('ru-RU')}</strong>.</p><p>Полный игровой год проходит за <strong>10 минут</strong> (по 2,5 минуты на каждый сезон), а фон пасеки меняется вместе со временем года.</p><p>❄️ ${isSyrupWindow() ? 'Сейчас идёт зимний прикорм: нажмите на ящик сиропа в правом нижнем углу — пчеловод отнесёт его к улью.' : 'С 1 декабря по 31 января в правом нижнем углу появляется ящик сиропа: нажмите на него, чтобы пчеловод подкормил пчёл.'}</p>`, [{label:'Закрыть календарь', secondary:true, onClick:closeDialog}]);
         }
       }
 
       function openTool(tool) {
         if (tool === 'help') {
-          openDialog('Справка пчеловода', '<p>Добро пожаловать на цветочную поляну! Щёлкайте мышкой по карте — пчеловод дойдёт туда прямо по тропинкам пасеки.</p><ul><li>Стройте ульи, чтобы увеличить количество пчелосемей.</li><li>Сажайте цветы: каждый медонос повышает выработку мёда.</li><li>Работники автоматически продают часть свежего урожая.</li><li>Нажмите «Собрать мёд», чтобы продать запас из хранилища.</li><li>Полив временно ускоряет производство, а ограждения повышают уют пасеки.</li></ul><p>Прогресс сохраняется в браузере автоматически.</p>', [{label:'Начать играть', onClick:closeDialog}]);
+          openDialog('Справка пчеловода', '<p>Добро пожаловать на цветочную поляну! Щёлкайте мышкой по карте — пчеловод дойдёт туда прямо по тропинкам пасеки.</p><ul><li>Стройте ульи, чтобы увеличить количество пчелосемей.</li><li>Сажайте цветы: каждый медонос повышает выработку мёда.</li><li>Работники автоматически продают часть свежего урожая.</li><li>Нажмите «Собрать мёд», чтобы продать запас из хранилища.</li><li>Полив временно ускоряет производство, а ограждения повышают уют пасеки.</li><li>Зимой (с 1 декабря по 31 января) в правом нижнем углу появляется ящик сиропа — нажмите на него, и пчеловод подкормит пчёл у улья: сбор мёда ускорится на 20%.</li></ul><p>Прогресс сохраняется в браузере автоматически.</p>', [{label:'Начать играть', onClick:closeDialog}]);
         } else if (tool === 'settings') {
           openDialog('Настройки', `<p>Сохранение: <span class="save-note">включено · прогресс в этом браузере</span></p><p>Скорость игры и состояние пасеки сохраняются автоматически.</p>`, [
-            {label:'Сбросить прогресс', danger:true, onClick:() => { if (window.confirm('Сбросить сохранение и начать заново?')) { localStorage.removeItem(SAVE_KEY); localStorage.removeItem(LEGACY_KEY); stopWateringAnimation(); walkArrivalCb = null; state = cloneStart(); activeRoute = []; hivePollenStats.clear(); resetWorkerActors(); playerEl.classList.remove('walking'); applyPlayerVisual(); renderTrailPreview(); closeDialog(); render(); save(); showToast('Пасека обновлена — хорошего сезона!'); } }},
+            {label:'Сбросить прогресс', danger:true, onClick:() => { if (window.confirm('Сбросить сохранение и начать заново?')) { localStorage.removeItem(SAVE_KEY); localStorage.removeItem(LEGACY_KEY); stopWateringAnimation(); stopFeedingAnimation(); feedJobActive = false; walkArrivalCb = null; state = cloneStart(); activeRoute = []; hivePollenStats.clear(); resetWorkerActors(); playerEl.classList.remove('walking'); applyPlayerVisual(); renderTrailPreview(); closeDialog(); render(); save(); showToast('Пасека обновлена — хорошего сезона!'); } }},
             {label:'Закрыть', secondary:true, onClick:closeDialog}
           ]);
         } else if (tool === 'exit') {
@@ -1779,7 +1922,8 @@
         'Разнообразные цветы повышают продуктивность пчёл и качество мёда.',
         'Полив медоносов ускоряет сбор нектара на 35% в течение полутора часов.',
         'Работники автоматически продают часть свежего мёда каждые 5 минут.',
-        'Исследования повышают урожайность каждого улья на +12% за уровень.'
+        'Исследования повышают урожайность каждого улья на +12% за уровень.',
+        'Зимой (1 декабря — 31 января) нажмите на ящик сиропа в углу: пчеловод подкормит пчёл у улья и сбор мёда ускорится на 20%.'
       ];
       let tipIndex = 0;
       const ZOOMS = [1, 1.12, 1.24];
@@ -1918,6 +2062,9 @@
 
       const playerEl = $('player');
       const playerFlipEl = $('player-flip');
+      const syrupCornerEl = $('syrup-corner');
+      const syrupBadgeEl = $('syrup-badge');
+      if (syrupCornerEl) syrupCornerEl.addEventListener('click', goFeedHives);
       const moveMarkerEl = $('move-marker');
       const trailLineEl = $('trail-line');
       const WALK_SPEED = 16.5; // world units per second
@@ -1925,6 +2072,9 @@
       let walkArrivalCb = null;
       let wateringTimer = 0;
       let wateringStep = 0;
+      let feedingTimer = 0;
+      let feedingStep = 0;
+      let feedJobActive = false;
       let lastWaterFlowerKey = '';
       let lastFrameAt = 0;
       let walkRaf = 0;
@@ -1970,6 +2120,127 @@
         const [fx, fy] = candidates[Math.floor(Math.random() * candidates.length)];
         lastWaterFlowerKey = `${fx},${fy}`;
         walkToMapPoint(fx, fy, () => startWateringAnimation(fx));
+      }
+
+      /* ------------- Зимний прикорм: пчеловод идёт к улью и наливает сироп ------------- */
+      const FEED_FRAME_DELAY = 340;   // мс на кадр анимации feed1.png / feed2.png
+      const FEED_FRAME_COUNT = 16;    // 16 кадров ≈ 5,5 секунды у улья
+      const FEED_COOLDOWN_MS = 45000; // перерыв между подкормками
+      const FEED_BOOST_TICKS = 150;   // +20% к производству на 150 игровых тиков
+
+      function stopFeedingAnimation() {
+        if (feedingTimer) {
+          window.clearInterval(feedingTimer);
+          feedingTimer = 0;
+        }
+        playerEl.classList.remove('feeding', 'feed-frame-1', 'feed-frame-2');
+      }
+
+      function startFeedingAnimation(hiveX) {
+        stopWateringAnimation();
+        stopFeedingAnimation();
+        if (Math.abs(hiveX - state.playerX) > 0.05) {
+          state.playerFace = hiveX >= state.playerX ? 1 : -1;
+        }
+        playerEl.classList.remove('walking');
+        applyPlayerVisual();
+        feedingStep = 0;
+        playerEl.classList.add('feeding', 'feed-frame-1');
+        feedingTimer = window.setInterval(() => {
+          feedingStep += 1;
+          if (feedingStep >= FEED_FRAME_COUNT) {
+            stopFeedingAnimation();
+            finishFeeding();
+            return;
+          }
+          const showSecond = feedingStep % 2 === 1;
+          playerEl.classList.toggle('feed-frame-1', !showSecond);
+          playerEl.classList.toggle('feed-frame-2', showSecond);
+        }, FEED_FRAME_DELAY);
+      }
+
+      // Улей на карте, к которому пчеловод пойдёт с сиропом
+      function nearestHiveFeedingSpot() {
+        let hives = [];
+        try { hives = typeof getActiveBeeHives === 'function' ? getActiveBeeHives() : []; } catch (_) { hives = []; }
+        if (!hives.length) hives = [[48.6, 59.8, 55.2]];
+        let best = hives[0];
+        let bestD = Infinity;
+        for (const hive of hives) {
+          const d = trailDist(state.playerX, state.playerY, hive[0], hive[1]);
+          if (d < bestD) { bestD = d; best = hive; }
+        }
+        // Встаём слева и чуть ниже улья: так пчеловод виден рядом с ним,
+        // а сироп из банки льётся в сторону летка.
+        return {
+          stand: [Math.max(2, best[0] - 3.2), Math.min(97, best[1] + 3.4)],
+          hiveX: best[0]
+        };
+      }
+
+      function feedCooldownLeft(nowMs = Date.now()) {
+        return Math.max(0, (Number(state.feedReadyAt) || 0) - nowMs);
+      }
+
+      function finishFeeding() {
+        feedJobActive = false;
+        state.feedReadyAt = Date.now() + FEED_COOLDOWN_MS;
+        state.happiness = Math.min(99, state.happiness + 3);
+        state.fedUntil = state.totalTicks + FEED_BOOST_TICKS;
+        addLog('Пчёлы получили зимний прикорм сиропом');
+        showToast('🍯 Пчёлы накормлены сиропом · +20% к сбору мёда');
+        render();
+        save();
+        // Возвращаемся с обочины на пешеходную тропинку
+        const back = nearestOnTrails(state.playerX, state.playerY);
+        if (back && trailDist(state.playerX, state.playerY, back.x, back.y) > 0.6) {
+          window.setTimeout(() => walkToMapPoint(back.x, back.y), 900);
+        }
+      }
+
+      function goFeedHives() {
+        if (!isSyrupWindow()) {
+          showToast('Прикорм сиропом доступен только с 1 декабря по 31 января');
+          return;
+        }
+        const left = feedCooldownLeft();
+        if (left > 0) {
+          showToast(`Сироп ещё не готов — осталось ${Math.ceil(left / 1000)} с`);
+          return;
+        }
+        if (feedJobActive) {
+          showToast('Пчеловод уже несёт сироп к улью');
+          return;
+        }
+        const spot = nearestHiveFeedingSpot();
+        const [hx, hy] = spot.stand;
+        const onArrive = () => { feedJobActive = false; startFeedingAnimation(spot.hiveX); };
+        onArrive.isFeedJob = true;
+        feedJobActive = true;
+        walkToHiveSpot(hx, hy, onArrive);
+        showToast('🍯 Пчеловод спешит к улью с сиропом');
+        render();
+        save();
+      }
+
+      function syncSyrupWidget() {
+        const widget = syrupCornerEl;
+        if (!widget) return;
+        const inWindow = isSyrupWindow();
+        const left = feedCooldownLeft();
+        const cooling = left > 0;
+        widget.classList.toggle('is-visible', inWindow);
+        widget.classList.toggle('is-cooling', inWindow && cooling);
+        widget.setAttribute('aria-hidden', String(!inWindow));
+        widget.tabIndex = inWindow ? 0 : -1;
+        if (syrupBadgeEl) {
+          syrupBadgeEl.textContent = cooling
+            ? `Сироп: ${Math.ceil(left / 1000)} с`
+            : 'Покормить пчёл';
+        }
+        widget.title = inWindow
+          ? (cooling ? 'Сироп настаивается — скоро можно будет подкормить снова' : 'Прикорм пчёл сиропом (1 декабря — 31 января)')
+          : 'Прикорм пчёл сиропом доступен с 1 декабря по 31 января';
       }
 
       function applyPlayerVisual() {
@@ -2046,11 +2317,9 @@
         }
       }
 
-      function walkToMapPoint(targetX, targetY, onArrive = null) {
-        stopWateringAnimation();
+      function startWalkAlong(points, onArrive = null) {
         walkArrivalCb = onArrive;
-        const route = computeTrailRoute(state.playerX, state.playerY, targetX, targetY);
-        activeRoute = route.slice(1);
+        activeRoute = points.slice(1);
         if (activeRoute.length === 0) {
           const arrived = walkArrivalCb;
           walkArrivalCb = null;
@@ -2066,6 +2335,25 @@
           lastFrameAt = 0;
           walkRaf = window.requestAnimationFrame(stepWalk);
         }
+      }
+
+      function walkToMapPoint(targetX, targetY, onArrive = null) {
+        stopWateringAnimation();
+        stopFeedingAnimation();
+        if (walkArrivalCb && walkArrivalCb.isFeedJob) feedJobActive = false;
+        startWalkAlong(computeTrailRoute(state.playerX, state.playerY, targetX, targetY), onArrive);
+      }
+
+      // Пчеловод идёт по тропинкам, а последний отрезок проходит напрямую к улью,
+      // потому что ульи на карте стоят в стороне от пешеходных дорожек.
+      function walkToHiveSpot(targetX, targetY, onArrive = null) {
+        stopWateringAnimation();
+        stopFeedingAnimation();
+        if (walkArrivalCb && walkArrivalCb.isFeedJob) feedJobActive = false;
+        const route = computeTrailRoute(state.playerX, state.playerY, targetX, targetY);
+        const last = route[route.length - 1] || [state.playerX, state.playerY];
+        if (trailDist(last[0], last[1], targetX, targetY) > 0.35) route.push([targetX, targetY]);
+        startWalkAlong(route, onArrive);
       }
 
       // Snap initial saved position onto nearest valid trail point
@@ -2701,6 +2989,7 @@
       try { if (!localStorage.getItem(SAVE_KEY)) save(); } catch (_) { /* localStorage может быть отключён */ }
       window.setInterval(stepCalendarClock, 100);
       window.setInterval(tick, 1000);
+      window.setInterval(syncSyrupWidget, 500); // держим счётчик готовности сиропа актуальным даже на паузе
     })();
   </script>
 </body>
