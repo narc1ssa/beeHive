@@ -347,7 +347,7 @@
       inset: 0 0 auto;
       height: var(--header-height);
       display: grid;
-      grid-template-columns: 360px minmax(0, 1fr) 232px;
+      grid-template-columns: 360px minmax(0, 1fr) 286px;
       align-items: center;
       gap: 10px;
       padding: 8px 7px 8px 13px;
@@ -481,7 +481,7 @@
     .date-card .res-label { font-size: 10px; }
     .date-card .res-value { font-size: 12px; margin-top: 6px; letter-spacing: .3px; }
 
-    .top-tools { pointer-events: auto; display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 7px; }
+    .top-tools { pointer-events: auto; display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 6px; }
     .tool-button {
       position: relative;
       height: 80px;
@@ -880,6 +880,129 @@
     }
     .toast.show { opacity: 1; transform: translate(-50%,0); }
 
+    /* --- Мышь-воришка и кот-защитник --- */
+    .critters-layer {
+      position: absolute;
+      z-index: 366;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .critter {
+      position: absolute;
+      left: 0;
+      top: 0;
+      transform: translate(-50%, -88%) scale(var(--depth-scale, .9));
+      transform-origin: 50% 88%;
+      pointer-events: none;
+      will-change: left, top, transform;
+      transition: opacity .3s ease;
+    }
+    .critter-mouse { height: 5.2%; aspect-ratio: 164 / 138; }
+    .critter-cat { height: 6.8%; aspect-ratio: 132 / 104; }
+    .critter.is-leaving { opacity: 0; }
+    .critter-shadow {
+      position: absolute;
+      left: 50%;
+      bottom: 2%;
+      width: 66%;
+      height: 17%;
+      border-radius: 50%;
+      transform: translate(-50%, 30%);
+      background: radial-gradient(rgba(38, 24, 8, .42), rgba(38, 24, 8, .14) 62%, transparent 76%);
+    }
+    .critter-flip {
+      display: block;
+      width: 100%;
+      height: 100%;
+      transform: scaleX(var(--face-dir, 1));
+      transform-origin: 50% 50%;
+    }
+    .critter-img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background-repeat: no-repeat;
+      background-size: 100% 100%;
+      background-position: 0 0;
+      filter: drop-shadow(0 3px 3px rgba(34, 21, 6, .42));
+      image-rendering: auto;
+    }
+
+    /* Кнопка «Позвать кота» — появляется, пока мышка стоит у улья */
+    .cat-call {
+      position: absolute;
+      z-index: 46;
+      left: 50%;
+      bottom: calc(var(--footer-height) + 56px);
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 6px 17px 7px 8px;
+      border: 2px solid #ffce55;
+      border-radius: 999px;
+      color: #fff4d6;
+      background: linear-gradient(150deg, #a8491f, #6d2c0c 58%, #481b06);
+      box-shadow: 0 9px 22px rgba(22, 9, 2, .58), inset 0 1px 0 rgba(255, 228, 152, .5);
+      cursor: pointer;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transform: translate(-50%, 16px) scale(.9);
+      transition: opacity .2s ease, transform .22s cubic-bezier(.2, .9, .3, 1.15), visibility .2s, filter .14s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .cat-call.is-visible {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transform: translate(-50%, 0) scale(1);
+      animation: cat-call-pulse 1.15s ease-in-out infinite;
+    }
+    .cat-call.is-visible:hover { filter: brightness(1.1); }
+    .cat-call.is-visible:active { transform: translate(-50%, 0) scale(.96); }
+    .cat-call-pic {
+      display: block;
+      flex: 0 0 58px;
+      width: 58px;
+      height: 46px;
+      background: url("cat_frames.png") 0 0 / 1200% 100% no-repeat;
+      filter: drop-shadow(0 2px 3px rgba(20, 8, 2, .55));
+    }
+    .cat-call-copy { display: grid; justify-items: start; gap: 1px; text-align: left; }
+    .cat-call-copy strong { font-size: 13.5px; font-weight: 1000; letter-spacing: .2px; text-shadow: 0 1px 1px rgba(24, 10, 2, .8); }
+    .cat-call-sub { color: #ffd98a; font-size: 10px; font-weight: 800; letter-spacing: .2px; }
+    .cat-call-track {
+      display: block;
+      width: 124px;
+      height: 6px;
+      margin-top: 3px;
+      border-radius: 999px;
+      background: rgba(28, 11, 2, .68);
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, .45);
+      overflow: hidden;
+    }
+    .cat-call-fill {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #ffe98a, #ffa62f);
+      transition: width .12s linear;
+    }
+    @keyframes cat-call-pulse {
+      0%, 100% { box-shadow: 0 9px 22px rgba(22, 9, 2, .58), 0 0 0 0 rgba(255, 205, 90, .5), inset 0 1px 0 rgba(255, 228, 152, .5); }
+      50% { box-shadow: 0 9px 22px rgba(22, 9, 2, .58), 0 0 0 9px rgba(255, 205, 90, 0), inset 0 1px 0 rgba(255, 228, 152, .5); }
+    }
+    @media (max-width: 980px) {
+      .cat-call { bottom: calc(var(--footer-height) + 48px); padding: 5px 13px 6px 7px; }
+      .cat-call-copy strong { font-size: 12px; }
+      .cat-call-track { width: 104px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .cat-call.is-visible { animation: none; }
+    }
+
     /* --- Зимний прикорм: ящик сиропа в углу экрана (1 декабря — 31 января) --- */
     .syrup-corner {
       position: absolute;
@@ -1015,7 +1138,7 @@
 
     @media (max-width: 1260px) {
       :root { --rail-width: 220px; }
-      .topbar { grid-template-columns: 290px minmax(0,1fr) 205px; gap: 8px; padding-right: 9px; }
+      .topbar { grid-template-columns: 290px minmax(0,1fr) 256px; gap: 8px; padding-right: 9px; }
       .brand-mark { width: 86px; flex-basis: 86px; }
       .brand h1 { font-size: 32px; }
       .brand p { font-size: 12px; }
@@ -1052,7 +1175,7 @@
       .date-card .res-icon { font-size: 24px; }
       .date-card .res-label { font-size: 8px; }
       .date-card .res-value { font-size: 9px; }
-      .top-tools { grid-column: 2; grid-row: 1; justify-self: end; width: 220px; }
+      .top-tools { grid-column: 2; grid-row: 1; justify-self: end; width: 262px; }
       .tool-button { height: 57px; border-radius: 14px; font-size: 8px; }
       .tool-button .tool-icon { font-size: 24px; }
       .main-nav { top: 151px; left: 8px; width: calc(100vw - 16px); height: 75px; gap: 5px; overflow-x: auto; }
@@ -1095,7 +1218,7 @@
       .brand-mark { width: 53px; height: 52px; flex-basis: 53px; margin-right: 2px; }
       .brand h1 { font-size: 24px; }
       .brand p { font-size: 8px; }
-      .top-tools { width: 155px; gap: 3px; }
+      .top-tools { width: 196px; gap: 3px; }
       .tool-button { height: 48px; padding: 2px; font-size: 7px; }
       .tool-button .tool-icon { font-size: 19px; }
       .resource-strip { gap: 3px; }
@@ -1222,6 +1345,7 @@
         <button class="tool-button" type="button" data-tool="help"><span class="tool-icon">❔</span><span>Справка</span></button>
         <button class="tool-button" type="button" data-tool="settings"><span class="tool-icon">⚙️</span><span>Настройки</span></button>
         <button class="tool-button" type="button" data-tool="exit"><span class="tool-icon">⇥</span><span>Выход</span></button>
+        <button class="tool-button" type="button" data-test="mouse" title="Проверка сценария: мышка и кот"><span class="tool-icon">🐭</span><span>Мышка</span></button>
       </div>
     </header>
 
@@ -1267,6 +1391,7 @@
       </div>
       <div class="bees-layer" id="bees-layer" aria-hidden="true"></div>
       <div class="popups-layer" id="popups-layer" aria-hidden="true"></div>
+      <div class="critters-layer" id="critters-layer" aria-hidden="true"></div>
     </div>
 
     <aside class="left-hud" aria-label="Совет и карта местности">
@@ -1368,6 +1493,15 @@
         <span class="action-icon" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M10 55V22l8-8 8 8v33M38 55V22l8-8 8 8v33" fill="#bd782c" stroke="#60340f" stroke-width="3" stroke-linejoin="round"/><path d="M8 32h48v8H8zM8 46h48v7H8z" fill="#d99946" stroke="#60340f" stroke-width="3" stroke-linejoin="round"/><path d="M12 34h40M12 48h40" stroke="#f1bd69" stroke-width="2"/></svg></span><span class="action-label">Дорожки<br>и заборы</span><span class="action-cost" id="fence-cost">80 <img class="coin-inline" src="coin.png" alt=""></span>
       </button>
     </div>
+
+    <button class="cat-call" type="button" id="cat-call" aria-hidden="true" tabindex="-1" title="Позвать кота — он прогонит мышку">
+      <span class="cat-call-pic" aria-hidden="true"></span>
+      <span class="cat-call-copy">
+        <strong>Позвать кота!</strong>
+        <span class="cat-call-sub">🐭 Мышка у улья — <span id="cat-call-timer">10</span> с</span>
+        <span class="cat-call-track" aria-hidden="true"><span class="cat-call-fill" id="cat-call-fill"></span></span>
+      </span>
+    </button>
 
     <button class="syrup-corner" type="button" id="syrup-corner" aria-label="Прикорм пчёл сиропом" aria-hidden="true" tabindex="-1" title="Прикорм пчёл сиропом (1 декабря — 31 января)">
       <span class="syrup-glow" aria-hidden="true"></span>
@@ -1891,10 +2025,10 @@
 
       function openTool(tool) {
         if (tool === 'help') {
-          openDialog('Справка пчеловода', '<p>Добро пожаловать на цветочную поляну! Щёлкайте мышкой по карте — пчеловод дойдёт туда прямо по тропинкам пасеки.</p><ul><li>Стройте ульи, чтобы увеличить количество пчелосемей.</li><li>Сажайте цветы: каждый медонос повышает выработку мёда.</li><li>Работники автоматически продают часть свежего урожая.</li><li>Нажмите «Собрать мёд», чтобы продать запас из хранилища.</li><li>Полив временно ускоряет производство, а ограждения повышают уют пасеки.</li><li>Зимой (с 1 декабря по 31 января) в правом нижнем углу появляется ящик сиропа — нажмите на него, и пчеловод подкормит пчёл у улья: сбор мёда ускорится на 20%.</li></ul><p>Прогресс сохраняется в браузере автоматически.</p>', [{label:'Начать играть', onClick:closeDialog}]);
+          openDialog('Справка пчеловода', '<p>Добро пожаловать на цветочную поляну! Щёлкайте мышкой по карте — пчеловод дойдёт туда прямо по тропинкам пасеки.</p><ul><li>Стройте ульи, чтобы увеличить количество пчелосемей.</li><li>Сажайте цветы: каждый медонос повышает выработку мёда.</li><li>Работники автоматически продают часть свежего урожая.</li><li>Нажмите «Собрать мёд», чтобы продать запас из хранилища.</li><li>Полив временно ускоряет производство, а ограждения повышают уют пасеки.</li><li>Зимой (с 1 декабря по 31 января) в правом нижнем углу появляется ящик сиропа — нажмите на него, и пчеловод подкормит пчёл у улья: сбор мёда ускорится на 20%.</li><li>🐭 Иногда к улью пробирается мышка. Пока она стоит у летка (10 секунд), внизу появляется кнопка «Позвать кота» — нажмите её, и кот прогонит воровку. Не успели — мышка унесёт часть мёда.</li></ul><p>Прогресс сохраняется в браузере автоматически.</p>', [{label:'Начать играть', onClick:closeDialog}]);
         } else if (tool === 'settings') {
           openDialog('Настройки', `<p>Сохранение: <span class="save-note">включено · прогресс в этом браузере</span></p><p>Скорость игры и состояние пасеки сохраняются автоматически.</p>`, [
-            {label:'Сбросить прогресс', danger:true, onClick:() => { if (window.confirm('Сбросить сохранение и начать заново?')) { localStorage.removeItem(SAVE_KEY); localStorage.removeItem(LEGACY_KEY); stopWateringAnimation(); stopFeedingAnimation(); feedJobActive = false; walkArrivalCb = null; state = cloneStart(); activeRoute = []; hivePollenStats.clear(); resetWorkerActors(); playerEl.classList.remove('walking'); applyPlayerVisual(); renderTrailPreview(); closeDialog(); render(); save(); showToast('Пасека обновлена — хорошего сезона!'); } }},
+            {label:'Сбросить прогресс', danger:true, onClick:() => { if (window.confirm('Сбросить сохранение и начать заново?')) { localStorage.removeItem(SAVE_KEY); localStorage.removeItem(LEGACY_KEY); stopWateringAnimation(); stopFeedingAnimation(); feedJobActive = false; resetCritters(); walkArrivalCb = null; state = cloneStart(); activeRoute = []; hivePollenStats.clear(); resetWorkerActors(); playerEl.classList.remove('walking'); applyPlayerVisual(); renderTrailPreview(); closeDialog(); render(); save(); showToast('Пасека обновлена — хорошего сезона!'); } }},
             {label:'Закрыть', secondary:true, onClick:closeDialog}
           ]);
         } else if (tool === 'exit') {
@@ -1923,7 +2057,8 @@
         'Полив медоносов ускоряет сбор нектара на 35% в течение полутора часов.',
         'Работники автоматически продают часть свежего мёда каждые 5 минут.',
         'Исследования повышают урожайность каждого улья на +12% за уровень.',
-        'Зимой (1 декабря — 31 января) нажмите на ящик сиропа в углу: пчеловод подкормит пчёл у улья и сбор мёда ускорится на 20%.'
+        'Зимой (1 декабря — 31 января) нажмите на ящик сиропа в углу: пчеловод подкормит пчёл у улья и сбор мёда ускорится на 20%.',
+        'Мышь у улья стоит 10 секунд — успейте нажать «Позвать кота», иначе она унесёт часть мёда.'
       ];
       let tipIndex = 0;
       const ZOOMS = [1, 1.12, 1.24];
@@ -2350,10 +2485,15 @@
         stopWateringAnimation();
         stopFeedingAnimation();
         if (walkArrivalCb && walkArrivalCb.isFeedJob) feedJobActive = false;
-        const route = computeTrailRoute(state.playerX, state.playerY, targetX, targetY);
-        const last = route[route.length - 1] || [state.playerX, state.playerY];
+        startWalkAlong(buildDirectRoute(state.playerX, state.playerY, targetX, targetY), onArrive);
+      }
+
+      // Маршрут по тропинкам + последний отрезок напрямую к цели (ульи стоят в стороне от дорожек)
+      function buildDirectRoute(fromX, fromY, targetX, targetY) {
+        const route = computeTrailRoute(fromX, fromY, targetX, targetY);
+        const last = route[route.length - 1] || [fromX, fromY];
         if (trailDist(last[0], last[1], targetX, targetY) > 0.35) route.push([targetX, targetY]);
-        startWalkAlong(route, onArrive);
+        return route;
       }
 
       // Snap initial saved position onto nearest valid trail point
@@ -2939,6 +3079,344 @@
 
       syncBeeSwarmCount(true);
 
+      /* =====================================================================
+         Мышь-воришка и кот-защитник.
+         Мышь случайно появляется на краю карты, подбегает к улью и стоит
+         рядом MOUSE_STAND_MS миллисекунд. В это время показывается кнопка с
+         котом: если игрок успел нажать — кот выбегает и прогоняет мышку,
+         иначе мышка убегает, унося часть мёда из хранилища.
+         ===================================================================== */
+      const MOUSE_FRAMES = 8;
+      const CAT_FRAMES = 12;
+      const MOUSE_STAND_MS = 10000;      // сколько мышка стоит у улья
+      const MOUSE_MIN_DELAY = 45000;     // пауза между появлениями мышки
+      const MOUSE_MAX_DELAY = 90000;
+      const MOUSE_SPEED = 15;            // world units per second
+      const MOUSE_FLEE_SPEED = 22;
+      const CAT_SPEED = 44;
+      const CAT_CATCH_DIST = 3.2;
+      const MOUSE_STEAL_MIN = 5;         // кг мёда, которые уносит мышка
+      const MOUSE_STEAL_MAX = 20;
+
+      const crittersLayerEl = $('critters-layer');
+      const catCallEl = $('cat-call');
+      const catCallTimerEl = $('cat-call-timer');
+      const catCallFillEl = $('cat-call-fill');
+
+      const MOUSE_EDGE_SPOTS = [
+        [3, 97], [97, 95], [2, 16], [97, 18], [48, 3], [72, 97], [12, 80], [90, 60]
+      ];
+
+      const critterState = {
+        mouse: null,
+        cat: null,
+        nextMouseAt: Date.now() + 22000 + Math.random() * 13000
+      };
+
+      function nearestEdgePoint(x, y) {
+        let best = MOUSE_EDGE_SPOTS[0];
+        let bestD = Infinity;
+        for (const spot of MOUSE_EDGE_SPOTS) {
+          const d = trailDist(x, y, spot[0], spot[1]);
+          if (d < bestD) { bestD = d; best = spot; }
+        }
+        return best.slice();
+      }
+
+      function farthestEdgePoint(x, y) {
+        let best = MOUSE_EDGE_SPOTS[0];
+        let bestD = -Infinity;
+        for (const spot of MOUSE_EDGE_SPOTS) {
+          const d = trailDist(x, y, spot[0], spot[1]);
+          if (d > bestD) { bestD = d; best = spot; }
+        }
+        return best.slice();
+      }
+
+      function createCritterEl(kind) {
+        const el = document.createElement('div');
+        el.className = `critter critter-${kind}`;
+        const shadow = document.createElement('span');
+        shadow.className = 'critter-shadow';
+        const flip = document.createElement('span');
+        flip.className = 'critter-flip';
+        const img = document.createElement('span');
+        img.className = 'critter-img';
+        const src = kind === 'mouse' ? 'mouse_frames.png' : 'cat_frames.png';
+        const total = kind === 'mouse' ? MOUSE_FRAMES : CAT_FRAMES;
+        img.style.backgroundImage = `url("${src}")`;
+        // одна кадровая ячейка = ширина блока, весь лист — total ячеек
+        img.style.backgroundSize = `${total * 100}% 100%`;
+        flip.appendChild(img);
+        el.appendChild(shadow);
+        el.appendChild(flip);
+        if (crittersLayerEl) crittersLayerEl.appendChild(el);
+        return { el, img, flip };
+      }
+
+      function placeCritter(c) {
+        c.el.style.left = `${c.x.toFixed(2)}%`;
+        c.el.style.top = `${c.y.toFixed(2)}%`;
+        c.el.style.setProperty('--depth-scale', (0.7 + 0.44 * (c.y / 100)).toFixed(3));
+        c.el.style.zIndex = String(Math.round(100 + c.y * 2) + 4);
+        c.flip.style.setProperty('--face-dir', String(c.face < 0 ? -1 : 1));
+      }
+
+      function setCritterFrame(c, frames, index) {
+        // Проценты background-position-x считаются от (блок − картинка), то есть от (frames − 1) кадров
+        const step = 100 / Math.max(1, frames - 1);
+        c.img.style.backgroundPositionX = `${(((index % frames) + frames) % frames * step).toFixed(4)}%`;
+      }
+
+      function removeCritter(c) {
+        if (!c) return;
+        c.el.classList.add('is-leaving');
+        window.setTimeout(() => { if (c.el.parentNode) c.el.remove(); }, 320);
+      }
+
+      // Двигаем существо по его путевым точкам; возвращает true, когда маршрут закончен
+      function stepCritterActor(c, dt, speed) {
+        let remaining = speed * dt;
+        while (remaining > 0 && c.waypoints.length > 0) {
+          const [tx, ty] = c.waypoints[0];
+          const segLen = trailDist(c.x, c.y, tx, ty);
+          const dx = tx - c.x;
+          if (Math.abs(dx) > 0.03) c.face = dx < 0 ? -1 : 1;
+          if (segLen <= remaining) {
+            c.x = tx;
+            c.y = ty;
+            remaining -= segLen;
+            c.waypoints.shift();
+          } else {
+            const r = remaining / segLen;
+            c.x += (tx - c.x) * r;
+            c.y += (ty - c.y) * r;
+            remaining = 0;
+          }
+        }
+        placeCritter(c);
+        return c.waypoints.length === 0;
+      }
+
+      function animateCritterFrames(c, dt, frameMs, frameCount, animate) {
+        if (!animate) return;
+        c.frameT = (c.frameT || 0) + dt * 1000;
+        if (c.frameT >= frameMs) {
+          c.frameT -= frameMs;
+          c.frame = (c.frame + 1) % frameCount;
+          setCritterFrame(c, frameCount, c.frame);
+        }
+      }
+
+      function showCatCall() {
+        if (!catCallEl) return;
+        catCallEl.classList.add('is-visible');
+        catCallEl.setAttribute('aria-hidden', 'false');
+        catCallEl.tabIndex = 0;
+        if (catCallFillEl) catCallFillEl.style.width = '100%';
+      }
+
+      function hideCatCall() {
+        if (!catCallEl) return;
+        catCallEl.classList.remove('is-visible');
+        catCallEl.setAttribute('aria-hidden', 'true');
+        catCallEl.tabIndex = -1;
+      }
+
+      function spawnMouse() {
+        if (critterState.mouse) return false;
+        if (!crittersLayerEl) return false;
+        if (state.hives < 1) return false;
+        let hives = [];
+        try { hives = getActiveBeeHives(); } catch (_) { hives = []; }
+        if (!hives.length) hives = [[48.6, 59.8, 55.2]];
+        const hive = hives[Math.floor(Math.random() * hives.length)];
+        const stand = [hive[0] + 3.6, Math.min(97, hive[1] + 3.6)];
+        const spawn = MOUSE_EDGE_SPOTS[Math.floor(Math.random() * MOUSE_EDGE_SPOTS.length)];
+        const route = buildDirectRoute(spawn[0], spawn[1], stand[0], stand[1]);
+        const base = createCritterEl('mouse');
+        const mouse = {
+          ...base,
+          x: route[0][0],
+          y: route[0][1],
+          face: 1,
+          phase: 'to-hive',
+          waypoints: route.slice(1),
+          hiveSpot: stand,
+          waitLeft: MOUSE_STAND_MS,
+          frame: 0,
+          frameT: 0
+        };
+        setCritterFrame(mouse, MOUSE_FRAMES, 0);
+        placeCritter(mouse);
+        critterState.mouse = mouse;
+        showToast('🐭 Мышка пробралась на пасеку!');
+        addLog('Замечена мышь возле ульев');
+        return true;
+      }
+
+      function mouseEscape(fastFlight, awayFrom) {
+        const mouse = critterState.mouse;
+        if (!mouse) return;
+        hideCatCall();
+        mouse.phase = 'fleeing';
+        mouse.speed = fastFlight ? MOUSE_FLEE_SPEED : MOUSE_SPEED;
+        // Если за ней гонится кот — бежим в противоположный край карты
+        mouse.waypoints = [awayFrom ? farthestEdgePoint(awayFrom[0], awayFrom[1]) : nearestEdgePoint(mouse.x, mouse.y)];
+      }
+
+      function mouseStealHoney() {
+        const mouse = critterState.mouse;
+        if (!mouse) return;
+        const wishKg = MOUSE_STEAL_MIN + Math.random() * (MOUSE_STEAL_MAX - MOUSE_STEAL_MIN);
+        const stolen = Math.min(state.honey, Math.round(wishKg * 10) / 10);
+        if (stolen > 0) {
+          state.honey = Math.max(0, state.honey - stolen);
+          state.happiness = Math.max(40, state.happiness - 2);
+          addLog(`Мышка утащила ${fmtOne.format(stolen)} кг мёда`);
+          showToast(`🐭 Мышка утащила ${fmtOne.format(stolen)} кг мёда!`);
+        } else {
+          addLog('Мышка убежала с пустыми лапами');
+          showToast('🐭 Мышка убежала ни с чем — хранилище пустое');
+        }
+        render();
+        save();
+        mouseEscape(false);
+      }
+
+      function callCat() {
+        const mouse = critterState.mouse;
+        if (!mouse || mouse.phase !== 'at-hive' || critterState.cat) return;
+        hideCatCall();
+        const from = nearestEdgePoint(mouse.hiveSpot[0], mouse.hiveSpot[1]);
+        const base = createCritterEl('cat');
+        const cat = {
+          ...base,
+          x: from[0],
+          y: from[1],
+          face: 1,
+          phase: 'chasing',
+          waypoints: [],
+          standLeft: 0,
+          frame: 0,
+          frameT: 0
+        };
+        setCritterFrame(cat, CAT_FRAMES, 0);
+        placeCritter(cat);
+        critterState.cat = cat;
+        // Мышка бросается наутёк в противоположный край, кот бросается за ней
+        mouseEscape(true, from);
+        showToast('🐱 Кот выбежал на пасеку — держись, мышка!');
+        addLog('Кот вызван на защиту ульев');
+      }
+
+      function updateCritters(dt) {
+        const now = Date.now();
+
+        // Плановое появление мышки
+        if (!critterState.mouse && now >= critterState.nextMouseAt) {
+          spawnMouse();
+          critterState.nextMouseAt = now + MOUSE_MIN_DELAY + Math.random() * (MOUSE_MAX_DELAY - MOUSE_MIN_DELAY);
+        }
+
+        const mouse = critterState.mouse;
+        if (mouse) {
+          if (mouse.phase === 'to-hive') {
+            animateCritterFrames(mouse, dt, 90, MOUSE_FRAMES, true);
+            if (stepCritterActor(mouse, dt, MOUSE_SPEED)) {
+              mouse.phase = 'at-hive';
+              mouse.waitLeft = MOUSE_STAND_MS;
+              showCatCall();
+              showToast('🐭 Мышка у улья — позовите кота!');
+              addLog('Мышка подошла к улью');
+            }
+          } else if (mouse.phase === 'at-hive') {
+            // «Принюхивается» у летка: покадровая анимация медленнее
+            animateCritterFrames(mouse, dt, 240, MOUSE_FRAMES, true);
+            mouse.waitLeft -= dt * 1000;
+            const left = Math.max(0, mouse.waitLeft);
+            if (catCallTimerEl) catCallTimerEl.textContent = String(Math.ceil(left / 1000));
+            if (catCallFillEl) catCallFillEl.style.width = `${(left / MOUSE_STAND_MS * 100).toFixed(1)}%`;
+            if (left <= 0) mouseStealHoney();
+          } else if (mouse.phase === 'fleeing') {
+            animateCritterFrames(mouse, dt, 70, MOUSE_FRAMES, true);
+            if (stepCritterActor(mouse, dt, mouse.speed || MOUSE_FLEE_SPEED)) {
+              removeCritter(mouse);
+              critterState.mouse = null;
+              critterState.nextMouseAt = Date.now() + MOUSE_MIN_DELAY + Math.random() * (MOUSE_MAX_DELAY - MOUSE_MIN_DELAY);
+            }
+          }
+        }
+
+        const cat = critterState.cat;
+        if (cat) {
+          if (cat.phase === 'chasing') {
+            animateCritterFrames(cat, dt, 70, CAT_FRAMES, true);
+            const target = critterState.mouse;
+            if (target) {
+              cat.waypoints = [[target.x, target.y]];
+              stepCritterActor(cat, dt, CAT_SPEED);
+              if (trailDist(cat.x, cat.y, target.x, target.y) <= CAT_CATCH_DIST) {
+                cat.phase = 'proud';
+                cat.standLeft = 1.6;
+                target.speed = MOUSE_FLEE_SPEED + 8; // мышка в панике улепётывает
+
+                showToast('🐱 Кот прогнал мышку — мёд спасён!');
+                addLog('Кот прогнал мышку от улья');
+                state.happiness = Math.min(99, state.happiness + 1);
+                render();
+                save();
+              }
+            } else {
+              cat.phase = 'returning';
+              cat.waypoints = [nearestEdgePoint(cat.x, cat.y)];
+            }
+          } else if (cat.phase === 'proud') {
+            animateCritterFrames(cat, dt, 150, CAT_FRAMES, false);
+            cat.standLeft -= dt;
+            if (cat.standLeft <= 0) {
+              cat.phase = 'returning';
+              cat.waypoints = [nearestEdgePoint(cat.x, cat.y)];
+            }
+          } else if (cat.phase === 'returning') {
+            animateCritterFrames(cat, dt, 60, CAT_FRAMES, true);
+            if (stepCritterActor(cat, dt, CAT_SPEED * 0.85)) {
+              removeCritter(cat);
+              critterState.cat = null;
+            }
+          }
+        }
+      }
+
+      function resetCritters() {
+        hideCatCall();
+        for (const key of ['mouse', 'cat']) {
+          const c = critterState[key];
+          if (c) {
+            if (c.el.parentNode) c.el.remove();
+            critterState[key] = null;
+          }
+        }
+        critterState.nextMouseAt = Date.now() + 22000 + Math.random() * 13000;
+      }
+
+      if (catCallEl) catCallEl.addEventListener('click', callCat);
+      const mouseTestBtn = document.querySelector('[data-test="mouse"]');
+      if (mouseTestBtn) {
+        mouseTestBtn.addEventListener('click', () => {
+          if (critterState.mouse) {
+            showToast('Мышка уже на пасеке');
+            return;
+          }
+          if (spawnMouse()) {
+            render();
+            save();
+          } else {
+            showToast('Сначала постройте хотя бы один улей');
+          }
+        });
+      }
+
       let lastWorkersTickAt = 0;
       function animateWorkersLoop(now) {
         const dt = lastWorkersTickAt ? Math.min(0.05, (now - lastWorkersTickAt) / 1000) : 1 / 60;
@@ -2981,6 +3459,7 @@
           syncBeeSwarmCount(false);
         }
         updateForagingBees(dt, now / 1000);
+        if (state.speed !== 0) updateCritters(dt);
         window.requestAnimationFrame(animateWorkersLoop);
       }
       window.requestAnimationFrame(animateWorkersLoop);
