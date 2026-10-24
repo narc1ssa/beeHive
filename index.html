@@ -65,7 +65,7 @@
       inset: 0;
       overflow: hidden;
       pointer-events: none;
-      background: #5ca938 url("map.png") center / 100% 100% no-repeat;
+      background: #5ca938 url("map_clean.png") center / 100% 100% no-repeat;
     }
     .scene-art-img {
       position: absolute;
@@ -1360,10 +1360,10 @@
 
     <div class="world-viewport" id="world-viewport" role="application" tabindex="0" aria-label="Игровая карта пасеки — нажмите по карте, чтобы пчеловод прошёл по тропинкам">
       <div class="scene-art" id="scene-art" aria-hidden="true">
-        <img class="scene-art-img" id="scene-map-0" data-season-idx="0" src="map_spring.png" alt="">
-        <img class="scene-art-img is-active" id="scene-map-1" data-season-idx="1" src="map.png" alt="">
-        <img class="scene-art-img" id="scene-map-2" data-season-idx="2" src="map_autumn.png" alt="">
-        <img class="scene-art-img" id="scene-map-3" data-season-idx="3" src="map_winter.png" alt="">
+        <img class="scene-art-img" id="scene-map-0" data-season-idx="0" src="map_clean_spring.png" alt="">
+        <img class="scene-art-img is-active" id="scene-map-1" data-season-idx="1" src="map_clean.png" alt="">
+        <img class="scene-art-img" id="scene-map-2" data-season-idx="2" src="map_clean_autumn.png" alt="">
+        <img class="scene-art-img" id="scene-map-3" data-season-idx="3" src="map_clean_winter.png" alt="">
       </div>
       <svg class="trail-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
         <polyline class="trail-line" id="trail-line" points=""></polyline>
@@ -1382,10 +1382,10 @@
       </div>
       <div class="map-layer" id="map-layer" aria-hidden="true">
         <div class="fg-props" id="fg-props">
-          <img class="scene-art-img" id="fg-map-0" src="map_spring.png" alt="">
-          <img class="scene-art-img is-active" id="fg-map-1" src="map.png" alt="">
-          <img class="scene-art-img" id="fg-map-2" src="map_autumn.png" alt="">
-          <img class="scene-art-img" id="fg-map-3" src="map_winter.png" alt="">
+          <img class="scene-art-img" id="fg-map-0" src="map_clean_spring.png" alt="">
+          <img class="scene-art-img is-active" id="fg-map-1" src="map_clean.png" alt="">
+          <img class="scene-art-img" id="fg-map-2" src="map_clean_autumn.png" alt="">
+          <img class="scene-art-img" id="fg-map-3" src="map_clean_winter.png" alt="">
         </div>
         <div id="placed-items"></div>
       </div>
@@ -1524,7 +1524,7 @@
       'use strict';
 
       const SEASONS = ['Весна', 'Лето', 'Осень', 'Зима'];
-      const SEASON_MAPS = ['map_spring.png', 'map.png', 'map_autumn.png', 'map_winter.png'];
+      const SEASON_MAPS = ['map_clean_spring.png', 'map_clean.png', 'map_clean_autumn.png', 'map_clean_winter.png'];
       const SEASON_ICONS = ['🌸', '☀️', '🍂', '❄️'];
       // 1 игровой год (4 сезона × 30 дней = 120 дней = 172 800 игровых минут) проходит ровно за 10 реальных минут (600 с) на скорости 1×
       const DAYS_PER_SEASON = 30;
@@ -1562,13 +1562,13 @@
       const SAVE_KEY = 'pasaka_game_v2';
       const LEGACY_KEY = 'pasaka_save_v1';
       const START = {
-        honey: 1248, coins: 3560, hives: 7, hiveLimit: 12,
-        flowers: 18, workers: 0, workerLimit: 12,
-        seasonHoney: 32, seasonTarget: 50, seasonIndex: 1, seasonRewarded: false,
+        honey: 0, coins: 3560, hives: 0, hiveLimit: 12,
+        flowers: 0, workers: 0, workerLimit: 12,
+        seasonHoney: 0, seasonTarget: 50, seasonIndex: 1, seasonRewarded: false,
         day: 14, year: 2, minutesOfDay: 14 * 60 + 32,
         totalTicks: 0, autoBuffer: 0, wateredUntil: 0, fedUntil: 0, feedReadyAt: 0,
         fenceLevel: 1, upgradeLevel: 0, happiness: 86,
-        taskIndex: 0, speed: 1, builtHives: 0, plantedFlowers: 0,
+        taskIndex: 0, speed: 1, builtHives: 0, plantedFlowers: 0, flowerSpots: [],
         playerX: 40.4, playerY: 66.6, playerFace: 1, hiredWorkers: []
       };
       const number = (value, fallback, min = 0, max = 1e9) => {
@@ -1609,7 +1609,7 @@
       state.honey = number(state.honey, START.honey);
       state.coins = number(state.coins, START.coins);
       state.hives = number(state.hives, START.hives, 0, 12);
-      state.hiveLimit = 12;
+      state.hiveLimit = 10; // ровно столько мест под ульи размечено на карте (HIVE_SLOTS)
       state.flowers = number(state.flowers, START.flowers, 0, 50);
       state.workerLimit = 12;
       if (!Array.isArray(state.hiredWorkers)) {
@@ -1641,7 +1641,11 @@
       state.taskIndex = number(state.taskIndex, 0, 0, TASKS.length - 1);
       state.speed = [0, 1, 2].includes(Number(state.speed)) ? Number(state.speed) : 1;
       state.builtHives = number(state.builtHives, 0, 0, 10);
+      state.builtHives = Math.min(state.builtHives, Math.min(state.hives, 10));
       state.plantedFlowers = number(state.plantedFlowers, 0, 0, 40);
+      state.flowerSpots = Array.isArray(state.flowerSpots)
+        ? state.flowerSpots.filter(sp => Array.isArray(sp) && sp.length === 2).map(sp => [number(sp[0], 50, 1, 99), number(sp[1], 50, 25, 99)]).slice(0, 40)
+        : [];
       state.playerX = number(state.playerX, START.playerX, 2, 96);
       state.playerY = number(state.playerY, START.playerY, 28, 98);
       state.playerFace = state.playerFace === -1 ? -1 : 1;
@@ -1813,9 +1817,10 @@
           if (!spend(cost)) return;
           state.flowers++;
           state.plantedFlowers++;
+          while (state.flowerSpots.length < state.plantedFlowers) state.flowerSpots.push(pickFlowerSpot());
           state.happiness = Math.min(95, state.happiness + 1);
           addLog('Посажены медоносные цветы');
-          showToast('🌼 Цветы посажены — нектара стало больше!');
+          showToast('🌼 Расцвела новая клумба — нектара стало больше!');
         } else if (action === 'worker') {
           const cost = 30 + state.workers * 20;
           if (state.workers >= state.workerLimit) return showToast('В команде уже максимальное число работников');
@@ -1925,10 +1930,42 @@
         [29.2, 36.2], [38.5, 34.5], [48.4, 35.2], [58.0, 35.2], [60.2, 41.8],
         [66.2, 46.8], [73.8, 49.4], [12.2, 69.4], [22.4, 67.8], [75.6, 88.2]
       ];
-      const FLOWER_SLOTS = [
-        [24.8, 42.4], [32.8, 49.2], [34.2, 37.8], [54.2, 36.0], [65.8, 39.2], [79.8, 47.2],
-        [68.2, 54.8], [75.2, 56.4], [83.8, 57.8], [47.2, 82.8], [24.2, 69.6], [55.2, 92.4]
+      // Площадки чистой травы, куда может лечь новый блок цветов (проверены по карте:
+      // никаких тропинок, построек, пруда и ручья в этих точках нет)
+      const FLOWER_SPOT_POOL = [
+        [84.2, 66.4], [87.0, 62.0], [93.1, 92.2], [65.2, 38.9], [50.0, 94.2],
+        [36.2, 45.0], [47.8, 44.5], [84.6, 91.5], [76.5, 71.7], [34.9, 72.5],
+        [9.8, 45.1], [67.8, 51.6], [73.5, 64.2], [30.9, 57.8], [87.5, 84.4],
+        [50.2, 90.2], [37.5, 66.9], [9.7, 82.9], [11.8, 93.0], [26.2, 94.5],
+        [80.5, 96.2], [68.9, 85.9], [39.4, 92.3], [75.2, 55.4], [85.6, 57.8],
+        [93.2, 74.2], [5.8, 75.4], [40.2, 38.9], [61.3, 47.3], [58.1, 89.6],
+        [13.7, 88.3], [27.1, 47.2], [27.7, 41.0], [44.0, 63.7], [60.6, 52.2],
+        [51.6, 56.5], [81.0, 87.5], [95.1, 81.2], [54.4, 39.6], [44.0, 34.6]
       ];
+      // Свободная случайная площадка под новую клумбу
+      function pickFlowerSpot() {
+        const busy = new Set(state.flowerSpots.map(([x, y]) => `${Math.round(x)},${Math.round(y)}`));
+        const hives = HIVE_SLOTS.slice(0, Math.min(state.builtHives, HIVE_SLOTS.length));
+        const free = FLOWER_SPOT_POOL.filter(([x, y]) => {
+          if (busy.has(`${Math.round(x)},${Math.round(y)}`)) return false;
+          return !hives.some(([hx, hy]) => Math.abs(hx - x) < 4 && Math.abs(hy - y) < 3.6);
+        });
+        let spot;
+        if (free.length > 0) {
+          spot = free[Math.floor(Math.random() * free.length)];
+        } else {
+          // все площадки заняты — добавляем клумбу со случайным сдвигом вокруг пасеки
+          spot = [4 + Math.random() * 92, 32 + Math.random() * 62];
+        }
+        // немного «живого» разброса, чтобы клумбы не стояли по линейке
+        return [
+          Math.max(2, Math.min(98, spot[0] + (Math.random() - 0.5) * 1.6)),
+          Math.max(28, Math.min(97, spot[1] + (Math.random() - 0.5) * 1.4))
+        ];
+      }
+      function flowerSpotAt(index) {
+        return state.flowerSpots[index] || FLOWER_SPOT_POOL[index % FLOWER_SPOT_POOL.length];
+      }
       function hiveSvg(index) {
         const gradientId = `woodBee${index}`;
         return `<svg viewBox="0 0 72 90" aria-hidden="true"><defs><linearGradient id="${gradientId}" x2="0" y2="1"><stop stop-color="#ffe06b"/><stop offset=".55" stop-color="#e99e20"/><stop offset="1" stop-color="#b96a12"/></linearGradient></defs><ellipse cx="36" cy="83" rx="29" ry="5" fill="#39200c" opacity=".45"/><path d="M13 27 36 8l23 19Z" fill="#8c541b" stroke="#59320e" stroke-width="3"/><rect x="17" y="29" width="38" height="42" rx="4" fill="url(#${gradientId})" stroke="#68400f" stroke-width="3"/><path d="M18 42h36M18 56h36" stroke="#a65c11" stroke-width="4"/><path d="M27 33v35M45 33v35" stroke="#ffe796" stroke-width="2" opacity=".75"/><circle cx="36" cy="64" r="4" fill="#48280d"/><path d="M22 72v9M50 72v9" stroke="#6b4117" stroke-width="4" stroke-linecap="round"/><path d="M28 81h-9M54 81h-9" stroke="#60380f" stroke-width="3" stroke-linecap="round"/></svg>`;
@@ -1941,16 +1978,17 @@
       function renderPlacedItems() {
         const container = $('placed-items');
         if (!container) return;
-        const targetHives = Math.min(state.builtHives, HIVE_SLOTS.length);
+        const targetHives = Math.min(state.hives, HIVE_SLOTS.length);
         while (placedHiveNodes.length < targetHives) {
           const i = placedHiveNodes.length;
           const item = document.createElement('span');
-          item.className = 'placed-object hive-object';
+          item.className = 'placed-object hive-object spawning';
           item.style.setProperty('--x', `${HIVE_SLOTS[i][0]}%`);
           item.style.setProperty('--y', `${HIVE_SLOTS[i][1]}%`);
           item.style.zIndex = String(Math.round(100 + HIVE_SLOTS[i][1] * 2));
           item.innerHTML = hiveSvg(i);
           container.appendChild(item);
+          window.setTimeout(() => item.classList.remove('spawning'), 620);
           placedHiveNodes.push(item);
         }
         while (placedHiveNodes.length > targetHives) {
@@ -1960,16 +1998,18 @@
             window.setTimeout(() => { if (removed.parentNode) removed.remove(); }, 190);
           }
         }
-        const targetFlowers = Math.min(state.plantedFlowers, FLOWER_SLOTS.length);
+        const targetFlowers = Math.min(state.plantedFlowers, 40);
         while (placedFlowerNodes.length < targetFlowers) {
           const i = placedFlowerNodes.length;
+          const [fx, fy] = flowerSpotAt(i);
           const item = document.createElement('span');
-          item.className = 'placed-object flower-patch';
-          item.style.setProperty('--x', `${FLOWER_SLOTS[i][0]}%`);
-          item.style.setProperty('--y', `${FLOWER_SLOTS[i][1]}%`);
-          item.style.zIndex = String(Math.round(90 + FLOWER_SLOTS[i][1] * 2));
+          item.className = 'placed-object flower-patch spawning';
+          item.style.setProperty('--x', `${fx}%`);
+          item.style.setProperty('--y', `${fy}%`);
+          item.style.zIndex = String(Math.round(90 + fy * 2));
           item.innerHTML = flowersSvg();
           container.appendChild(item);
+          window.setTimeout(() => item.classList.remove('spawning'), 620);
           placedFlowerNodes.push(item);
         }
         while (placedFlowerNodes.length > targetFlowers) {
@@ -2691,30 +2731,16 @@
       // Счётчик доставленных жёлтых кружочков по каждому отдельному улью (ключ — индекс улья)
       const hivePollenStats = new Map();
 
-      const MAP_FLOWER_SPOTS = [
-        // Северо-западный аптекарский цветник у домика
-        [7.2, 46.5], [10.5, 49.0],
-        // Лавандовые кусты по всей пасеке
-        [25.5, 49.0], [26.2, 62.2], [68.5, 89.2],
-        // Подсолнухи у центральной развилки и на юго-востоке
-        [32.0, 56.8], [73.5, 70.5], [73.2, 79.5],
-        // Ромашковые полянки от центра до дальнего правого луга
-        [31.2, 44.5], [87.5, 75.5], [81.0, 86.8], [91.8, 70.2],
-        // Разноцветные полевые цветы и клумбы вдоль тропинок и ручья
-        [26.2, 38.6], [36.6, 39.2], [36.0, 71.2], [41.8, 70.6],
-        [49.5, 30.8], [58.0, 32.5], [68.2, 47.6], [68.0, 58.2],
-        [76.5, 45.8], [78.5, 55.2], [79.5, 69.5], [81.8, 80.5], [88.2, 56.2]
-      ];
-
       function mapLayerPctToViewport(sx, sy) {
         return [sx, sy];
       }
 
       function getAllFlowerTargets() {
-        const list = MAP_FLOWER_SPOTS.slice();
-        const plantedCount = Math.min(state.plantedFlowers, FLOWER_SLOTS.length);
+        // Цветы на карте появляются только там, где игрок их посадил
+        const list = [];
+        const plantedCount = Math.min(state.plantedFlowers, 40);
         for (let i = 0; i < plantedCount; i++) {
-          const [sx, sy] = FLOWER_SLOTS[i];
+          const [sx, sy] = flowerSpotAt(i);
           list.push(mapLayerPctToViewport(sx, sy));
         }
         return list;
@@ -2764,18 +2790,12 @@
       }
 
       function getActiveBeeHives() {
+        // На фоне карты ульев больше нет — все они появляются на слотах постройки
         const list = [];
-        const builtCount = Math.min(state.builtHives, HIVE_SLOTS.length);
-        const mapCount = Math.max(0, Math.min(state.hives - builtCount, BEE_MAP_HIVES.length));
-        for (let i = 0; i < mapCount; i++) {
-          list.push(BEE_MAP_HIVES[i]);
-        }
-        for (let i = 0; i < builtCount; i++) {
+        const count = Math.min(state.hives, HIVE_SLOTS.length);
+        for (let i = 0; i < count; i++) {
           const [vx, vy] = mapLayerPctToViewport(HIVE_SLOTS[i][0], HIVE_SLOTS[i][1]);
-          list.push([vx, +(vy + 1.1).toFixed(2), +(vy - 3.6).toFixed(2)]);
-        }
-        if (list.length === 0 && state.hives > 0) {
-          list.push(BEE_MAP_HIVES[0]);
+          list.push([vx, +(vy - 1.4).toFixed(2), +(vy - 5.2).toFixed(2)]);
         }
         return list;
       }
@@ -2988,6 +3008,7 @@
 
       function desiredBeeCount() {
         if (state.hives <= 0) return 0;
+        if (state.flowers <= 0) return 0; // без цветов пчёлам некуда лететь
         const sIdx = currentSeasonIndex();
         if (sIdx === 3) return 0; // Зимой пчёлы не летают
         const summerRaw = summerBeeCountRaw();
