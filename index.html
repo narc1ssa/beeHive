@@ -423,6 +423,40 @@
       overflow: hidden;
       pointer-events: none;
     }
+    .hero-cleanup {
+      position: absolute;
+      z-index: 3;
+      left: 49.85%;
+      top: 64.3%;
+      width: 130px;
+      height: 136px;
+      transform: translate(-50%, -50%);
+      background-image: url("map.png");
+      background-size: 100vw 100vh;
+      background-position: -38.1vw -53.1vh;
+      background-repeat: no-repeat;
+      clip-path: polygon(25% 2%, 48% 0%, 70% 3%, 89% 13%, 99% 29%, 95% 47%, 100% 65%, 87% 83%, 69% 96%, 49% 100%, 31% 95%, 13% 84%, 2% 67%, 0 48%, 5% 29%, 13% 12%);
+      filter: drop-shadow(0 2px 3px rgba(35,59,18,.25));
+      pointer-events: none;
+    }
+    .feed-character {
+      position: absolute;
+      z-index: 5;
+      left: 49.85%;
+      top: 72.4%;
+      width: 88px;
+      height: 112px;
+      transform: translate(-50%, -100%);
+      filter: drop-shadow(0 3px 3px rgba(33,22,8,.5));
+      pointer-events: none;
+    }
+    .feed-character.approaching { transition: left 1.2s cubic-bezier(.18,.7,.22,1), top 1.2s cubic-bezier(.18,.7,.22,1); }
+    .feed-character[hidden], .hero-cleanup[hidden] { display: none !important; }
+    .feed-sprite, .feed-fallback { display: block; width: 100%; height: 100%; object-fit: contain; overflow: visible; }
+    .feed-fallback[data-frame="1"] .feeding-arm { transform: rotate(-7deg); }
+    .feed-fallback[data-frame="2"] .feeding-arm { transform: rotate(13deg); }
+    .feed-character.feeding .feeding-arm { animation: feed-arm .36s ease-in-out infinite alternate; transform-origin: 76px 73px; }
+    @keyframes feed-arm { from { transform: rotate(-10deg); } to { transform: rotate(17deg); } }
     .map-bee {
       position: absolute;
       z-index: 2;
@@ -448,6 +482,40 @@
     .placed-object.flower-patch { width: 64px; height: 39px; }
     .placed-object svg { display: block; width: 100%; height: 100%; overflow: visible; }
     @keyframes pop-in { from { opacity: 0; scale: .45; } to { opacity: 1; scale: 1; } }
+
+    .winter-feed-card {
+      position: absolute;
+      z-index: 15;
+      top: 224px;
+      right: calc(var(--rail-width) + 14px);
+      width: 144px;
+      min-height: 92px;
+      padding: 8px 9px;
+      border: 2px solid #f0bc4c;
+      border-radius: 18px;
+      display: grid;
+      grid-template-columns: 55px 1fr;
+      align-items: center;
+      gap: 6px;
+      color: #fff4d2;
+      background: linear-gradient(145deg, #70491f, #412711 55%, #30200f);
+      box-shadow: 0 5px 14px rgba(24,14,5,.55), inset 0 1px 0 rgba(255,232,168,.5);
+      cursor: pointer;
+      text-align: left;
+      animation: winter-glow 1.5s ease-in-out infinite alternate;
+    }
+    .winter-feed-card[hidden] { display: none; }
+    .winter-feed-card:hover { filter: brightness(1.15); transform: translateY(-2px); }
+    .winter-feed-card::before { content:""; position:absolute; inset:3px; border:1px solid rgba(255,225,149,.32); border-radius:13px; pointer-events:none; }
+    @keyframes winter-glow { from { box-shadow:0 4px 9px rgba(24,14,5,.5),0 0 0 rgba(255,196,52,0); } to { box-shadow:0 5px 18px rgba(24,14,5,.55),0 0 13px rgba(255,203,59,.62); } }
+    .syrup-art { width:52px; height:62px; display:grid; place-items:center; position:relative; }
+    .syrup-fallback, .syrup-image { width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 2px 2px rgba(0,0,0,.42)); }
+    .syrup-image { display:none; }
+    .winter-feed-card.has-syrops .syrup-image { display:block; }
+    .winter-feed-card.has-syrops .syrup-fallback { display:none; }
+    .winter-feed-copy strong { display:block; color:#ffd75b; font-size:11px; line-height:1.1; text-transform:uppercase; }
+    .winter-feed-copy span { display:block; margin-top:4px; font-size:11px; line-height:1.15; font-weight:900; }
+    .winter-feed-copy small { display:block; margin-top:4px; color:#dcefa7; font-size:9px; font-weight:800; }
 
     .toast {
       position: absolute;
@@ -554,6 +622,7 @@
       .nav-tab .nav-icon { font-size: 27px; }
       .nav-tab .nav-icon svg { width: 32px; height: 32px; }
       .scene-art { inset: 145px 0 var(--footer-height); background-size: 100vw 100vh; background-position: left -17vh; }
+      .winter-feed-card { top: 230px; left: 10px; right: auto; }
       .map-layer { inset: 145px 0 var(--footer-height); }
       .right-rail { top: 235px; right: 8px; bottom: calc(var(--footer-height) + 7px); width: 210px; grid-template-rows: 105px 170px minmax(145px,1fr); gap: 5px; }
       .right-rail .speed-card { display: none; }
@@ -606,6 +675,7 @@
       .nav-tab .nav-icon { font-size: 22px; }
       .nav-tab .nav-icon svg { width: 26px; height: 26px; }
       .scene-art { inset: 145px 0 var(--footer-height); background-position: center -17vh; background-size: 125vw 100vh; }
+      .winter-feed-card { top: 218px; left: 7px; transform: scale(.88); transform-origin: top left; }
       .map-layer { inset: 145px 0 var(--footer-height); }
       .right-rail { top: auto; right: 5px; bottom: calc(var(--footer-height) + 5px); width: 165px; height: 176px; max-height: 270px; grid-template-rows: 96px 1fr; gap: 4px; }
       .right-rail .info-card { display: none; }
@@ -731,6 +801,28 @@
       <span class="map-bee" style="--x:39%;--y:37%;--delay:-.6s">🐝</span>
       <span class="map-bee" style="--x:62%;--y:28%;--delay:-2.2s">🐝</span>
       <span class="map-bee" style="--x:76%;--y:53%;--delay:-1.4s">🐝</span>
+      <div class="hero-cleanup" id="hero-cleanup" hidden aria-hidden="true"></div>
+      <div class="feed-character" id="feed-character" hidden aria-hidden="true">
+        <img class="feed-sprite" id="feed-sprite" src="feed1.png" alt="" hidden>
+        <svg class="feed-fallback" id="feed-fallback" data-frame="1" viewBox="0 0 100 128">
+          <ellipse cx="50" cy="122" rx="28" ry="5" fill="#35200e" opacity=".42"/>
+          <path d="M37 84 32 108l9 7 8-25M62 84l7 24-10 8-9-26" fill="#eee3c9" stroke="#72532e" stroke-width="3" stroke-linejoin="round"/>
+          <path d="M30 108q-4 4-3 9l14 2 3-5-6-7M61 109l-3 6 4 5 14-3q1-6-5-9Z" fill="#74512a" stroke="#4e351c" stroke-width="2.5" stroke-linejoin="round"/>
+          <path d="M32 59q5-7 18-7h2q14 0 18 8l6 28q-8 8-26 8T25 88Z" fill="#f4ead2" stroke="#76542c" stroke-width="3" stroke-linejoin="round"/>
+          <path d="M50 57v37M37 68h26M39 85h22" fill="none" stroke="#bea77e" stroke-width="2"/>
+          <path d="M31 64 21 77l5 10 10-9" fill="#e7d8bb" stroke="#76542c" stroke-width="3" stroke-linejoin="round"/>
+          <path d="M20 78q-7-2-8 5l4 8 7 1 4-6Z" fill="#bd7b47" stroke="#754421" stroke-width="2"/>
+          <g class="feeding-arm" fill="none" stroke="#76542c" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><path d="M68 63 78 73l-2 12"/><path d="M76 70q-7-1-6 6l5 7 7-1 3-7Z" fill="#bd7b47" stroke-width="2"/></g>
+          <path d="M39 28q2-17 12-17 12 0 14 18l-3 25q-3 13-12 13-10 0-13-13Z" fill="#d28a54" stroke="#754721" stroke-width="2.5"/>
+          <path d="M42 40h3M58 40h3" stroke="#3e2616" stroke-width="3" stroke-linecap="round"/><path d="M46 49q5 5 10 0" fill="none" stroke="#744326" stroke-width="2.4" stroke-linecap="round"/>
+          <path d="M35 28q1-20 16-21 18 0 19 22l-6 6-4-11q-8 5-22 1Z" fill="#f6ecd5" stroke="#76542c" stroke-width="3" stroke-linejoin="round"/>
+          <path d="M32 28q18 6 42 0l-2 31q-4 18-19 18-15 0-19-18Z" fill="rgba(247,246,230,.3)" stroke="#9c8257" stroke-width="2.5"/>
+          <path d="M35 36h34M36 43h32M37 50h30M39 57h26" stroke="#ddcfb1" stroke-width="1" opacity=".9"/><path d="M33 29q18 7 41 0" fill="none" stroke="#fff9e7" stroke-width="5"/>
+          <path d="M42 80h16" stroke="#e0b44e" stroke-width="3" stroke-linecap="round"/><circle cx="50" cy="80" r="3" fill="#d89b26"/>
+          <path d="M13 83q-7 1-7 8l2 14q7 5 17 0l-2-16q-2-6-10-6Z" fill="#a9b2ae" stroke="#4e5145" stroke-width="2.5"/><path d="M8 91h14M10 103h13" stroke="#dce4df" stroke-width="2"/>
+          <path d="M9 82q6-8 14-2M7 77q-2-5 2-7m7 6q1-6 6-7" fill="none" stroke="#6c5434" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      </div>
       <div id="placed-items"></div>
     </div>
 
@@ -835,6 +927,13 @@
       </button>
     </div>
 
+    <button class="winter-feed-card" id="winter-feed-card" type="button" hidden aria-label="1 декабря: подкормить пчёл">
+      <span class="syrup-art">
+        <img class="syrup-image" id="syrops-image" src="syrops.png" alt="">
+        <svg class="syrup-fallback" viewBox="0 0 64 64" aria-hidden="true"><path d="M23 6h18v8l5 5v37q0 4-5 4H23q-5 0-5-4V19l5-5Z" fill="#ffcf45" stroke="#723c0d" stroke-width="3" stroke-linejoin="round"/><path d="M23 13h18M21 28h22v18H21Z" fill="#fff1bb" stroke="#a96513" stroke-width="2"/><path d="M25 33h14M25 39h10" stroke="#9c5b14" stroke-width="2" stroke-linecap="round"/><path d="M29 4h7v5h-7Z" fill="#e9a622" stroke="#723c0d" stroke-width="2"/><path d="M48 22q9 5 8 14" fill="none" stroke="#fff0a6" stroke-width="3" stroke-linecap="round"/></svg>
+      </span>
+      <span class="winter-feed-copy"><strong>1 декабря</strong><span>Подкормить<br>пчёл</span><small>Нажмите сюда</small></span>
+    </button>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <dialog id="game-dialog" aria-labelledby="dialog-title">
       <div class="dialog-inner">
@@ -860,7 +959,8 @@
         day: 14, year: 2, minutesOfDay: 14 * 60 + 32,
         totalTicks: 0, autoBuffer: 0, wateredUntil: 0,
         fenceLevel: 1, upgradeLevel: 0, happiness: 86,
-        taskIndex: 0, speed: 1, builtHives: 0, plantedFlowers: 0
+        taskIndex: 0, speed: 1, builtHives: 0, plantedFlowers: 0,
+        winterFeedPromptedYear: 0, winterFedYear: 0, winterFeedAvailable: false
       };
       const number = (value, fallback, min = 0, max = 1e9) => {
         const parsed = Number(value);
@@ -920,8 +1020,9 @@
       state.speed = [0, 1, 2].includes(Number(state.speed)) ? Number(state.speed) : 1;
       state.builtHives = number(state.builtHives, 0, 0, 10);
       state.plantedFlowers = number(state.plantedFlowers, 0, 0, 40);
-      delete state.playerX;
-      delete state.playerY;
+      state.winterFeedPromptedYear = number(state.winterFeedPromptedYear, 0, 0, 10000);
+      state.winterFedYear = number(state.winterFedYear, 0, 0, 10000);
+      state.winterFeedAvailable = Boolean(state.winterFeedAvailable);
 
       const fmt = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 });
       const fmtOne = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -930,6 +1031,10 @@
       const dialog = $('game-dialog');
       let toastTimer = 0;
       let lastLogAt = 0;
+      let feedingInProgress = false;
+      let activeFeedFrame = 0;
+      const FEED_HOME = { x: 49.85, y: 72.4 };
+      const FEED_HIVE = { x: 57, y: 57 };
 
       function save() {
         try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); }
@@ -992,6 +1097,15 @@
         $('efficiency-label').textContent = `${efficiency}%`;
         $('efficiency-bar').style.width = `${efficiency}%`;
         $('mood').textContent = happy >= 80 ? '🙂 Спокойное' : '😟 Тревожное';
+        const isFedThisWinter = seasonName() === 'Зима' && state.winterFedYear === state.year;
+        $('winter-feed-card').hidden = !(state.winterFeedAvailable && seasonName() === 'Зима' && !isFedThisWinter && !feedingInProgress);
+        $('hero-cleanup').hidden = !(feedingInProgress || isFedThisWinter);
+        $('feed-character').hidden = !(feedingInProgress || isFedThisWinter);
+        if (isFedThisWinter && !feedingInProgress) {
+          $('feed-character').style.left = `${FEED_HIVE.x}%`;
+          $('feed-character').style.top = `${FEED_HIVE.y}%`;
+          setFeedFrame(2);
+        }
 
         const buildCost = 50 + Math.max(0, state.hives - 7) * 25;
         const flowerCost = 20 + state.plantedFlowers * 4;
@@ -1031,6 +1145,66 @@
           line.textContent = `${clockLabel()} — ${message}`;
           politeLog.prepend(line);
         }
+      }
+
+      function maybeOfferWinterFeed() {
+        if (seasonName() !== 'Зима' || state.day !== 1 || state.winterFeedPromptedYear === state.year || state.winterFedYear === state.year) return;
+        state.winterFeedPromptedYear = state.year;
+        state.winterFeedAvailable = true;
+        showToast('❄️ 1 декабря: пчёлам нужна зимняя подкормка');
+        save();
+      }
+
+      function setFeedFrame(frame) {
+        if (activeFeedFrame === frame) return;
+        activeFeedFrame = frame;
+        const sprite = $('feed-sprite');
+        const fallback = $('feed-fallback');
+        fallback.dataset.frame = String(frame);
+        sprite.hidden = true;
+        fallback.hidden = false;
+        sprite.onload = () => { sprite.hidden = false; fallback.hidden = true; };
+        sprite.onerror = () => { sprite.hidden = true; fallback.hidden = false; };
+        sprite.src = `feed${frame}.png`;
+        if (sprite.complete && sprite.naturalWidth > 0) { sprite.hidden = false; fallback.hidden = true; }
+      }
+
+      const wait = ms => new Promise(resolve => window.setTimeout(resolve, ms));
+      async function startWinterFeeding() {
+        if (feedingInProgress || !state.winterFeedAvailable || seasonName() !== 'Зима' || state.winterFedYear === state.year) return;
+        feedingInProgress = true;
+        const character = $('feed-character');
+        const cleanup = $('hero-cleanup');
+        cleanup.hidden = false;
+        character.hidden = false;
+        character.classList.remove('feeding', 'approaching');
+        character.style.transition = 'none';
+        character.style.left = `${FEED_HOME.x}%`;
+        character.style.top = `${FEED_HOME.y}%`;
+        setFeedFrame(1);
+        render();
+        save();
+        await wait(60);
+        character.style.transition = '';
+        character.classList.add('approaching');
+        character.style.left = `${FEED_HIVE.x}%`;
+        character.style.top = `${FEED_HIVE.y}%`;
+        showToast('Алексей несёт сироп к улью…');
+        await wait(1250);
+        character.classList.remove('approaching');
+        character.classList.add('feeding');
+        for (let frame = 0; frame < 6; frame++) {
+          setFeedFrame(frame % 2 + 1);
+          await wait(380);
+        }
+        character.classList.remove('feeding');
+        state.winterFedYear = state.year;
+        state.winterFeedAvailable = false;
+        state.happiness = Math.min(99, state.happiness + 8);
+        feedingInProgress = false;
+        save();
+        render();
+        showToast('🐝 Пчёлы получили прикорм · счастье +8%');
       }
 
       function spend(amount) {
@@ -1132,6 +1306,7 @@
             addLog(`Новый сезон: ${seasonName()}`);
           }
         }
+        maybeOfferWinterFeed();
         render();
         if (state.totalTicks % 5 === 0) save();
       }
@@ -1250,7 +1425,11 @@
       $('dialog-close').addEventListener('click', closeDialog);
       dialog.addEventListener('click', event => { if (event.target === dialog) closeDialog(); });
       document.querySelector('.brand').addEventListener('click', event => { event.preventDefault(); selectTab('overview'); });
+      $('winter-feed-card').addEventListener('click', startWinterFeeding);
+      $('syrops-image').addEventListener('load', () => $('winter-feed-card').classList.add('has-syrops'));
+      $('syrops-image').addEventListener('error', () => $('winter-feed-card').classList.remove('has-syrops'));
 
+      maybeOfferWinterFeed();
       render();
       try { if (!localStorage.getItem(SAVE_KEY)) save(); } catch (_) { /* localStorage может быть отключён */ }
       window.setInterval(tick, 1000);
