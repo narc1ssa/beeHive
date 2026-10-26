@@ -364,7 +364,7 @@
       inset: 0 0 auto;
       height: var(--header-height);
       display: grid;
-      grid-template-columns: 360px minmax(0, 1fr) 286px;
+      grid-template-columns: 360px minmax(0, 1fr) 350px;
       align-items: center;
       gap: 10px;
       padding: 8px 7px 8px 13px;
@@ -498,7 +498,7 @@
     .date-card .res-label { font-size: 10px; }
     .date-card .res-value { font-size: 12px; margin-top: 6px; letter-spacing: .3px; }
 
-    .top-tools { pointer-events: auto; display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 6px; }
+    .top-tools { pointer-events: auto; display: grid; grid-template-columns: repeat(3, minmax(0, 1.15fr)) repeat(2, minmax(0, .85fr)); gap: 6px; }
     .tool-button {
       position: relative;
       height: 80px;
@@ -1156,7 +1156,7 @@
 
     @media (max-width: 1260px) {
       :root { --rail-width: 220px; }
-      .topbar { grid-template-columns: 290px minmax(0,1fr) 256px; gap: 8px; padding-right: 9px; }
+      .topbar { grid-template-columns: 290px minmax(0,1fr) 280px; gap: 8px; padding-right: 9px; }
       .brand-mark { width: 86px; flex-basis: 86px; }
       .brand h1 { font-size: 32px; }
       .brand p { font-size: 12px; }
@@ -1166,7 +1166,7 @@
       .res-label { font-size: 11px; }
       .res-value { font-size: 17px; }
       .top-tools { gap: 5px; }
-      .tool-button { font-size: 9px; }
+      .tool-button { font-size: 8px; padding: 3px 2px; }
       .main-nav { width: min(870px, calc(100vw - var(--rail-width) - 24px)); gap: 7px; }
       .nav-tab { font-size: 11px; }
       .nav-tab .nav-icon { font-size: 31px; }
@@ -1193,7 +1193,7 @@
       .date-card .res-icon { font-size: 24px; }
       .date-card .res-label { font-size: 8px; }
       .date-card .res-value { font-size: 9px; }
-      .top-tools { grid-column: 2; grid-row: 1; justify-self: end; width: 262px; }
+      .top-tools { grid-column: 2; grid-row: 1; justify-self: end; width: 310px; }
       .tool-button { height: 57px; border-radius: 14px; font-size: 8px; }
       .tool-button .tool-icon { font-size: 24px; }
       .main-nav { top: 151px; left: 8px; width: calc(100vw - 16px); height: 75px; gap: 5px; overflow-x: auto; }
@@ -1238,6 +1238,7 @@
       .brand p { font-size: 8px; }
       .top-tools { width: 196px; gap: 3px; }
       .tool-button { height: 48px; padding: 2px; font-size: 7px; }
+      .top-tools .tool-button > span:not(.tool-icon) { display: none; }
       .tool-button .tool-icon { font-size: 19px; }
       .resource-strip { gap: 3px; }
       .resource-card { height: 60px; gap: 2px; padding: 3px 2px; border-width: 1px; border-radius: 11px; }
@@ -1364,6 +1365,7 @@
         <button class="tool-button" type="button" data-tool="settings"><span class="tool-icon">⚙️</span><span>Настройки</span></button>
         <button class="tool-button" type="button" data-tool="exit"><span class="tool-icon">⇥</span><span>Выход</span></button>
         <button class="tool-button" type="button" data-test="mouse" title="Проверка сценария: мышка и кот"><span class="tool-icon">🐭</span><span>Мышка</span></button>
+        <button class="tool-button" type="button" data-test="season" id="season-next-btn" title="Следующее время года — переключить сезон"><span class="tool-icon" id="season-next-icon">🍂</span><span>След.<br>сезон</span></button>
       </div>
     </header>
 
@@ -1737,6 +1739,16 @@
         $('worker-limit').textContent = state.workerLimit;
         $('season-day').textContent = `${seasonName().toLocaleUpperCase('ru-RU')} · ДЕНЬ ${state.day}`;
         syncSeasonBackground();
+        const nextSeasonIconEl = $('season-next-icon');
+        if (nextSeasonIconEl) {
+          const nextIdx = (seasonIndex() + 1) % SEASONS.length;
+          nextSeasonIconEl.textContent = SEASON_ICONS[nextIdx];
+        }
+        const nextSeasonBtnEl = $('season-next-btn');
+        if (nextSeasonBtnEl) {
+          const nextIdx = (seasonIndex() + 1) % SEASONS.length;
+          nextSeasonBtnEl.title = `Следующее время года: ${SEASONS[nextIdx]} — переключить сезон`;
+        }
         $('year-label').textContent = `ГОД ${state.year}`;
         $('season-progress').textContent = currency(state.seasonHoney);
         $('season-target').textContent = fmt.format(state.seasonTarget);
@@ -1916,6 +1928,22 @@
           }
         }
         render();
+      }
+
+      // Кнопка контроля «Следующее время года»: переключает сезон вручную,
+      // повторяя ту же логику, что и естественная смена сезона в часах.
+      function advanceSeason() {
+        state.seasonIndex += 1;
+        if (state.seasonIndex % SEASONS.length === 0) state.year += 1;
+        state.day = 1;
+        state.minutesOfDay = 0;
+        state.seasonHoney = 0;
+        state.seasonRewarded = false;
+        const idx = ((state.seasonIndex % SEASONS.length) + SEASONS.length) % SEASONS.length;
+        addLog(`Сезон переключён вручную: ${SEASONS[idx]}`);
+        showToast(`${SEASON_ICONS[idx]} Наступил сезон: ${SEASONS[idx]}`);
+        render();
+        save();
       }
 
       function tick() {
@@ -3490,6 +3518,8 @@
       }
 
       if (catCallEl) catCallEl.addEventListener('click', callCat);
+      const seasonNextBtn = document.querySelector('[data-test="season"]');
+      if (seasonNextBtn) seasonNextBtn.addEventListener('click', advanceSeason);
       const mouseTestBtn = document.querySelector('[data-test="mouse"]');
       if (mouseTestBtn) {
         mouseTestBtn.addEventListener('click', () => {
