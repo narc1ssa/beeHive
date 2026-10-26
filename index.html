@@ -862,15 +862,23 @@
       position: absolute;
       left: var(--x);
       top: var(--y);
-      width: 55px;
-      height: 68px;
-      transform: translate(-50%,-50%);
-      filter: drop-shadow(0 3px 2px rgba(36,20,6,.58));
+      transform: translate(-50%,-100%);
+      filter: drop-shadow(0 2px 2px rgba(36,20,6,.45));
       animation: pop-in .28s cubic-bezier(.2,1.35,.5,1) both;
       pointer-events: none;
     }
-    .placed-object.flower-patch { width: 64px; height: 39px; }
-    .placed-object svg { display: block; width: 100%; height: 100%; overflow: visible; }
+    /* Улей — спрайт hive.png, низ спрайта стоит точно в точке слота */
+    .placed-object.hive-object { width: 3.77%; aspect-ratio: 70 / 96; }
+    /* Клумбы — спрайты flowers1.png / flowers2.png (чередуются) */
+    .placed-object.flower-patch { width: 4%; aspect-ratio: 169 / 108; }
+    .placed-object .placed-sprite {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      image-rendering: auto;
+      user-select: none;
+    }
     @keyframes pop-in { from { opacity: 0; scale: .45; } to { opacity: 1; scale: 1; } }
     .placed-object.removing { animation: pop-out .19s ease-in forwards; }
     @keyframes pop-out { from { opacity: 1; scale: 1; } to { opacity: 0; scale: .38; } }
@@ -1278,8 +1286,8 @@
       .action-label { font-size: 6px; }
       .action-cost { font-size: 6.5px; margin-top: 2px; }
       .foraging-bee { width: 22px; height: 21px; }
-      .placed-object { width: 43px; height: 55px; }
-      .placed-object.flower-patch { width: 50px; height: 31px; }
+      .placed-object.hive-object { width: 3.77%; }
+      .placed-object.flower-patch { width: 4%; }
     }
 
     @media (max-height: 720px) and (min-width: 981px) {
@@ -1665,7 +1673,7 @@
       state.builtHives = Math.min(state.builtHives, Math.min(state.hives, 10));
       state.plantedFlowers = number(state.plantedFlowers, 0, 0, 40);
       state.flowerSpots = Array.isArray(state.flowerSpots)
-        ? state.flowerSpots.filter(sp => Array.isArray(sp) && sp.length === 2).map(sp => [number(sp[0], 50, 1, 99), number(sp[1], 50, 25, 99)]).slice(0, 40)
+        ? state.flowerSpots.filter(sp => Array.isArray(sp) && sp.length === 2).map(sp => [number(sp[0], 50, 10, 95), number(sp[1], 50, 30, 80)]).slice(0, 40)
         : [];
       state.playerX = number(state.playerX, START.playerX, 2, 96);
       state.playerY = number(state.playerY, START.playerY, 28, 98);
@@ -1947,24 +1955,26 @@
         if (state.totalTicks % 5 === 0) save();
       }
 
-      // Места под ульи — на открытом лугу новой стартовой карты map00.png
+      // Места под ульи — на открытом лугу map00.png; спрайт улья — hive.png
       const HIVE_SLOTS = [
-        [29.5, 43.0], [37.0, 42.0], [45.0, 42.5],
-        [53.0, 43.0], [61.0, 44.5], [27.0, 51.0],
-        [35.5, 50.5], [44.5, 51.5], [55.6, 47.6],
-        [65.5, 52.0]
+        [32.0, 44.8], [64.6, 37.6], [50.4, 48.0],
+        [43.2, 36], [54.4, 36.8], [40.0, 52.0],
+        [27.2, 52.0], [59.2, 43.2], [26.9, 39.2],
+        [36.8, 39.2],
       ];
-      // Площадки чистой травы, куда может лечь новый блок цветов (проверены по map00.png:
-      // ни дорожек, ни построек, ни пруда/ручья и готовых клумб в этих точках нет)
+      // Площадки чистой травы под клумбы (спрайты flowers1.png / flowers2.png). Каждая проверена
+      // по map00.png: открытая трава без дорожек, построек, деревьев, пруда и готовых клумб.
       const FLOWER_SPOT_POOL = [
-        [58.4, 38.8], [61.7, 38.8], [67.8, 40.5], [75.4, 43.9], [74.8, 46.5],
-        [70.6, 46.8], [78.6, 48.1], [51.3, 49.5], [73.2, 49.6], [22.3, 50.6],
-        [60.7, 53.8], [76.8, 53.8], [82.3, 54.2], [72.7, 54.5], [51.2, 56.1],
-        [78.6, 56.5], [33.4, 56.6], [56.9, 56.6], [38.5, 56.9], [41.7, 57.7],
-        [66.4, 57.8], [63.0, 57.9], [70.8, 59.1], [48.0, 59.3], [74.8, 59.3],
-        [59.7, 59.7], [51.6, 60.0], [55.9, 60.1], [78.5, 60.1], [65.6, 61.2],
-        [26.1, 61.8], [48.2, 62.4], [44.9, 62.6], [52.6, 62.7], [71.9, 62.7],
-        [58.1, 62.9], [36.0, 67.9], [51.5, 66.1], [35.4, 71.6], [29.8, 56.6]
+        [79.6, 48.2], [14, 73.8], [41.2, 41.0], [51.6, 67.4],
+        [72.4, 67.4], [59.6, 33], [32.4, 69.0], [54.8, 49.0],
+        [82.8, 33], [86.8, 61.8], [31.6, 53.0], [67.6, 54.6],
+        [44.4, 53.8], [48.4, 33], [59.6, 61.0], [77.2, 58.6],
+        [22.8, 69.8], [64.4, 67.4], [80.4, 65.8], [37.2, 57.8],
+        [46.0, 46.6], [54.8, 41.8], [83.6, 55.4], [68.4, 61.8],
+        [74.0, 52.2], [84.4, 39.4], [52.4, 61.0], [16.4, 68.2],
+        [50.0, 38.6], [67.6, 72.2], [35.6, 49.8], [26.8, 66.6],
+        [63.3, 57.8], [78.8, 53.8], [72.4, 57.0], [82.0, 60.2],
+        [27.6, 71.4], [74.8, 47.4], [73.2, 62.6], [22.0, 74.6],
       ];
       // Свободная случайная площадка под новую клумбу
       function pickFlowerSpot() {
@@ -1978,24 +1988,27 @@
         if (free.length > 0) {
           spot = free[Math.floor(Math.random() * free.length)];
         } else {
-          // все площадки заняты — добавляем клумбу со случайным сдвигом вокруг пасеки
-          spot = [20 + Math.random() * 62, 39 + Math.random() * 24];
+          // все площадки заняты — берём любую из пула и слегка сдвигаем в пределах луга
+          const base = FLOWER_SPOT_POOL[Math.floor(Math.random() * FLOWER_SPOT_POOL.length)];
+          spot = [base[0], base[1]];
         }
         // немного «живого» разброса, чтобы клумбы не стояли по линейке
         return [
-          Math.max(2, Math.min(98, spot[0] + (Math.random() - 0.5) * 1.6)),
-          Math.max(38, Math.min(70, spot[1] + (Math.random() - 0.5) * 1.4))
+          Math.max(13, Math.min(93, spot[0] + (Math.random() - 0.5) * 1.2)),
+          Math.max(33, Math.min(76, spot[1] + (Math.random() - 0.5) * 1.0))
         ];
       }
       function flowerSpotAt(index) {
         return state.flowerSpots[index] || FLOWER_SPOT_POOL[index % FLOWER_SPOT_POOL.length];
       }
-      function hiveSvg(index) {
-        const gradientId = `woodBee${index}`;
-        return `<svg viewBox="0 0 72 90" aria-hidden="true"><defs><linearGradient id="${gradientId}" x2="0" y2="1"><stop stop-color="#ffe06b"/><stop offset=".55" stop-color="#e99e20"/><stop offset="1" stop-color="#b96a12"/></linearGradient></defs><ellipse cx="36" cy="83" rx="29" ry="5" fill="#39200c" opacity=".45"/><path d="M13 27 36 8l23 19Z" fill="#8c541b" stroke="#59320e" stroke-width="3"/><rect x="17" y="29" width="38" height="42" rx="4" fill="url(#${gradientId})" stroke="#68400f" stroke-width="3"/><path d="M18 42h36M18 56h36" stroke="#a65c11" stroke-width="4"/><path d="M27 33v35M45 33v35" stroke="#ffe796" stroke-width="2" opacity=".75"/><circle cx="36" cy="64" r="4" fill="#48280d"/><path d="M22 72v9M50 72v9" stroke="#6b4117" stroke-width="4" stroke-linecap="round"/><path d="M28 81h-9M54 81h-9" stroke="#60380f" stroke-width="3" stroke-linecap="round"/></svg>`;
+      // Спрайты строений из репозитория: улей — hive.png, клумбы — flowers1.png / flowers2.png
+      const HIVE_SPRITE = 'hive.png';
+      const FLOWER_SPRITES = ['flowers1.png', 'flowers2.png'];
+      function hiveSpriteMarkup() {
+        return `<img class="placed-sprite" src="${HIVE_SPRITE}" alt="" decoding="async" draggable="false">`;
       }
-      function flowersSvg() {
-        return `<svg viewBox="0 0 100 54" aria-hidden="true"><ellipse cx="50" cy="49" rx="45" ry="4" fill="#32651e" opacity=".35"/><path d="M21 48q4-20 13-26M49 48q0-25 4-34M77 48q-5-21-12-28" fill="none" stroke="#39832b" stroke-width="3"/><g fill="#ffde4b" stroke="#d89116" stroke-width="1.5"><circle cx="34" cy="20" r="7"/><circle cx="53" cy="12" r="7"/><circle cx="66" cy="23" r="7"/></g><g fill="#fff7e7" stroke="#d979aa" stroke-width="1.4"><circle cx="18" cy="36" r="6"/><circle cx="82" cy="38" r="6"/></g><g fill="#a65320"><circle cx="34" cy="20" r="2.3"/><circle cx="53" cy="12" r="2.3"/><circle cx="66" cy="23" r="2.3"/></g><path d="M19 38q7-6 13-1M52 27q-8 1-12 8M72 32q8-6 13-2" fill="none" stroke="#58a734" stroke-width="3" stroke-linecap="round"/></svg>`;
+      function flowersSpriteMarkup(index) {
+        return `<img class="placed-sprite" src="${FLOWER_SPRITES[index % FLOWER_SPRITES.length]}" alt="" decoding="async" draggable="false">`;
       }
       const placedHiveNodes = [];
       const placedFlowerNodes = [];
@@ -2010,7 +2023,7 @@
           item.style.setProperty('--x', `${HIVE_SLOTS[i][0]}%`);
           item.style.setProperty('--y', `${HIVE_SLOTS[i][1]}%`);
           item.style.zIndex = String(Math.round(100 + HIVE_SLOTS[i][1] * 2));
-          item.innerHTML = hiveSvg(i);
+          item.innerHTML = hiveSpriteMarkup();
           container.appendChild(item);
           window.setTimeout(() => item.classList.remove('spawning'), 620);
           placedHiveNodes.push(item);
@@ -2031,7 +2044,7 @@
           item.style.setProperty('--x', `${fx}%`);
           item.style.setProperty('--y', `${fy}%`);
           item.style.zIndex = String(Math.round(90 + fy * 2));
-          item.innerHTML = flowersSvg();
+          item.innerHTML = flowersSpriteMarkup(i);
           container.appendChild(item);
           window.setTimeout(() => item.classList.remove('spawning'), 620);
           placedFlowerNodes.push(item);
@@ -2740,9 +2753,12 @@
       const popupsLayerEl = $('popups-layer');
 
       // Координаты ульев на карте: [x%, леток y%, крыша y%] (слоты постройки на map00.png)
+      // Спрайт улья (hive.png) стоит низом в точке слота, поэтому леток — чуть выше низа,
+      // а облачко мёда всплывает над крышей.
+      const HIVE_SPRITE_H_PCT = 3.77 * (96 / 70) * (1672 / 941); // высота спрайта в % высоты сцены
       const BEE_MAP_HIVES = HIVE_SLOTS.map(([hx, hy]) => {
         const [vx, vy] = mapLayerPctToViewport(hx, hy);
-        return [vx, +(vy - 1.4).toFixed(2), +(vy - 5.2).toFixed(2)];
+        return [vx, +(vy - 3.4).toFixed(2), +(vy - HIVE_SPRITE_H_PCT - 1.2).toFixed(2)];
       });
 
       let honeyCloudSeq = 0;
@@ -2831,7 +2847,7 @@
         const count = Math.min(state.hives, HIVE_SLOTS.length);
         for (let i = 0; i < count; i++) {
           const [vx, vy] = mapLayerPctToViewport(HIVE_SLOTS[i][0], HIVE_SLOTS[i][1]);
-          list.push([vx, +(vy - 1.4).toFixed(2), +(vy - 5.2).toFixed(2)]);
+          list.push([vx, +(vy - 3.4).toFixed(2), +(vy - HIVE_SPRITE_H_PCT - 1.2).toFixed(2)]);
         }
         return list;
       }
