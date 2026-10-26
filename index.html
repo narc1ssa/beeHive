@@ -66,6 +66,7 @@
       overflow: hidden;
       pointer-events: none;
       background: #5ca938 url("map00.png") center / 100% 100% no-repeat;
+      transition: filter .65s ease;
     }
     .scene-art-img {
       position: absolute;
@@ -101,13 +102,16 @@
       mix-blend-mode: soft-light;
       transition: opacity .65s ease, background .65s ease;
     }
-    .scene-art.season-spring { filter: saturate(1.06) hue-rotate(-4deg); }
-    .scene-art.season-spring .season-wash { opacity: .5; background: #ffd6e8; }
-    .scene-art.season-summer .season-wash { opacity: 0; }
-    .scene-art.season-autumn { filter: sepia(.34) saturate(1.18) hue-rotate(-14deg) brightness(1.02); }
-    .scene-art.season-autumn .season-wash { opacity: .55; background: #ffa63c; }
-    .scene-art.season-winter { filter: saturate(.45) brightness(1.04) contrast(.93) hue-rotate(8deg); }
-    .scene-art.season-winter .season-wash { opacity: .78; background: #e8f3ff; }
+    /* Лето — ровно map00.png, без всякой тонировки: карта должна оставаться такой же сочной, как файл. */
+    .scene-art.season-summer { filter: none; }
+    .scene-art.season-summer .season-wash { opacity: 0; background: transparent; }
+    /* Остальные сезоны — только лёгкий цветовой сдвиг, чтобы роспись не выцветала. */
+    .scene-art.season-spring { filter: saturate(1.05) hue-rotate(-3deg) brightness(1.01); }
+    .scene-art.season-spring .season-wash { opacity: .12; background: #ffd6e8; }
+    .scene-art.season-autumn { filter: sepia(.12) saturate(1.07) hue-rotate(-7deg) brightness(1.01); }
+    .scene-art.season-autumn .season-wash { opacity: .14; background: #ffa63c; }
+    .scene-art.season-winter { filter: saturate(.84) brightness(1.02) hue-rotate(6deg); }
+    .scene-art.season-winter .season-wash { opacity: .2; background: #dbeaff; }
     .trail-svg {
       position: absolute;
       z-index: 3;
