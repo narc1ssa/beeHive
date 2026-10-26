@@ -3059,10 +3059,35 @@
         bee.el.classList.toggle('has-pollen', flag);
       }
 
+      // Цветов на поляне нет — пчела всё равно вылетает из улья и кружит рядом с пасекой.
+      // Пыльцы она при этом не приносит, но рой остаётся живым во всех сезонах, кроме зимы.
+      function sendBeeToHivePatrol(bee) {
+        const hives = getActiveBeeHives();
+        if (hives.length === 0) return;
+        if (bee.hiveIdx == null || bee.hiveIdx >= hives.length) {
+          bee.hiveIdx = Math.floor(Math.random() * hives.length);
+        }
+        const [hx, hy] = hives[bee.hiveIdx];
+        const angle = Math.random() * Math.PI * 2;
+        const radius = 3.5 + Math.random() * 6.5;
+        const tx = Math.max(3, Math.min(97, hx + Math.cos(angle) * radius * 1.7));
+        const ty = Math.max(3, Math.min(97, hy + Math.sin(angle) * radius));
+        bee.patrol = true;
+        bee.phase = 'to-flower';
+        bee.el.classList.remove('gathering');
+        setBeeCarrying(bee, false);
+        planFlightLeg(bee, bee.x, bee.y, tx, ty, 1);
+      }
+
       function sendBeeToRandomFlower(bee) {
         const flowers = getAllFlowerTargets();
         const hives = getActiveBeeHives();
+        if (flowers.length === 0) {
+          sendBeeToHivePatrol(bee);
+          return;
+        }
         const fIdx = pickRandomIndex(flowers.length, bee.flowerIdx);
+        bee.patrol = false;
         bee.flowerIdx = fIdx;
         if (hives.length > 0 && (bee.hiveIdx == null || bee.hiveIdx >= hives.length)) {
           bee.hiveIdx = Math.floor(Math.random() * hives.length);
@@ -3083,7 +3108,8 @@
         const [tx, ty] = hiveEntrancePoint(hives[bee.hiveIdx]);
         bee.phase = 'to-hive';
         bee.el.classList.remove('gathering');
-        setBeeCarrying(bee, true);
+        // Патрульной пчеле нечего нести: без цветов пыльцы нет, значит и мёда тоже
+        setBeeCarrying(bee, !bee.patrol);
         planFlightLeg(bee, bee.x, bee.y, tx, ty, 0.85);
       }
 
@@ -3107,7 +3133,7 @@
         if (hives.length === 0) return null;
         const flowers = getAllFlowerTargets();
         const hiveIdx = Math.floor(Math.random() * hives.length);
-        const flowerIdx = Math.floor(Math.random() * flowers.length);
+        const flowerIdx = flowers.length > 0 ? Math.floor(Math.random() * flowers.length) : -1;
         const [hx, hy] = hiveEntrancePoint(hives[hiveIdx]);
         const el = document.createElement('div');
         el.className = 'foraging-bee';
@@ -3128,6 +3154,7 @@
           hiveIdx,
           flowerIdx,
           phase: 'to-flower',
+          patrol: false,
           carrying: false,
           progress: 0,
           duration: 2,
@@ -3141,7 +3168,11 @@
           // Равномерно распределяем стартовый рой: часть летит к разным цветам налегке,
           // часть уже опыляет цветок, а часть возвращается в ульи с жёлтым кружочком в лапах
           const roll = Math.random();
-          if (roll < 0.45) {
+          if (flowers.length === 0) {
+            // Клумб нет — пчёлы вылетают из улья и кружат над пасекой
+            sendBeeToHivePatrol(bee);
+            bee.progress = Math.random() * 0.9;
+          } else if (roll < 0.45) {
             sendBeeToRandomFlower(bee);
             bee.progress = Math.random() * 0.9;
           } else if (roll < 0.62) {
@@ -3181,24 +3212,26 @@
         return ((state.seasonIndex % SEASONS.length) + SEASONS.length) % SEASONS.length;
       }
 
-      // Летняя численность при 1 улье = 5 пчёл, каждый новый улей увеличивает количество пчёл на +20% (×1.2):
-      // 1..12 ульев летом: 5, 6, 7, 9, 10, 12, 15, 18, 22, 26, 31, 37 пчёл
+      // Летняя численность при 1 улье = 8 пчёл, каждый новый улей увеличивает рой на +20% (×1.2):
+      // 1..12 ульев летом: 8, 10, 12, 14, 17, 20, 24, 29, 34, 41, 50, 60 пчёл
+      // Лето — это полный рой, весна и осень — ровно его пятая часть, зима — ни одной пчелы.
       function summerBeeCountRaw() {
         if (state.hives <= 0) return 0;
-        return 5 * Math.pow(1.2, state.hives - 1);
+        return 8 * Math.pow(1.2, state.hives - 1);
       }
 
       function desiredBeeCount() {
         if (state.hives <= 0) return 0;
-        if (state.flowers <= 0) return 0; // без цветов пчёлам некуда лететь
         const sIdx = currentSeasonIndex();
         if (sIdx === 3) return 0; // Зимой пчёлы не летают
-        const summerRaw = summerBeeCountRaw();
+        const summerCount = Math.max(1, Math.round(summerBeeCountRaw()));
         if (sIdx === 0 || sIdx === 2) {
-          // Весной и осенью вылетает около 20% от летнего роя
-          return Math.max(1, Math.round(summerRaw * 0.2));
+          // Весной и осенью вылетает ровно пятая часть летнего роя.
+          // Округляем вниз, чтобы в другие сезоны пчёл никогда не было больше 1/5 летнего,
+          // то есть летом их всегда минимум в 5 раз больше.
+          return Math.max(1, Math.floor(summerCount / 5));
         }
-        return Math.max(1, Math.round(summerRaw));
+        return summerCount;
       }
 
       function seasonBeeSpeedFactor() {
@@ -3246,9 +3279,9 @@
             if (bee.progress >= 1) {
               if (bee.phase === 'to-flower') {
                 bee.phase = 'gathering';
-                bee.timer = 0.85 + Math.random() * 0.65;
+                bee.timer = bee.patrol ? 0.4 + Math.random() * 0.5 : 0.85 + Math.random() * 0.65;
                 bee.pollenPicked = false;
-                bee.el.classList.add('gathering');
+                if (!bee.patrol) bee.el.classList.add('gathering');
               } else {
                 // Прилетела к улью — заносит жёлтый кружочек пыльцы в улей
                 const deliveredPollen = bee.carrying;
@@ -3263,7 +3296,7 @@
           } else if (bee.phase === 'gathering') {
             bee.timer -= step;
             // Во время сбора на цветке в лапках появляется яркий жёлтый кружочек пыльцы
-            if (!bee.pollenPicked && bee.timer <= 0.42) {
+            if (!bee.patrol && !bee.pollenPicked && bee.timer <= 0.42) {
               bee.pollenPicked = true;
               setBeeCarrying(bee, true);
             }
