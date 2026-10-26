@@ -360,6 +360,23 @@
     .minimap-zoom-in { left: 79.5%; top: 59.5%; width: 16%; height: 13.5%; }
     .minimap-zoom-out { left: 79.5%; top: 72.5%; width: 16%; height: 13.5%; }
     .minimap-area-btn { left: 8%; top: 12%; width: 84%; height: 42%; border-radius: 22px; }
+    .music-hit {
+      left: 6.5%; top: 74%; width: 27%; height: 13.5%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 11px;
+      border: 2px solid rgba(220, 163, 68, .92);
+      background: linear-gradient(145deg, #6b4a24 0%, #3a2411 100%);
+      box-shadow: 0 2px 4px rgba(24, 13, 4, .45), inset 0 1px 0 rgba(255, 232, 161, .35);
+      color: #ffe08a;
+      font-size: 15px;
+      line-height: 1;
+      transition: transform .14s, filter .14s, opacity .2s;
+    }
+    .music-hit:hover { transform: translateY(-1px); filter: brightness(1.14); background: linear-gradient(145deg, #7b5629 0%, #462c15 100%); }
+    .music-hit.is-off { opacity: .6; border-color: rgba(150, 110, 55, .78); color: #cbb68e; }
+    .music-hit:active { transform: translateY(0); }
 
     .topbar {
       position: absolute;
@@ -1424,6 +1441,7 @@
         <button class="minimap-hit minimap-area-btn" type="button" id="minimap-info" aria-label="Область: Цветочная поляна" title="Область: Цветочная поляна"></button>
         <button class="minimap-hit minimap-zoom-in" type="button" id="zoom-in" aria-label="Приблизить карту" title="Приблизить (+)"></button>
         <button class="minimap-hit minimap-zoom-out" type="button" id="zoom-out" aria-label="Отдалить карту" title="Отдалить (−)"></button>
+        <button class="minimap-hit music-hit" type="button" id="music-toggle" aria-label="Фоновая музыка" aria-pressed="true" title="Музыка: вкл (M)"><span id="music-icon">🎵</span></button>
       </div>
     </aside>
 
@@ -2133,7 +2151,7 @@
         if (tool === 'help') {
           openDialog('Справка пчеловода', '<p>Добро пожаловать на цветочную поляну! Щёлкайте мышкой по карте — пчеловод дойдёт туда прямо по тропинкам пасеки.</p><ul><li>Стройте ульи, чтобы увеличить количество пчелосемей.</li><li>Сажайте цветы: каждый медонос повышает выработку мёда.</li><li>Работники автоматически продают часть свежего урожая.</li><li>Нажмите «Собрать мёд», чтобы продать запас из хранилища.</li><li>Полив временно ускоряет производство, а ограждения повышают уют пасеки.</li><li>Зимой (с 1 декабря по 31 января) в правом нижнем углу появляется ящик сиропа — нажмите на него, и пчеловод подкормит пчёл у улья: сбор мёда ускорится на 20%.</li><li>🐭 Иногда к улью пробирается мышка. Пока она стоит у летка (10 секунд), внизу появляется кнопка «Позвать кота» — нажмите её, и кот прогонит воровку. Не успели — мышка унесёт часть мёда.</li></ul><p>Прогресс сохраняется в браузере автоматически.</p>', [{label:'Начать играть', onClick:closeDialog}]);
         } else if (tool === 'settings') {
-          openDialog('Настройки', `<p>Сохранение: <span class="save-note">включено · прогресс в этом браузере</span></p><p>Скорость игры и состояние пасеки сохраняются автоматически.</p>`, [
+          openDialog('Настройки', `<p>Сохранение: <span class="save-note">включено · прогресс в этом браузере</span></p><p>Скорость игры и состояние пасеки сохраняются автоматически.</p><p>Музыка: <span class="save-note">два трека по очереди · кнопка 🎵 на мини-карте или клавиша M</span></p>`, [
             {label:'Сбросить прогресс', danger:true, onClick:() => { if (window.confirm('Сбросить сохранение и начать заново?')) { localStorage.removeItem(SAVE_KEY); localStorage.removeItem(LEGACY_KEY); stopWateringAnimation(); stopFeedingAnimation(); feedJobActive = false; resetCritters(); walkArrivalCb = null; state = cloneStart(); activeRoute = []; hivePollenStats.clear(); resetWorkerActors(); playerEl.classList.remove('walking'); applyPlayerVisual(); renderTrailPreview(); closeDialog(); render(); save(); showToast('Пасека обновлена — хорошего сезона!'); } }},
             {label:'Закрыть', secondary:true, onClick:closeDialog}
           ]);
@@ -2152,6 +2170,91 @@
       document.querySelectorAll('[data-action]').forEach(button => button.addEventListener('click', () => doAction(button.dataset.action)));
       document.querySelectorAll('[data-speed]').forEach(button => button.addEventListener('click', () => { state.speed = Number(button.dataset.speed); render(); save(); }));
       document.querySelectorAll('[data-tool]').forEach(button => button.addEventListener('click', () => openTool(button.dataset.tool)));
+
+      // --- Фоновая музыка: music1.mp3 и music2.mp3 играют по очереди, без наложения ---
+      const MUSIC_TRACKS = ['music1.mp3', 'music2.mp3'];
+      const MUSIC_VOLUME = 0.32;
+      const MUSIC_OFF_KEY = 'pasaka_music_off';
+      const MUSIC_TRACK_KEY = 'pasaka_music_track';
+      const readMusicFlag = (key, fallback) => {
+        try { return localStorage.getItem(key) || fallback; } catch (error) { return fallback; }
+      };
+      let musicOff = readMusicFlag(MUSIC_OFF_KEY, '0') === '1';
+      let musicTrack = readMusicFlag(MUSIC_TRACK_KEY, '0') === '1' ? 1 : 0;
+      let musicPlaying = false;
+
+      const musicEls = MUSIC_TRACKS.map((src, index) => {
+        const el = new Audio(src);
+        el.preload = 'auto';
+        el.loop = false;
+        el.volume = MUSIC_VOLUME;
+        el.addEventListener('ended', () => {
+          if (musicOff) return;
+          setMusicTrack((index + 1) % MUSIC_TRACKS.length);
+          playMusic();
+        });
+        return el;
+      });
+
+      function setMusicTrack(index) {
+        musicTrack = index;
+        try { localStorage.setItem(MUSIC_TRACK_KEY, String(index)); } catch (error) { /* приватный режим */ }
+      }
+
+      function playMusic() {
+        if (musicOff) return;
+        const current = musicEls[musicTrack];
+        if (!current) return;
+        musicEls.forEach(el => { if (el !== current && !el.paused) el.pause(); });
+        const started = current.play();
+        if (started && typeof started.catch === 'function') {
+          started.then(() => { musicPlaying = true; }).catch(() => { musicPlaying = false; });
+        } else {
+          musicPlaying = true;
+        }
+      }
+
+      function pauseMusic() {
+        musicEls.forEach(el => { if (!el.paused) el.pause(); });
+        musicPlaying = false;
+      }
+
+      function renderMusicButton() {
+        const button = $('music-toggle');
+        if (button) {
+          button.classList.toggle('is-off', musicOff);
+          button.setAttribute('aria-pressed', musicOff ? 'false' : 'true');
+          button.title = musicOff ? 'Музыка: выкл (M)' : 'Музыка: вкл (M)';
+        }
+        const icon = $('music-icon');
+        if (icon) icon.textContent = musicOff ? '🔇' : '🎵';
+      }
+
+      function toggleMusic() {
+        musicOff = !musicOff;
+        try { localStorage.setItem(MUSIC_OFF_KEY, musicOff ? '1' : '0'); } catch (error) { /* приватный режим */ }
+        if (musicOff) { pauseMusic(); showToast('🔇 Музыка выключена'); }
+        else { playMusic(); showToast('🎵 Музыка включена'); }
+        renderMusicButton();
+      }
+
+      // Браузеры не дают автоплей до первого действия пользователя — догоняем на первом клике или клавише.
+      const unlockMusic = () => { if (!musicOff && !musicPlaying) playMusic(); };
+      ['pointerdown', 'keydown', 'touchstart'].forEach(type => {
+        document.addEventListener(type, unlockMusic, { passive: true });
+      });
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) pauseMusic();
+        else if (!musicOff && !musicPlaying) playMusic();
+      });
+      const musicToggleEl = $('music-toggle');
+      if (musicToggleEl) musicToggleEl.addEventListener('click', toggleMusic);
+      document.addEventListener('keydown', event => {
+        if (event.code === 'KeyM' && !event.repeat) toggleMusic();
+      });
+      renderMusicButton();
+      playMusic();
+
       $('change-task').addEventListener('click', () => { state.taskIndex = (state.taskIndex + 1) % TASKS.length; render(); save(); showToast(`Задача обновлена: ${TASKS[state.taskIndex].toLowerCase()}`); });
 
       $('dialog-close').addEventListener('click', closeDialog);
