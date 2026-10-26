@@ -692,12 +692,12 @@
       pointer-events: none;
       position: absolute;
       z-index: 43;
-      left: max(246px, calc(50% - 468px));
+      left: max(246px, calc(50% - 517px));
       bottom: 0;
-      width: min(948px, calc(100vw - var(--rail-width) - 256px));
+      width: min(1046px, calc(100vw - var(--rail-width) - 256px));
       height: var(--footer-height);
       display: grid;
-      grid-template-columns: repeat(8, minmax(0,1fr));
+      grid-template-columns: repeat(9, minmax(0,1fr));
       gap: 7px;
       align-items: stretch;
       padding: 3px 0 0;
@@ -1180,7 +1180,7 @@
       .wood-card { padding-left: 9px; padding-right: 9px; }
       .info-head { grid-template-columns: 88px 1fr; gap: 4px; }
       .beekeeper-portrait svg, .beekeeper-portrait img { width: 78px; }
-      .action-bar { left: max(244px, calc(50% - 420px)); width: min(860px, calc(100vw - var(--rail-width) - 256px)); gap: 6px; }
+      .action-bar { left: max(244px, calc(50% - 472px)); width: min(958px, calc(100vw - var(--rail-width) - 256px)); gap: 6px; }
       .action-label { font-size: 9.5px; }
     }
 
@@ -1228,7 +1228,7 @@
       .right-rail .status-copy strong { font-size: 11px; }
       .right-rail .status-icon { font-size: 21px; }
       .right-rail .apiary-button { min-height: 29px; font-size: 10px; margin-top: 4px; }
-      .action-bar { left: 50%; transform: translateX(-50%); width: min(880px, calc(100vw - 228px)); height: var(--footer-height); gap: 4px; }
+      .action-bar { left: 50%; transform: translateX(-50%); width: min(968px, calc(100vw - 228px)); height: var(--footer-height); gap: 4px; }
       .action-button { border-radius: 14px; }
       .action-icon { height: 43px; font-size: 34px; }
       .action-icon svg { width: 39px; height: 39px; }
@@ -1503,6 +1503,9 @@
       <button class="action-button" type="button" data-action="flower">
         <span class="action-icon" aria-hidden="true">🌼</span><span class="action-label">Посадить<br>цветы</span><span class="action-cost" id="flower-cost">20 <img class="coin-inline" src="coin.png" alt=""></span>
       </button>
+      <button class="action-button" type="button" data-action="remove-flower">
+        <span class="action-icon" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M27 58q0-16 5-26" fill="none" stroke="#3f7f2a" stroke-width="3.6" stroke-linecap="round"/><path d="M27 42q-9-1-13-8 9-1 13 8Z" fill="#63b83f" stroke="#2f6a1e" stroke-width="2" stroke-linejoin="round"/><path d="M31 46q9-2 12-9-9-1-12 9Z" fill="#7ecb52" stroke="#2f6a1e" stroke-width="2" stroke-linejoin="round"/><g fill="#ffd85e" stroke="#b9791a" stroke-width="2.2"><circle cx="32" cy="17" r="6"/><circle cx="22.5" cy="24" r="6"/><circle cx="41.5" cy="24" r="6"/><circle cx="26" cy="32.5" r="6"/><circle cx="38" cy="32.5" r="6"/></g><circle cx="32" cy="25" r="4.4" fill="#8a4a12" stroke="#5c2d06" stroke-width="1.8"/><circle cx="47" cy="47" r="13" fill="#d9452f" stroke="#52190c" stroke-width="2.8"/><path d="M41 47h12" stroke="#fff7df" stroke-width="4.4" stroke-linecap="round"/></svg></span><span class="action-label">Удалить<br>цветы</span><span class="action-cost" id="remove-flower-label">Нет цветов</span>
+      </button>
       <button class="action-button" type="button" data-action="worker">
         <span class="action-icon" aria-hidden="true">🧑</span><span class="action-label">Нанять<br>работника</span><span class="action-cost" id="worker-cost">30 <img class="coin-inline" src="coin.png" alt=""></span>
       </button>
@@ -1776,6 +1779,7 @@
         $('hive-cost').innerHTML = `${buildCost} <img class="coin-inline" src="coin.png" alt="">`;
         $('remove-hive-label').textContent = state.hives > 0 ? `Ульев: ${state.hives}` : 'Нет ульев';
         $('flower-cost').innerHTML = `${flowerCost} <img class="coin-inline" src="coin.png" alt="">`;
+        $('remove-flower-label').textContent = state.plantedFlowers > 0 ? `Клумб: ${Math.min(state.plantedFlowers, 40)}` : 'Нет цветов';
         $('worker-cost').innerHTML = `${workerCost} <img class="coin-inline" src="coin.png" alt="">`;
         $('fire-worker-label').textContent = state.workers > 0 ? `В штате: ${state.workers}` : 'Нет рабочих';
         $('water-cost').innerHTML = '15 <img class="coin-inline" src="coin.png" alt="">';
@@ -1784,6 +1788,7 @@
 
         document.querySelector('[data-action="hive"]').disabled = state.coins < buildCost || state.hives >= state.hiveLimit;
         document.querySelector('[data-action="flower"]').disabled = state.coins < flowerCost || state.flowers >= 50;
+        document.querySelector('[data-action="remove-flower"]').disabled = state.plantedFlowers < 1;
         document.querySelector('[data-action="worker"]').disabled = state.coins < workerCost || state.workers >= state.workerLimit;
         document.querySelector('[data-action="fire-worker"]').disabled = state.workers < 1;
         document.querySelector('[data-action="remove-hive"]').disabled = state.hives < 1;
@@ -1850,6 +1855,13 @@
           state.happiness = Math.min(95, state.happiness + 1);
           addLog('Посажены медоносные цветы');
           showToast('🌼 Расцвела новая клумба — нектара стало больше!');
+        } else if (action === 'remove-flower') {
+          if (state.plantedFlowers < 1) return showToast('На поляне нет посаженных цветов');
+          state.plantedFlowers -= 1;
+          state.flowers = Math.max(0, state.flowers - 1);
+          while (state.flowerSpots.length > state.plantedFlowers) state.flowerSpots.pop();
+          addLog('Клумба убрана с поляны');
+          showToast('🌼 Клумба убрана с поляны');
         } else if (action === 'worker') {
           const cost = 30 + state.workers * 20;
           if (state.workers >= state.workerLimit) return showToast('В команде уже максимальное число работников');
@@ -2051,7 +2063,10 @@
         }
         while (placedFlowerNodes.length > targetFlowers) {
           const removed = placedFlowerNodes.pop();
-          if (removed && removed.parentNode) removed.remove();
+          if (removed) {
+            removed.classList.add('removing');
+            window.setTimeout(() => { if (removed.parentNode) removed.remove(); }, 190);
+          }
         }
       }
 
