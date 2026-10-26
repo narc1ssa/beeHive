@@ -66,6 +66,7 @@
       overflow: hidden;
       pointer-events: none;
       background: #5ca938 url("map00.png") center / 100% 100% no-repeat;
+      transition: filter .65s ease;
     }
     .scene-art-img {
       position: absolute;
@@ -101,13 +102,16 @@
       mix-blend-mode: soft-light;
       transition: opacity .65s ease, background .65s ease;
     }
-    .scene-art.season-spring { filter: saturate(1.06) hue-rotate(-4deg); }
-    .scene-art.season-spring .season-wash { opacity: .5; background: #ffd6e8; }
-    .scene-art.season-summer .season-wash { opacity: 0; }
-    .scene-art.season-autumn { filter: sepia(.34) saturate(1.18) hue-rotate(-14deg) brightness(1.02); }
-    .scene-art.season-autumn .season-wash { opacity: .55; background: #ffa63c; }
-    .scene-art.season-winter { filter: saturate(.45) brightness(1.04) contrast(.93) hue-rotate(8deg); }
-    .scene-art.season-winter .season-wash { opacity: .78; background: #e8f3ff; }
+    /* Лето — ровно map00.png, без всякой тонировки: карта должна оставаться такой же сочной, как файл. */
+    .scene-art.season-summer { filter: none; }
+    .scene-art.season-summer .season-wash { opacity: 0; background: transparent; }
+    /* Остальные сезоны — только лёгкий цветовой сдвиг, чтобы роспись не выцветала. */
+    .scene-art.season-spring { filter: saturate(1.05) hue-rotate(-3deg) brightness(1.01); }
+    .scene-art.season-spring .season-wash { opacity: .12; background: #ffd6e8; }
+    .scene-art.season-autumn { filter: sepia(.12) saturate(1.07) hue-rotate(-7deg) brightness(1.01); }
+    .scene-art.season-autumn .season-wash { opacity: .14; background: #ffa63c; }
+    .scene-art.season-winter { filter: saturate(.84) brightness(1.02) hue-rotate(6deg); }
+    .scene-art.season-winter .season-wash { opacity: .2; background: #dbeaff; }
     .trail-svg {
       position: absolute;
       z-index: 3;
@@ -356,6 +360,23 @@
     .minimap-zoom-in { left: 79.5%; top: 59.5%; width: 16%; height: 13.5%; }
     .minimap-zoom-out { left: 79.5%; top: 72.5%; width: 16%; height: 13.5%; }
     .minimap-area-btn { left: 8%; top: 12%; width: 84%; height: 42%; border-radius: 22px; }
+    .music-hit {
+      left: 6.5%; top: 74%; width: 27%; height: 13.5%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 11px;
+      border: 2px solid rgba(220, 163, 68, .92);
+      background: linear-gradient(145deg, #6b4a24 0%, #3a2411 100%);
+      box-shadow: 0 2px 4px rgba(24, 13, 4, .45), inset 0 1px 0 rgba(255, 232, 161, .35);
+      color: #ffe08a;
+      font-size: 15px;
+      line-height: 1;
+      transition: transform .14s, filter .14s, opacity .2s;
+    }
+    .music-hit:hover { transform: translateY(-1px); filter: brightness(1.14); background: linear-gradient(145deg, #7b5629 0%, #462c15 100%); }
+    .music-hit.is-off { opacity: .6; border-color: rgba(150, 110, 55, .78); color: #cbb68e; }
+    .music-hit:active { transform: translateY(0); }
 
     .topbar {
       position: absolute;
@@ -364,7 +385,7 @@
       inset: 0 0 auto;
       height: var(--header-height);
       display: grid;
-      grid-template-columns: 360px minmax(0, 1fr) 286px;
+      grid-template-columns: 360px minmax(0, 1fr) 350px;
       align-items: center;
       gap: 10px;
       padding: 8px 7px 8px 13px;
@@ -498,7 +519,7 @@
     .date-card .res-label { font-size: 10px; }
     .date-card .res-value { font-size: 12px; margin-top: 6px; letter-spacing: .3px; }
 
-    .top-tools { pointer-events: auto; display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 6px; }
+    .top-tools { pointer-events: auto; display: grid; grid-template-columns: repeat(3, minmax(0, 1.15fr)) repeat(2, minmax(0, .85fr)); gap: 6px; }
     .tool-button {
       position: relative;
       height: 80px;
@@ -692,12 +713,12 @@
       pointer-events: none;
       position: absolute;
       z-index: 43;
-      left: max(246px, calc(50% - 468px));
+      left: max(246px, calc(50% - 517px));
       bottom: 0;
-      width: min(948px, calc(100vw - var(--rail-width) - 256px));
+      width: min(1046px, calc(100vw - var(--rail-width) - 256px));
       height: var(--footer-height);
       display: grid;
-      grid-template-columns: repeat(8, minmax(0,1fr));
+      grid-template-columns: repeat(9, minmax(0,1fr));
       gap: 7px;
       align-items: stretch;
       padding: 3px 0 0;
@@ -734,13 +755,6 @@
       inset: 0;
       overflow: hidden;
       pointer-events: none;
-    }
-    .fg-props {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      z-index: 252;
-      clip-path: polygon(53.4% 72.2%, 55.9% 72.2%, 56.0% 70.8%, 61.8% 65.0%, 68.0% 70.8%, 68.0% 84.4%, 53.4% 84.4%);
     }
     .bees-layer {
       position: absolute;
@@ -862,15 +876,23 @@
       position: absolute;
       left: var(--x);
       top: var(--y);
-      width: 55px;
-      height: 68px;
-      transform: translate(-50%,-50%);
-      filter: drop-shadow(0 3px 2px rgba(36,20,6,.58));
+      transform: translate(-50%,-100%);
+      filter: drop-shadow(0 2px 2px rgba(36,20,6,.45));
       animation: pop-in .28s cubic-bezier(.2,1.35,.5,1) both;
       pointer-events: none;
     }
-    .placed-object.flower-patch { width: 64px; height: 39px; }
-    .placed-object svg { display: block; width: 100%; height: 100%; overflow: visible; }
+    /* Улей — спрайт hive.png, низ спрайта стоит точно в точке слота */
+    .placed-object.hive-object { width: 3.77%; aspect-ratio: 70 / 96; }
+    /* Клумбы — спрайты flowers1.png / flowers2.png (чередуются) */
+    .placed-object.flower-patch { width: 4%; aspect-ratio: 169 / 108; }
+    .placed-object .placed-sprite {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      image-rendering: auto;
+      user-select: none;
+    }
     @keyframes pop-in { from { opacity: 0; scale: .45; } to { opacity: 1; scale: 1; } }
     .placed-object.removing { animation: pop-out .19s ease-in forwards; }
     @keyframes pop-out { from { opacity: 1; scale: 1; } to { opacity: 0; scale: .38; } }
@@ -1155,7 +1177,7 @@
 
     @media (max-width: 1260px) {
       :root { --rail-width: 220px; }
-      .topbar { grid-template-columns: 290px minmax(0,1fr) 256px; gap: 8px; padding-right: 9px; }
+      .topbar { grid-template-columns: 290px minmax(0,1fr) 280px; gap: 8px; padding-right: 9px; }
       .brand-mark { width: 86px; flex-basis: 86px; }
       .brand h1 { font-size: 32px; }
       .brand p { font-size: 12px; }
@@ -1165,14 +1187,14 @@
       .res-label { font-size: 11px; }
       .res-value { font-size: 17px; }
       .top-tools { gap: 5px; }
-      .tool-button { font-size: 9px; }
+      .tool-button { font-size: 8px; padding: 3px 2px; }
       .main-nav { width: min(870px, calc(100vw - var(--rail-width) - 24px)); gap: 7px; }
       .nav-tab { font-size: 11px; }
       .nav-tab .nav-icon { font-size: 31px; }
       .wood-card { padding-left: 9px; padding-right: 9px; }
       .info-head { grid-template-columns: 88px 1fr; gap: 4px; }
       .beekeeper-portrait svg, .beekeeper-portrait img { width: 78px; }
-      .action-bar { left: max(244px, calc(50% - 420px)); width: min(860px, calc(100vw - var(--rail-width) - 256px)); gap: 6px; }
+      .action-bar { left: max(244px, calc(50% - 472px)); width: min(958px, calc(100vw - var(--rail-width) - 256px)); gap: 6px; }
       .action-label { font-size: 9.5px; }
     }
 
@@ -1192,7 +1214,7 @@
       .date-card .res-icon { font-size: 24px; }
       .date-card .res-label { font-size: 8px; }
       .date-card .res-value { font-size: 9px; }
-      .top-tools { grid-column: 2; grid-row: 1; justify-self: end; width: 262px; }
+      .top-tools { grid-column: 2; grid-row: 1; justify-self: end; width: 310px; }
       .tool-button { height: 57px; border-radius: 14px; font-size: 8px; }
       .tool-button .tool-icon { font-size: 24px; }
       .main-nav { top: 151px; left: 8px; width: calc(100vw - 16px); height: 75px; gap: 5px; overflow-x: auto; }
@@ -1220,7 +1242,7 @@
       .right-rail .status-copy strong { font-size: 11px; }
       .right-rail .status-icon { font-size: 21px; }
       .right-rail .apiary-button { min-height: 29px; font-size: 10px; margin-top: 4px; }
-      .action-bar { left: 50%; transform: translateX(-50%); width: min(880px, calc(100vw - 228px)); height: var(--footer-height); gap: 4px; }
+      .action-bar { left: 50%; transform: translateX(-50%); width: min(968px, calc(100vw - 228px)); height: var(--footer-height); gap: 4px; }
       .action-button { border-radius: 14px; }
       .action-icon { height: 43px; font-size: 34px; }
       .action-icon svg { width: 39px; height: 39px; }
@@ -1237,6 +1259,7 @@
       .brand p { font-size: 8px; }
       .top-tools { width: 196px; gap: 3px; }
       .tool-button { height: 48px; padding: 2px; font-size: 7px; }
+      .top-tools .tool-button > span:not(.tool-icon) { display: none; }
       .tool-button .tool-icon { font-size: 19px; }
       .resource-strip { gap: 3px; }
       .resource-card { height: 60px; gap: 2px; padding: 3px 2px; border-width: 1px; border-radius: 11px; }
@@ -1278,8 +1301,8 @@
       .action-label { font-size: 6px; }
       .action-cost { font-size: 6.5px; margin-top: 2px; }
       .foraging-bee { width: 22px; height: 21px; }
-      .placed-object { width: 43px; height: 55px; }
-      .placed-object.flower-patch { width: 50px; height: 31px; }
+      .placed-object.hive-object { width: 3.77%; }
+      .placed-object.flower-patch { width: 4%; }
     }
 
     @media (max-height: 720px) and (min-width: 981px) {
@@ -1363,6 +1386,7 @@
         <button class="tool-button" type="button" data-tool="settings"><span class="tool-icon">⚙️</span><span>Настройки</span></button>
         <button class="tool-button" type="button" data-tool="exit"><span class="tool-icon">⇥</span><span>Выход</span></button>
         <button class="tool-button" type="button" data-test="mouse" title="Проверка сценария: мышка и кот"><span class="tool-icon">🐭</span><span>Мышка</span></button>
+        <button class="tool-button" type="button" data-test="season" id="season-next-btn" title="Следующее время года — переключить сезон"><span class="tool-icon" id="season-next-icon">🍂</span><span>След.<br>сезон</span></button>
       </div>
     </header>
 
@@ -1399,12 +1423,6 @@
         </span>
       </div>
       <div class="map-layer" id="map-layer" aria-hidden="true">
-        <div class="fg-props" id="fg-props">
-          <img class="scene-art-img" id="fg-map-0" src="map00.png" alt="">
-          <img class="scene-art-img is-active" id="fg-map-1" src="map00.png" alt="">
-          <img class="scene-art-img" id="fg-map-2" src="map00.png" alt="">
-          <img class="scene-art-img" id="fg-map-3" src="map00.png" alt="">
-        </div>
         <div id="placed-items"></div>
       </div>
       <div class="bees-layer" id="bees-layer" aria-hidden="true"></div>
@@ -1423,6 +1441,7 @@
         <button class="minimap-hit minimap-area-btn" type="button" id="minimap-info" aria-label="Область: Цветочная поляна" title="Область: Цветочная поляна"></button>
         <button class="minimap-hit minimap-zoom-in" type="button" id="zoom-in" aria-label="Приблизить карту" title="Приблизить (+)"></button>
         <button class="minimap-hit minimap-zoom-out" type="button" id="zoom-out" aria-label="Отдалить карту" title="Отдалить (−)"></button>
+        <button class="minimap-hit music-hit" type="button" id="music-toggle" aria-label="Фоновая музыка" aria-pressed="true" title="Музыка: вкл (M)"><span id="music-icon">🎵</span></button>
       </div>
     </aside>
 
@@ -1494,6 +1513,9 @@
       </button>
       <button class="action-button" type="button" data-action="flower">
         <span class="action-icon" aria-hidden="true">🌼</span><span class="action-label">Посадить<br>цветы</span><span class="action-cost" id="flower-cost">20 <img class="coin-inline" src="coin.png" alt=""></span>
+      </button>
+      <button class="action-button" type="button" data-action="remove-flower">
+        <span class="action-icon" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M27 58q0-16 5-26" fill="none" stroke="#3f7f2a" stroke-width="3.6" stroke-linecap="round"/><path d="M27 42q-9-1-13-8 9-1 13 8Z" fill="#63b83f" stroke="#2f6a1e" stroke-width="2" stroke-linejoin="round"/><path d="M31 46q9-2 12-9-9-1-12 9Z" fill="#7ecb52" stroke="#2f6a1e" stroke-width="2" stroke-linejoin="round"/><g fill="#ffd85e" stroke="#b9791a" stroke-width="2.2"><circle cx="32" cy="17" r="6"/><circle cx="22.5" cy="24" r="6"/><circle cx="41.5" cy="24" r="6"/><circle cx="26" cy="32.5" r="6"/><circle cx="38" cy="32.5" r="6"/></g><circle cx="32" cy="25" r="4.4" fill="#8a4a12" stroke="#5c2d06" stroke-width="1.8"/><circle cx="47" cy="47" r="13" fill="#d9452f" stroke="#52190c" stroke-width="2.8"/><path d="M41 47h12" stroke="#fff7df" stroke-width="4.4" stroke-linecap="round"/></svg></span><span class="action-label">Удалить<br>цветы</span><span class="action-cost" id="remove-flower-label">Нет цветов</span>
       </button>
       <button class="action-button" type="button" data-action="worker">
         <span class="action-icon" aria-hidden="true">🧑</span><span class="action-label">Нанять<br>работника</span><span class="action-cost" id="worker-cost">30 <img class="coin-inline" src="coin.png" alt=""></span>
@@ -1571,11 +1593,6 @@
           if (img) {
             img.classList.toggle('is-active', i === currentSeasonMapIdx);
             img.classList.toggle('is-prev', i === prevSeasonMapIdx && i !== currentSeasonMapIdx);
-          }
-          const fgImg = $(`fg-map-${i}`);
-          if (fgImg) {
-            fgImg.classList.toggle('is-active', i === currentSeasonMapIdx);
-            fgImg.classList.toggle('is-prev', i === prevSeasonMapIdx && i !== currentSeasonMapIdx);
           }
         }
       }
@@ -1665,7 +1682,7 @@
       state.builtHives = Math.min(state.builtHives, Math.min(state.hives, 10));
       state.plantedFlowers = number(state.plantedFlowers, 0, 0, 40);
       state.flowerSpots = Array.isArray(state.flowerSpots)
-        ? state.flowerSpots.filter(sp => Array.isArray(sp) && sp.length === 2).map(sp => [number(sp[0], 50, 1, 99), number(sp[1], 50, 25, 99)]).slice(0, 40)
+        ? state.flowerSpots.filter(sp => Array.isArray(sp) && sp.length === 2).map(sp => [number(sp[0], 50, 10, 95), number(sp[1], 50, 30, 80)]).slice(0, 40)
         : [];
       state.playerX = number(state.playerX, START.playerX, 2, 96);
       state.playerY = number(state.playerY, START.playerY, 28, 98);
@@ -1744,6 +1761,16 @@
         $('worker-limit').textContent = state.workerLimit;
         $('season-day').textContent = `${seasonName().toLocaleUpperCase('ru-RU')} · ДЕНЬ ${state.day}`;
         syncSeasonBackground();
+        const nextSeasonIconEl = $('season-next-icon');
+        if (nextSeasonIconEl) {
+          const nextIdx = (seasonIndex() + 1) % SEASONS.length;
+          nextSeasonIconEl.textContent = SEASON_ICONS[nextIdx];
+        }
+        const nextSeasonBtnEl = $('season-next-btn');
+        if (nextSeasonBtnEl) {
+          const nextIdx = (seasonIndex() + 1) % SEASONS.length;
+          nextSeasonBtnEl.title = `Следующее время года: ${SEASONS[nextIdx]} — переключить сезон`;
+        }
         $('year-label').textContent = `ГОД ${state.year}`;
         $('season-progress').textContent = currency(state.seasonHoney);
         $('season-target').textContent = fmt.format(state.seasonTarget);
@@ -1768,6 +1795,7 @@
         $('hive-cost').innerHTML = `${buildCost} <img class="coin-inline" src="coin.png" alt="">`;
         $('remove-hive-label').textContent = state.hives > 0 ? `Ульев: ${state.hives}` : 'Нет ульев';
         $('flower-cost').innerHTML = `${flowerCost} <img class="coin-inline" src="coin.png" alt="">`;
+        $('remove-flower-label').textContent = state.plantedFlowers > 0 ? `Клумб: ${Math.min(state.plantedFlowers, 40)}` : 'Нет цветов';
         $('worker-cost').innerHTML = `${workerCost} <img class="coin-inline" src="coin.png" alt="">`;
         $('fire-worker-label').textContent = state.workers > 0 ? `В штате: ${state.workers}` : 'Нет рабочих';
         $('water-cost').innerHTML = '15 <img class="coin-inline" src="coin.png" alt="">';
@@ -1776,6 +1804,7 @@
 
         document.querySelector('[data-action="hive"]').disabled = state.coins < buildCost || state.hives >= state.hiveLimit;
         document.querySelector('[data-action="flower"]').disabled = state.coins < flowerCost || state.flowers >= 50;
+        document.querySelector('[data-action="remove-flower"]').disabled = state.plantedFlowers < 1;
         document.querySelector('[data-action="worker"]').disabled = state.coins < workerCost || state.workers >= state.workerLimit;
         document.querySelector('[data-action="fire-worker"]').disabled = state.workers < 1;
         document.querySelector('[data-action="remove-hive"]').disabled = state.hives < 1;
@@ -1842,6 +1871,13 @@
           state.happiness = Math.min(95, state.happiness + 1);
           addLog('Посажены медоносные цветы');
           showToast('🌼 Расцвела новая клумба — нектара стало больше!');
+        } else if (action === 'remove-flower') {
+          if (state.plantedFlowers < 1) return showToast('На поляне нет посаженных цветов');
+          state.plantedFlowers -= 1;
+          state.flowers = Math.max(0, state.flowers - 1);
+          while (state.flowerSpots.length > state.plantedFlowers) state.flowerSpots.pop();
+          addLog('Клумба убрана с поляны');
+          showToast('🌼 Клумба убрана с поляны');
         } else if (action === 'worker') {
           const cost = 30 + state.workers * 20;
           if (state.workers >= state.workerLimit) return showToast('В команде уже максимальное число работников');
@@ -1916,6 +1952,22 @@
         render();
       }
 
+      // Кнопка контроля «Следующее время года»: переключает сезон вручную,
+      // повторяя ту же логику, что и естественная смена сезона в часах.
+      function advanceSeason() {
+        state.seasonIndex += 1;
+        if (state.seasonIndex % SEASONS.length === 0) state.year += 1;
+        state.day = 1;
+        state.minutesOfDay = 0;
+        state.seasonHoney = 0;
+        state.seasonRewarded = false;
+        const idx = ((state.seasonIndex % SEASONS.length) + SEASONS.length) % SEASONS.length;
+        addLog(`Сезон переключён вручную: ${SEASONS[idx]}`);
+        showToast(`${SEASON_ICONS[idx]} Наступил сезон: ${SEASONS[idx]}`);
+        render();
+        save();
+      }
+
       function tick() {
         if (state.speed === 0) return;
         for (let step = 0; step < state.speed; step++) {
@@ -1947,24 +1999,26 @@
         if (state.totalTicks % 5 === 0) save();
       }
 
-      // Места под ульи — на открытом лугу новой стартовой карты map00.png
+      // Места под ульи — на открытом лугу map00.png; спрайт улья — hive.png
       const HIVE_SLOTS = [
-        [29.5, 43.0], [37.0, 42.0], [45.0, 42.5],
-        [53.0, 43.0], [61.0, 44.5], [27.0, 51.0],
-        [35.5, 50.5], [44.5, 51.5], [55.6, 47.6],
-        [65.5, 52.0]
+        [32.0, 44.8], [64.6, 37.6], [50.4, 48.0],
+        [43.2, 36], [54.4, 36.8], [40.0, 52.0],
+        [27.2, 52.0], [59.2, 43.2], [26.9, 39.2],
+        [36.8, 39.2],
       ];
-      // Площадки чистой травы, куда может лечь новый блок цветов (проверены по map00.png:
-      // ни дорожек, ни построек, ни пруда/ручья и готовых клумб в этих точках нет)
+      // Площадки чистой травы под клумбы (спрайты flowers1.png / flowers2.png). Каждая проверена
+      // по map00.png: открытая трава без дорожек, построек, деревьев, пруда и готовых клумб.
       const FLOWER_SPOT_POOL = [
-        [58.4, 38.8], [61.7, 38.8], [67.8, 40.5], [75.4, 43.9], [74.8, 46.5],
-        [70.6, 46.8], [78.6, 48.1], [51.3, 49.5], [73.2, 49.6], [22.3, 50.6],
-        [60.7, 53.8], [76.8, 53.8], [82.3, 54.2], [72.7, 54.5], [51.2, 56.1],
-        [78.6, 56.5], [33.4, 56.6], [56.9, 56.6], [38.5, 56.9], [41.7, 57.7],
-        [66.4, 57.8], [63.0, 57.9], [70.8, 59.1], [48.0, 59.3], [74.8, 59.3],
-        [59.7, 59.7], [51.6, 60.0], [55.9, 60.1], [78.5, 60.1], [65.6, 61.2],
-        [26.1, 61.8], [48.2, 62.4], [44.9, 62.6], [52.6, 62.7], [71.9, 62.7],
-        [58.1, 62.9], [36.0, 67.9], [51.5, 66.1], [35.4, 71.6], [29.8, 56.6]
+        [79.6, 48.2], [14, 73.8], [41.2, 41.0], [51.6, 67.4],
+        [72.4, 67.4], [59.6, 33], [32.4, 69.0], [54.8, 49.0],
+        [82.8, 33], [86.8, 61.8], [31.6, 53.0], [67.6, 54.6],
+        [44.4, 53.8], [48.4, 33], [59.6, 61.0], [77.2, 58.6],
+        [22.8, 69.8], [64.4, 67.4], [80.4, 65.8], [37.2, 57.8],
+        [46.0, 46.6], [54.8, 41.8], [83.6, 55.4], [68.4, 61.8],
+        [74.0, 52.2], [84.4, 39.4], [52.4, 61.0], [16.4, 68.2],
+        [50.0, 38.6], [67.6, 72.2], [35.6, 49.8], [26.8, 66.6],
+        [63.3, 57.8], [78.8, 53.8], [72.4, 57.0], [82.0, 60.2],
+        [27.6, 71.4], [74.8, 47.4], [73.2, 62.6], [22.0, 74.6],
       ];
       // Свободная случайная площадка под новую клумбу
       function pickFlowerSpot() {
@@ -1978,24 +2032,27 @@
         if (free.length > 0) {
           spot = free[Math.floor(Math.random() * free.length)];
         } else {
-          // все площадки заняты — добавляем клумбу со случайным сдвигом вокруг пасеки
-          spot = [20 + Math.random() * 62, 39 + Math.random() * 24];
+          // все площадки заняты — берём любую из пула и слегка сдвигаем в пределах луга
+          const base = FLOWER_SPOT_POOL[Math.floor(Math.random() * FLOWER_SPOT_POOL.length)];
+          spot = [base[0], base[1]];
         }
         // немного «живого» разброса, чтобы клумбы не стояли по линейке
         return [
-          Math.max(2, Math.min(98, spot[0] + (Math.random() - 0.5) * 1.6)),
-          Math.max(38, Math.min(70, spot[1] + (Math.random() - 0.5) * 1.4))
+          Math.max(13, Math.min(93, spot[0] + (Math.random() - 0.5) * 1.2)),
+          Math.max(33, Math.min(76, spot[1] + (Math.random() - 0.5) * 1.0))
         ];
       }
       function flowerSpotAt(index) {
         return state.flowerSpots[index] || FLOWER_SPOT_POOL[index % FLOWER_SPOT_POOL.length];
       }
-      function hiveSvg(index) {
-        const gradientId = `woodBee${index}`;
-        return `<svg viewBox="0 0 72 90" aria-hidden="true"><defs><linearGradient id="${gradientId}" x2="0" y2="1"><stop stop-color="#ffe06b"/><stop offset=".55" stop-color="#e99e20"/><stop offset="1" stop-color="#b96a12"/></linearGradient></defs><ellipse cx="36" cy="83" rx="29" ry="5" fill="#39200c" opacity=".45"/><path d="M13 27 36 8l23 19Z" fill="#8c541b" stroke="#59320e" stroke-width="3"/><rect x="17" y="29" width="38" height="42" rx="4" fill="url(#${gradientId})" stroke="#68400f" stroke-width="3"/><path d="M18 42h36M18 56h36" stroke="#a65c11" stroke-width="4"/><path d="M27 33v35M45 33v35" stroke="#ffe796" stroke-width="2" opacity=".75"/><circle cx="36" cy="64" r="4" fill="#48280d"/><path d="M22 72v9M50 72v9" stroke="#6b4117" stroke-width="4" stroke-linecap="round"/><path d="M28 81h-9M54 81h-9" stroke="#60380f" stroke-width="3" stroke-linecap="round"/></svg>`;
+      // Спрайты строений из репозитория: улей — hive.png, клумбы — flowers1.png / flowers2.png
+      const HIVE_SPRITE = 'hive.png';
+      const FLOWER_SPRITES = ['flowers1.png', 'flowers2.png'];
+      function hiveSpriteMarkup() {
+        return `<img class="placed-sprite" src="${HIVE_SPRITE}" alt="" decoding="async" draggable="false">`;
       }
-      function flowersSvg() {
-        return `<svg viewBox="0 0 100 54" aria-hidden="true"><ellipse cx="50" cy="49" rx="45" ry="4" fill="#32651e" opacity=".35"/><path d="M21 48q4-20 13-26M49 48q0-25 4-34M77 48q-5-21-12-28" fill="none" stroke="#39832b" stroke-width="3"/><g fill="#ffde4b" stroke="#d89116" stroke-width="1.5"><circle cx="34" cy="20" r="7"/><circle cx="53" cy="12" r="7"/><circle cx="66" cy="23" r="7"/></g><g fill="#fff7e7" stroke="#d979aa" stroke-width="1.4"><circle cx="18" cy="36" r="6"/><circle cx="82" cy="38" r="6"/></g><g fill="#a65320"><circle cx="34" cy="20" r="2.3"/><circle cx="53" cy="12" r="2.3"/><circle cx="66" cy="23" r="2.3"/></g><path d="M19 38q7-6 13-1M52 27q-8 1-12 8M72 32q8-6 13-2" fill="none" stroke="#58a734" stroke-width="3" stroke-linecap="round"/></svg>`;
+      function flowersSpriteMarkup(index) {
+        return `<img class="placed-sprite" src="${FLOWER_SPRITES[index % FLOWER_SPRITES.length]}" alt="" decoding="async" draggable="false">`;
       }
       const placedHiveNodes = [];
       const placedFlowerNodes = [];
@@ -2010,7 +2067,7 @@
           item.style.setProperty('--x', `${HIVE_SLOTS[i][0]}%`);
           item.style.setProperty('--y', `${HIVE_SLOTS[i][1]}%`);
           item.style.zIndex = String(Math.round(100 + HIVE_SLOTS[i][1] * 2));
-          item.innerHTML = hiveSvg(i);
+          item.innerHTML = hiveSpriteMarkup();
           container.appendChild(item);
           window.setTimeout(() => item.classList.remove('spawning'), 620);
           placedHiveNodes.push(item);
@@ -2031,14 +2088,17 @@
           item.style.setProperty('--x', `${fx}%`);
           item.style.setProperty('--y', `${fy}%`);
           item.style.zIndex = String(Math.round(90 + fy * 2));
-          item.innerHTML = flowersSvg();
+          item.innerHTML = flowersSpriteMarkup(i);
           container.appendChild(item);
           window.setTimeout(() => item.classList.remove('spawning'), 620);
           placedFlowerNodes.push(item);
         }
         while (placedFlowerNodes.length > targetFlowers) {
           const removed = placedFlowerNodes.pop();
-          if (removed && removed.parentNode) removed.remove();
+          if (removed) {
+            removed.classList.add('removing');
+            window.setTimeout(() => { if (removed.parentNode) removed.remove(); }, 190);
+          }
         }
       }
 
@@ -2091,7 +2151,7 @@
         if (tool === 'help') {
           openDialog('Справка пчеловода', '<p>Добро пожаловать на цветочную поляну! Щёлкайте мышкой по карте — пчеловод дойдёт туда прямо по тропинкам пасеки.</p><ul><li>Стройте ульи, чтобы увеличить количество пчелосемей.</li><li>Сажайте цветы: каждый медонос повышает выработку мёда.</li><li>Работники автоматически продают часть свежего урожая.</li><li>Нажмите «Собрать мёд», чтобы продать запас из хранилища.</li><li>Полив временно ускоряет производство, а ограждения повышают уют пасеки.</li><li>Зимой (с 1 декабря по 31 января) в правом нижнем углу появляется ящик сиропа — нажмите на него, и пчеловод подкормит пчёл у улья: сбор мёда ускорится на 20%.</li><li>🐭 Иногда к улью пробирается мышка. Пока она стоит у летка (10 секунд), внизу появляется кнопка «Позвать кота» — нажмите её, и кот прогонит воровку. Не успели — мышка унесёт часть мёда.</li></ul><p>Прогресс сохраняется в браузере автоматически.</p>', [{label:'Начать играть', onClick:closeDialog}]);
         } else if (tool === 'settings') {
-          openDialog('Настройки', `<p>Сохранение: <span class="save-note">включено · прогресс в этом браузере</span></p><p>Скорость игры и состояние пасеки сохраняются автоматически.</p>`, [
+          openDialog('Настройки', `<p>Сохранение: <span class="save-note">включено · прогресс в этом браузере</span></p><p>Скорость игры и состояние пасеки сохраняются автоматически.</p><p>Музыка: <span class="save-note">два трека по очереди · кнопка 🎵 на мини-карте или клавиша M</span></p>`, [
             {label:'Сбросить прогресс', danger:true, onClick:() => { if (window.confirm('Сбросить сохранение и начать заново?')) { localStorage.removeItem(SAVE_KEY); localStorage.removeItem(LEGACY_KEY); stopWateringAnimation(); stopFeedingAnimation(); feedJobActive = false; resetCritters(); walkArrivalCb = null; state = cloneStart(); activeRoute = []; hivePollenStats.clear(); resetWorkerActors(); playerEl.classList.remove('walking'); applyPlayerVisual(); renderTrailPreview(); closeDialog(); render(); save(); showToast('Пасека обновлена — хорошего сезона!'); } }},
             {label:'Закрыть', secondary:true, onClick:closeDialog}
           ]);
@@ -2110,6 +2170,91 @@
       document.querySelectorAll('[data-action]').forEach(button => button.addEventListener('click', () => doAction(button.dataset.action)));
       document.querySelectorAll('[data-speed]').forEach(button => button.addEventListener('click', () => { state.speed = Number(button.dataset.speed); render(); save(); }));
       document.querySelectorAll('[data-tool]').forEach(button => button.addEventListener('click', () => openTool(button.dataset.tool)));
+
+      // --- Фоновая музыка: music1.mp3 и music2.mp3 играют по очереди, без наложения ---
+      const MUSIC_TRACKS = ['music1.mp3', 'music2.mp3'];
+      const MUSIC_VOLUME = 0.32;
+      const MUSIC_OFF_KEY = 'pasaka_music_off';
+      const MUSIC_TRACK_KEY = 'pasaka_music_track';
+      const readMusicFlag = (key, fallback) => {
+        try { return localStorage.getItem(key) || fallback; } catch (error) { return fallback; }
+      };
+      let musicOff = readMusicFlag(MUSIC_OFF_KEY, '0') === '1';
+      let musicTrack = readMusicFlag(MUSIC_TRACK_KEY, '0') === '1' ? 1 : 0;
+      let musicPlaying = false;
+
+      const musicEls = MUSIC_TRACKS.map((src, index) => {
+        const el = new Audio(src);
+        el.preload = 'auto';
+        el.loop = false;
+        el.volume = MUSIC_VOLUME;
+        el.addEventListener('ended', () => {
+          if (musicOff) return;
+          setMusicTrack((index + 1) % MUSIC_TRACKS.length);
+          playMusic();
+        });
+        return el;
+      });
+
+      function setMusicTrack(index) {
+        musicTrack = index;
+        try { localStorage.setItem(MUSIC_TRACK_KEY, String(index)); } catch (error) { /* приватный режим */ }
+      }
+
+      function playMusic() {
+        if (musicOff) return;
+        const current = musicEls[musicTrack];
+        if (!current) return;
+        musicEls.forEach(el => { if (el !== current && !el.paused) el.pause(); });
+        const started = current.play();
+        if (started && typeof started.catch === 'function') {
+          started.then(() => { musicPlaying = true; }).catch(() => { musicPlaying = false; });
+        } else {
+          musicPlaying = true;
+        }
+      }
+
+      function pauseMusic() {
+        musicEls.forEach(el => { if (!el.paused) el.pause(); });
+        musicPlaying = false;
+      }
+
+      function renderMusicButton() {
+        const button = $('music-toggle');
+        if (button) {
+          button.classList.toggle('is-off', musicOff);
+          button.setAttribute('aria-pressed', musicOff ? 'false' : 'true');
+          button.title = musicOff ? 'Музыка: выкл (M)' : 'Музыка: вкл (M)';
+        }
+        const icon = $('music-icon');
+        if (icon) icon.textContent = musicOff ? '🔇' : '🎵';
+      }
+
+      function toggleMusic() {
+        musicOff = !musicOff;
+        try { localStorage.setItem(MUSIC_OFF_KEY, musicOff ? '1' : '0'); } catch (error) { /* приватный режим */ }
+        if (musicOff) { pauseMusic(); showToast('🔇 Музыка выключена'); }
+        else { playMusic(); showToast('🎵 Музыка включена'); }
+        renderMusicButton();
+      }
+
+      // Браузеры не дают автоплей до первого действия пользователя — догоняем на первом клике или клавише.
+      const unlockMusic = () => { if (!musicOff && !musicPlaying) playMusic(); };
+      ['pointerdown', 'keydown', 'touchstart'].forEach(type => {
+        document.addEventListener(type, unlockMusic, { passive: true });
+      });
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) pauseMusic();
+        else if (!musicOff && !musicPlaying) playMusic();
+      });
+      const musicToggleEl = $('music-toggle');
+      if (musicToggleEl) musicToggleEl.addEventListener('click', toggleMusic);
+      document.addEventListener('keydown', event => {
+        if (event.code === 'KeyM' && !event.repeat) toggleMusic();
+      });
+      renderMusicButton();
+      playMusic();
+
       $('change-task').addEventListener('click', () => { state.taskIndex = (state.taskIndex + 1) % TASKS.length; render(); save(); showToast(`Задача обновлена: ${TASKS[state.taskIndex].toLowerCase()}`); });
 
       $('dialog-close').addEventListener('click', closeDialog);
@@ -2156,16 +2301,15 @@
         n15: [49.16, 53.67], n16: [23.27, 55.47], n17: [23.68, 56.75],
         n18: [27.63, 57.17], n19: [45.93, 57.7], n20: [38.4, 60.26],
         n21: [31.04, 60.79], n22: [34.45, 61.21], n23: [42.58, 61.64],
-        n24: [21.29, 62.27], n25: [39.17, 62.7], n26: [42.05, 62.7],
-        n27: [37.92, 64.61], n28: [57.42, 65.46], n29: [44.38, 67.91],
-        n30: [40.55, 69.71], n31: [45.75, 70.03], n32: [54.43, 70.24],
-        n33: [49.7, 70.78], n34: [36.96, 72.79], n35: [45.45, 73.11],
-        n36: [51.38, 73.22], n37: [34.81, 76.09], n38: [56.34, 79.28],
-        n39: [51.44, 80.23], n40: [57.12, 80.87], n41: [60.11, 82.68],
-        n42: [53.71, 84.59], n43: [52.15, 85.12], n44: [53.17, 85.44],
-        n45: [32.95, 88.31], n46: [48.74, 88.84], n47: [43.18, 89.37],
-        n48: [36.66, 90.86], n49: [44.98, 91.18], n50: [44.44, 91.39],
-        n51: [40.13, 94.26], n52: [41.45, 95.11], n53: [41.03, 97.56]
+        n24: [21.29, 62.27], n25: [39.17, 62.7], n26: [46.6, 65.2],
+        n27: [37.92, 64.61], n29: [44.6, 80.4], n30: [40.0, 79.6],
+        n31: [45.75, 70.03], n33: [49.7, 70.78], n34: [37.2, 80.6],
+        n35: [45.45, 73.11], n36: [51.38, 73.22], n37: [33.6, 78.6],
+        n39: [51.44, 80.23], n42: [53.71, 84.59], n43: [52.15, 85.12],
+        n44: [53.17, 85.44], n45: [32.95, 88.31], n46: [48.74, 88.84],
+        n47: [43.18, 89.37], n48: [36.66, 90.86], n49: [44.98, 91.18],
+        n50: [44.44, 91.39], n51: [40.13, 94.26], n52: [41.45, 95.11],
+        n53: [41.03, 97.56],
       };
       const PATH_EDGES = [
         ['n1', 'n0'], ['n2', 'n6'], ['n4', 'n1'], ['n5', 'n4'], ['n6', 'n8'],
@@ -2173,12 +2317,11 @@
         ['n14', 'n13'], ['n15', 'n14'], ['n17', 'n18'], ['n18', 'n21'], ['n19', 'n15'],
         ['n20', 'n25'], ['n21', 'n22'], ['n22', 'n20'], ['n22', 'n27'], ['n23', 'n19'],
         ['n24', 'n17'], ['n25', 'n26'], ['n26', 'n29'], ['n27', 'n25'], ['n29', 'n31'],
-        ['n30', 'n29'], ['n31', 'n33'], ['n32', 'n28'], ['n33', 'n36'], ['n34', 'n30'],
-        ['n35', 'n31'], ['n36', 'n32'], ['n36', 'n39'], ['n37', 'n34'], ['n38', 'n40'],
-        ['n39', 'n43'], ['n40', 'n41'], ['n42', 'n40'], ['n45', 'n48'], ['n46', 'n43'],
+        ['n30', 'n29'], ['n31', 'n33'], ['n33', 'n36'], ['n34', 'n30'], ['n35', 'n31'],
+        ['n36', 'n39'], ['n37', 'n34'], ['n39', 'n43'], ['n45', 'n48'], ['n46', 'n43'],
         ['n47', 'n50'], ['n48', 'n51'], ['n49', 'n46'], ['n51', 'n52'], ['n52', 'n50'],
         ['n53', 'n52'], ['n5', 'n3'], ['n11', 'n12'], ['n49', 'n50'], ['n42', 'n44'],
-        ['n23', 'n26'], ['n9', 'n12'], ['n17', 'n16'], ['n44', 'n43']
+        ['n23', 'n26'], ['n9', 'n12'], ['n17', 'n16'], ['n44', 'n43'],
       ];
       const ASPECT_X = 1672 / 941;
       const trailDist = (ax, ay, bx, by) => Math.hypot((bx - ax) * ASPECT_X, by - ay);
@@ -2740,9 +2883,12 @@
       const popupsLayerEl = $('popups-layer');
 
       // Координаты ульев на карте: [x%, леток y%, крыша y%] (слоты постройки на map00.png)
+      // Спрайт улья (hive.png) стоит низом в точке слота, поэтому леток — чуть выше низа,
+      // а облачко мёда всплывает над крышей.
+      const HIVE_SPRITE_H_PCT = 3.77 * (96 / 70) * (1672 / 941); // высота спрайта в % высоты сцены
       const BEE_MAP_HIVES = HIVE_SLOTS.map(([hx, hy]) => {
         const [vx, vy] = mapLayerPctToViewport(hx, hy);
-        return [vx, +(vy - 1.4).toFixed(2), +(vy - 5.2).toFixed(2)];
+        return [vx, +(vy - 3.4).toFixed(2), +(vy - HIVE_SPRITE_H_PCT - 1.2).toFixed(2)];
       });
 
       let honeyCloudSeq = 0;
@@ -2831,7 +2977,7 @@
         const count = Math.min(state.hives, HIVE_SLOTS.length);
         for (let i = 0; i < count; i++) {
           const [vx, vy] = mapLayerPctToViewport(HIVE_SLOTS[i][0], HIVE_SLOTS[i][1]);
-          list.push([vx, +(vy - 1.4).toFixed(2), +(vy - 5.2).toFixed(2)]);
+          list.push([vx, +(vy - 3.4).toFixed(2), +(vy - HIVE_SPRITE_H_PCT - 1.2).toFixed(2)]);
         }
         return list;
       }
@@ -2913,10 +3059,35 @@
         bee.el.classList.toggle('has-pollen', flag);
       }
 
+      // Цветов на поляне нет — пчела всё равно вылетает из улья и кружит рядом с пасекой.
+      // Пыльцы она при этом не приносит, но рой остаётся живым во всех сезонах, кроме зимы.
+      function sendBeeToHivePatrol(bee) {
+        const hives = getActiveBeeHives();
+        if (hives.length === 0) return;
+        if (bee.hiveIdx == null || bee.hiveIdx >= hives.length) {
+          bee.hiveIdx = Math.floor(Math.random() * hives.length);
+        }
+        const [hx, hy] = hives[bee.hiveIdx];
+        const angle = Math.random() * Math.PI * 2;
+        const radius = 3.5 + Math.random() * 6.5;
+        const tx = Math.max(3, Math.min(97, hx + Math.cos(angle) * radius * 1.7));
+        const ty = Math.max(3, Math.min(97, hy + Math.sin(angle) * radius));
+        bee.patrol = true;
+        bee.phase = 'to-flower';
+        bee.el.classList.remove('gathering');
+        setBeeCarrying(bee, false);
+        planFlightLeg(bee, bee.x, bee.y, tx, ty, 1);
+      }
+
       function sendBeeToRandomFlower(bee) {
         const flowers = getAllFlowerTargets();
         const hives = getActiveBeeHives();
+        if (flowers.length === 0) {
+          sendBeeToHivePatrol(bee);
+          return;
+        }
         const fIdx = pickRandomIndex(flowers.length, bee.flowerIdx);
+        bee.patrol = false;
         bee.flowerIdx = fIdx;
         if (hives.length > 0 && (bee.hiveIdx == null || bee.hiveIdx >= hives.length)) {
           bee.hiveIdx = Math.floor(Math.random() * hives.length);
@@ -2937,7 +3108,8 @@
         const [tx, ty] = hiveEntrancePoint(hives[bee.hiveIdx]);
         bee.phase = 'to-hive';
         bee.el.classList.remove('gathering');
-        setBeeCarrying(bee, true);
+        // Патрульной пчеле нечего нести: без цветов пыльцы нет, значит и мёда тоже
+        setBeeCarrying(bee, !bee.patrol);
         planFlightLeg(bee, bee.x, bee.y, tx, ty, 0.85);
       }
 
@@ -2961,7 +3133,7 @@
         if (hives.length === 0) return null;
         const flowers = getAllFlowerTargets();
         const hiveIdx = Math.floor(Math.random() * hives.length);
-        const flowerIdx = Math.floor(Math.random() * flowers.length);
+        const flowerIdx = flowers.length > 0 ? Math.floor(Math.random() * flowers.length) : -1;
         const [hx, hy] = hiveEntrancePoint(hives[hiveIdx]);
         const el = document.createElement('div');
         el.className = 'foraging-bee';
@@ -2982,6 +3154,7 @@
           hiveIdx,
           flowerIdx,
           phase: 'to-flower',
+          patrol: false,
           carrying: false,
           progress: 0,
           duration: 2,
@@ -2995,7 +3168,11 @@
           // Равномерно распределяем стартовый рой: часть летит к разным цветам налегке,
           // часть уже опыляет цветок, а часть возвращается в ульи с жёлтым кружочком в лапах
           const roll = Math.random();
-          if (roll < 0.45) {
+          if (flowers.length === 0) {
+            // Клумб нет — пчёлы вылетают из улья и кружат над пасекой
+            sendBeeToHivePatrol(bee);
+            bee.progress = Math.random() * 0.9;
+          } else if (roll < 0.45) {
             sendBeeToRandomFlower(bee);
             bee.progress = Math.random() * 0.9;
           } else if (roll < 0.62) {
@@ -3035,24 +3212,26 @@
         return ((state.seasonIndex % SEASONS.length) + SEASONS.length) % SEASONS.length;
       }
 
-      // Летняя численность при 1 улье = 5 пчёл, каждый новый улей увеличивает количество пчёл на +20% (×1.2):
-      // 1..12 ульев летом: 5, 6, 7, 9, 10, 12, 15, 18, 22, 26, 31, 37 пчёл
+      // Летняя численность при 1 улье = 8 пчёл, каждый новый улей увеличивает рой на +20% (×1.2):
+      // 1..12 ульев летом: 8, 10, 12, 14, 17, 20, 24, 29, 34, 41, 50, 60 пчёл
+      // Лето — это полный рой, весна и осень — ровно его пятая часть, зима — ни одной пчелы.
       function summerBeeCountRaw() {
         if (state.hives <= 0) return 0;
-        return 5 * Math.pow(1.2, state.hives - 1);
+        return 8 * Math.pow(1.2, state.hives - 1);
       }
 
       function desiredBeeCount() {
         if (state.hives <= 0) return 0;
-        if (state.flowers <= 0) return 0; // без цветов пчёлам некуда лететь
         const sIdx = currentSeasonIndex();
         if (sIdx === 3) return 0; // Зимой пчёлы не летают
-        const summerRaw = summerBeeCountRaw();
+        const summerCount = Math.max(1, Math.round(summerBeeCountRaw()));
         if (sIdx === 0 || sIdx === 2) {
-          // Весной и осенью вылетает около 20% от летнего роя
-          return Math.max(1, Math.round(summerRaw * 0.2));
+          // Весной и осенью вылетает ровно пятая часть летнего роя.
+          // Округляем вниз, чтобы в другие сезоны пчёл никогда не было больше 1/5 летнего,
+          // то есть летом их всегда минимум в 5 раз больше.
+          return Math.max(1, Math.floor(summerCount / 5));
         }
-        return Math.max(1, Math.round(summerRaw));
+        return summerCount;
       }
 
       function seasonBeeSpeedFactor() {
@@ -3100,9 +3279,9 @@
             if (bee.progress >= 1) {
               if (bee.phase === 'to-flower') {
                 bee.phase = 'gathering';
-                bee.timer = 0.85 + Math.random() * 0.65;
+                bee.timer = bee.patrol ? 0.4 + Math.random() * 0.5 : 0.85 + Math.random() * 0.65;
                 bee.pollenPicked = false;
-                bee.el.classList.add('gathering');
+                if (!bee.patrol) bee.el.classList.add('gathering');
               } else {
                 // Прилетела к улью — заносит жёлтый кружочек пыльцы в улей
                 const deliveredPollen = bee.carrying;
@@ -3117,7 +3296,7 @@
           } else if (bee.phase === 'gathering') {
             bee.timer -= step;
             // Во время сбора на цветке в лапках появляется яркий жёлтый кружочек пыльцы
-            if (!bee.pollenPicked && bee.timer <= 0.42) {
+            if (!bee.patrol && !bee.pollenPicked && bee.timer <= 0.42) {
               bee.pollenPicked = true;
               setBeeCarrying(bee, true);
             }
@@ -3479,6 +3658,8 @@
       }
 
       if (catCallEl) catCallEl.addEventListener('click', callCat);
+      const seasonNextBtn = document.querySelector('[data-test="season"]');
+      if (seasonNextBtn) seasonNextBtn.addEventListener('click', advanceSeason);
       const mouseTestBtn = document.querySelector('[data-test="mouse"]');
       if (mouseTestBtn) {
         mouseTestBtn.addEventListener('click', () => {
