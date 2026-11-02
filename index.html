@@ -43,7 +43,7 @@
       background: #4e9e32;
     }
 
-    /* Единая координатная сцена с точным соотношением сторон map.png (1672×941),
+    /* Единая координатная сцена с точным соотношением сторон сезонных карт (1672×941),
        чтобы тропинки, постройки и пчеловод совпадали до пикселя на любом экране. */
     .world-viewport {
       position: absolute;
@@ -91,23 +91,8 @@
       transition: opacity .65s ease;
     }
 
-    /* Сезонная тонировка одной и той же карты — геометрия не «прыгает» при смене сезона */
-    .season-wash {
-      position: absolute;
-      inset: 0;
-      z-index: 3;
-      pointer-events: none;
-      opacity: 0;
-      mix-blend-mode: soft-light;
-      transition: opacity .65s ease, background .65s ease;
-    }
-    .scene-art.season-spring { filter: saturate(1.06) hue-rotate(-4deg); }
-    .scene-art.season-spring .season-wash { opacity: .5; background: #ffd6e8; }
-    .scene-art.season-summer .season-wash { opacity: 0; }
-    .scene-art.season-autumn { filter: sepia(.34) saturate(1.18) hue-rotate(-14deg) brightness(1.02); }
-    .scene-art.season-autumn .season-wash { opacity: .55; background: #ffa63c; }
-    .scene-art.season-winter { filter: saturate(.45) brightness(1.04) contrast(.93) hue-rotate(8deg); }
-    .scene-art.season-winter .season-wash { opacity: .78; background: #e8f3ff; }
+    /* У каждого времени года свой готовый фон с той же геометрией карты (1672×941):
+       слоты, тропинки и передний план не смещаются, новый слой просто плавно проявляется. */
     .trail-svg {
       position: absolute;
       z-index: 3;
@@ -871,6 +856,21 @@
     }
     .placed-object.flower-patch { width: 64px; height: 39px; }
     .placed-object svg { display: block; width: 100%; height: 100%; overflow: visible; }
+    .hive-object .hive-sprite {
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-drag: none;
+      transition: opacity .65s ease;
+    }
+    .hive-object .hive-sprite-winter { opacity: 0; }
+    .world-viewport[data-hive-season="winter"] .hive-object .hive-sprite-regular { opacity: 0; }
+    .world-viewport[data-hive-season="winter"] .hive-object .hive-sprite-winter { opacity: 1; }
     @keyframes pop-in { from { opacity: 0; scale: .45; } to { opacity: 1; scale: 1; } }
     .placed-object.removing { animation: pop-out .19s ease-in forwards; }
     @keyframes pop-out { from { opacity: 1; scale: 1; } to { opacity: 0; scale: .38; } }
@@ -1377,11 +1377,10 @@
 
     <div class="world-viewport" id="world-viewport" role="application" tabindex="0" aria-label="Игровая карта пасеки — нажмите по карте, чтобы пчеловод прошёл по тропинкам">
       <div class="scene-art" id="scene-art" aria-hidden="true">
-        <img class="scene-art-img" id="scene-map-0" data-season-idx="0" src="map00.png" alt="">
+        <img class="scene-art-img" id="scene-map-0" data-season-idx="0" src="map_spring.png" alt="">
         <img class="scene-art-img is-active" id="scene-map-1" data-season-idx="1" src="map00.png" alt="">
-        <img class="scene-art-img" id="scene-map-2" data-season-idx="2" src="map00.png" alt="">
-        <img class="scene-art-img" id="scene-map-3" data-season-idx="3" src="map00.png" alt="">
-        <span class="season-wash" aria-hidden="true"></span>
+        <img class="scene-art-img" id="scene-map-2" data-season-idx="2" src="map_autumn.png" alt="">
+        <img class="scene-art-img" id="scene-map-3" data-season-idx="3" src="map_winter.png" alt="">
       </div>
       <svg class="trail-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
         <polyline class="trail-line" id="trail-line" points=""></polyline>
@@ -1400,10 +1399,10 @@
       </div>
       <div class="map-layer" id="map-layer" aria-hidden="true">
         <div class="fg-props" id="fg-props">
-          <img class="scene-art-img" id="fg-map-0" src="map00.png" alt="">
+          <img class="scene-art-img" id="fg-map-0" src="map_spring.png" alt="">
           <img class="scene-art-img is-active" id="fg-map-1" src="map00.png" alt="">
-          <img class="scene-art-img" id="fg-map-2" src="map00.png" alt="">
-          <img class="scene-art-img" id="fg-map-3" src="map00.png" alt="">
+          <img class="scene-art-img" id="fg-map-2" src="map_autumn.png" alt="">
+          <img class="scene-art-img" id="fg-map-3" src="map_winter.png" alt="">
         </div>
         <div id="placed-items"></div>
       </div>
@@ -1542,7 +1541,11 @@
       'use strict';
 
       const SEASONS = ['Весна', 'Лето', 'Осень', 'Зима'];
-      const SEASON_MAPS = ['map00.png', 'map00.png', 'map00.png', 'map00.png'];
+      // Готовые фоны на каждый сезон. Геометрия всех карт одинаковая (1672×941),
+      // поэтому тропинки, слоты ульев и передний план остаются на своих местах.
+      // Лето оставляем на исходной карте map00.png.
+      const SEASON_MAPS = ['map_spring.png', 'map00.png', 'map_autumn.png', 'map_winter.png'];
+      const SEASON_KEYS = ['spring', 'summer', 'autumn', 'winter'];
       const SEASON_ICONS = ['🌸', '☀️', '🍂', '❄️'];
       // 1 игровой год (4 сезона × 30 дней = 120 дней = 172 800 игровых минут) проходит ровно за 10 реальных минут (600 с) на скорости 1×
       const DAYS_PER_SEASON = 30;
@@ -1554,26 +1557,36 @@
 
       function syncSeasonBackground() {
         const idx = ((state.seasonIndex % SEASONS.length) + SEASONS.length) % SEASONS.length;
-        const iconEl = $('season-icon');
-        if (iconEl) iconEl.textContent = SEASON_ICONS[idx];
-        const sceneArtEl = $('scene-art');
-        if (sceneArtEl) {
-          sceneArtEl.style.backgroundImage = `url("${SEASON_MAPS[idx]}")`;
-          const seasonKey = ['spring', 'summer', 'autumn', 'winter'][idx] || 'summer';
-          sceneArtEl.classList.remove('season-spring', 'season-summer', 'season-autumn', 'season-winter');
-          sceneArtEl.classList.add(`season-${seasonKey}`);
-        }
         if (idx === currentSeasonMapIdx) return;
         prevSeasonMapIdx = currentSeasonMapIdx;
         currentSeasonMapIdx = idx;
+
+        const iconEl = $('season-icon');
+        if (iconEl) iconEl.textContent = SEASON_ICONS[idx];
+
+        const seasonKey = SEASON_KEYS[idx] || 'summer';
+        const sceneArtEl = $('scene-art');
+        if (sceneArtEl) sceneArtEl.style.backgroundImage = `url("${SEASON_MAPS[idx]}")`;
+
+        // Зима в календаре пасеки — это декабрь, январь и февраль (SEASON_MONTHS[3]).
+        // В эти месяцы ульи рисуем заснеженным спрайтом hive_winter.png.
+        const viewportEl = $('world-viewport');
+        if (viewportEl) {
+          viewportEl.dataset.season = seasonKey;
+          viewportEl.dataset.hiveSeason = idx === 3 ? 'winter' : 'regular';
+        }
+
         for (let i = 0; i < SEASON_MAPS.length; i++) {
+          const src = SEASON_MAPS[i];
           const img = $(`scene-map-${i}`);
           if (img) {
+            if (img.getAttribute('src') !== src) img.src = src;
             img.classList.toggle('is-active', i === currentSeasonMapIdx);
             img.classList.toggle('is-prev', i === prevSeasonMapIdx && i !== currentSeasonMapIdx);
           }
           const fgImg = $(`fg-map-${i}`);
           if (fgImg) {
+            if (fgImg.getAttribute('src') !== src) fgImg.src = src;
             fgImg.classList.toggle('is-active', i === currentSeasonMapIdx);
             fgImg.classList.toggle('is-prev', i === prevSeasonMapIdx && i !== currentSeasonMapIdx);
           }
@@ -1947,7 +1960,7 @@
         if (state.totalTicks % 5 === 0) save();
       }
 
-      // Места под ульи — на открытом лугу новой стартовой карты map00.png
+      // Места под ульи — на открытом лугу карты (геометрия одинаковая у всех сезонных фонов, проверено по map00.png)
       const HIVE_SLOTS = [
         [29.5, 43.0], [37.0, 42.0], [45.0, 42.5],
         [53.0, 43.0], [61.0, 44.5], [27.0, 51.0],
@@ -1990,9 +2003,11 @@
       function flowerSpotAt(index) {
         return state.flowerSpots[index] || FLOWER_SPOT_POOL[index % FLOWER_SPOT_POOL.length];
       }
-      function hiveSvg(index) {
-        const gradientId = `woodBee${index}`;
-        return `<svg viewBox="0 0 72 90" aria-hidden="true"><defs><linearGradient id="${gradientId}" x2="0" y2="1"><stop stop-color="#ffe06b"/><stop offset=".55" stop-color="#e99e20"/><stop offset="1" stop-color="#b96a12"/></linearGradient></defs><ellipse cx="36" cy="83" rx="29" ry="5" fill="#39200c" opacity=".45"/><path d="M13 27 36 8l23 19Z" fill="#8c541b" stroke="#59320e" stroke-width="3"/><rect x="17" y="29" width="38" height="42" rx="4" fill="url(#${gradientId})" stroke="#68400f" stroke-width="3"/><path d="M18 42h36M18 56h36" stroke="#a65c11" stroke-width="4"/><path d="M27 33v35M45 33v35" stroke="#ffe796" stroke-width="2" opacity=".75"/><circle cx="36" cy="64" r="4" fill="#48280d"/><path d="M22 72v9M50 72v9" stroke="#6b4117" stroke-width="4" stroke-linecap="round"/><path d="M28 81h-9M54 81h-9" stroke="#60380f" stroke-width="3" stroke-linecap="round"/></svg>`;
+      // Обычный и зимний спрайты лежат друг на друге; видимый слой переключает
+      // атрибут data-hive-season на #world-viewport (см. syncSeasonBackground).
+      function hiveSpriteMarkup() {
+        return `<img class="hive-sprite hive-sprite-regular" src="hive.png" alt="" decoding="sync" draggable="false">
+                <img class="hive-sprite hive-sprite-winter" src="hive_winter.png" alt="" decoding="sync" draggable="false">`;
       }
       function flowersSvg() {
         return `<svg viewBox="0 0 100 54" aria-hidden="true"><ellipse cx="50" cy="49" rx="45" ry="4" fill="#32651e" opacity=".35"/><path d="M21 48q4-20 13-26M49 48q0-25 4-34M77 48q-5-21-12-28" fill="none" stroke="#39832b" stroke-width="3"/><g fill="#ffde4b" stroke="#d89116" stroke-width="1.5"><circle cx="34" cy="20" r="7"/><circle cx="53" cy="12" r="7"/><circle cx="66" cy="23" r="7"/></g><g fill="#fff7e7" stroke="#d979aa" stroke-width="1.4"><circle cx="18" cy="36" r="6"/><circle cx="82" cy="38" r="6"/></g><g fill="#a65320"><circle cx="34" cy="20" r="2.3"/><circle cx="53" cy="12" r="2.3"/><circle cx="66" cy="23" r="2.3"/></g><path d="M19 38q7-6 13-1M52 27q-8 1-12 8M72 32q8-6 13-2" fill="none" stroke="#58a734" stroke-width="3" stroke-linecap="round"/></svg>`;
@@ -2010,7 +2025,7 @@
           item.style.setProperty('--x', `${HIVE_SLOTS[i][0]}%`);
           item.style.setProperty('--y', `${HIVE_SLOTS[i][1]}%`);
           item.style.zIndex = String(Math.round(100 + HIVE_SLOTS[i][1] * 2));
-          item.innerHTML = hiveSvg(i);
+          item.innerHTML = hiveSpriteMarkup();
           container.appendChild(item);
           window.setTimeout(() => item.classList.remove('spawning'), 620);
           placedHiveNodes.push(item);
@@ -2083,7 +2098,7 @@
           openDialog('Задачи сезона', `<p>Главная цель — произвести <strong>${currency(state.seasonTarget)} кг мёда</strong> за сезон.</p><p>Уже произведено: <strong>${fmtOne.format(state.seasonHoney)} кг</strong> (${Math.floor(Math.min(100, state.seasonHoney / state.seasonTarget * 100))}%).</p><p>За выполненную цель выдаётся денежная награда. Работники продают часть свежего мёда автоматически.</p>`, [{label:'Понятно', secondary:true, onClick:closeDialog}]);
         } else if (tab === 'calendar') {
           const nextSeason = SEASONS[(state.seasonIndex + 1) % SEASONS.length];
-          openDialog('Календарь пасеки', `<p><strong>${SEASON_ICONS[state.seasonIndex % SEASONS.length]} ${seasonName()}, ${currentMonthName().toLocaleLowerCase('ru-RU')}, день ${state.day}, год ${state.year}</strong></p><p>До конца сезона осталось ${Math.max(0,30-state.day)} дней. Следом наступит <strong>${nextSeason.toLocaleLowerCase('ru-RU')}</strong>.</p><p>Полный игровой год проходит за <strong>10 минут</strong> (по 2,5 минуты на каждый сезон), а фон пасеки меняется вместе со временем года.</p><p>❄️ ${isSyrupWindow() ? 'Сейчас идёт зимний прикорм: нажмите на ящик сиропа в правом нижнем углу — пчеловод отнесёт его к улью.' : 'С 1 декабря по 31 января в правом нижнем углу появляется ящик сиропа: нажмите на него, чтобы пчеловод подкормил пчёл.'}</p>`, [{label:'Закрыть календарь', secondary:true, onClick:closeDialog}]);
+          openDialog('Календарь пасеки', `<p><strong>${SEASON_ICONS[state.seasonIndex % SEASONS.length]} ${seasonName()}, ${currentMonthName().toLocaleLowerCase('ru-RU')}, день ${state.day}, год ${state.year}</strong></p><p>До конца сезона осталось ${Math.max(0,30-state.day)} дней. Следом наступит <strong>${nextSeason.toLocaleLowerCase('ru-RU')}</strong>.</p><p>Полный игровой год проходит за <strong>10 минут</strong> (по 2,5 минуты на каждый сезон): у каждого времени года свой фон, а зимой ульи покрываются снегом.</p><p>❄️ ${isSyrupWindow() ? 'Сейчас идёт зимний прикорм: нажмите на ящик сиропа в правом нижнем углу — пчеловод отнесёт его к улью.' : 'С 1 декабря по 31 января в правом нижнем углу появляется ящик сиропа: нажмите на него, чтобы пчеловод подкормил пчёл.'}</p>`, [{label:'Закрыть календарь', secondary:true, onClick:closeDialog}]);
         }
       }
 
@@ -2146,7 +2161,7 @@
         showToast('🗺️ Область: Цветочная поляна · Нектар высокий');
       });
 
-      // Граф пешеходных тропинок, снятый с самой карты map00.png
+      // Граф пешеходных тропинок, снятый с карты map00.png (совпадает со всеми сезонными фонами)
       const PATH_NODES = {
         n0: [74.46, 38.36], n1: [70.93, 41.66], n2: [8.61, 43.15],
         n3: [64.47, 43.78], n4: [67.22, 44.1], n5: [64.53, 44.31],
@@ -2739,7 +2754,7 @@
       const beesLayerEl = $('bees-layer');
       const popupsLayerEl = $('popups-layer');
 
-      // Координаты ульев на карте: [x%, леток y%, крыша y%] (слоты постройки на map00.png)
+      // Координаты ульев на карте: [x%, леток y%, крыша y%] (слоты одинаковы на всех сезонных картах)
       const BEE_MAP_HIVES = HIVE_SLOTS.map(([hx, hy]) => {
         const [vx, vy] = mapLayerPctToViewport(hx, hy);
         return [vx, +(vy - 1.4).toFixed(2), +(vy - 5.2).toFixed(2)];
