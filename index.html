@@ -1361,7 +1361,7 @@
       <div class="top-tools" aria-label="Системные кнопки">
         <button class="tool-button" type="button" data-tool="help"><span class="tool-icon">❔</span><span>Справка</span></button>
         <button class="tool-button" type="button" data-tool="settings"><span class="tool-icon">⚙️</span><span>Настройки</span></button>
-        <button class="tool-button" type="button" data-tool="exit"><span class="tool-icon">⇥</span><span>Выход</span></button>
+        <button class="tool-button" type="button" data-test="season" id="season-next-btn" title="Следующее время года — переключить сезон"><span class="tool-icon" id="season-next-icon">🍂</span><span>След.<br>сезон</span></button>
         <button class="tool-button" type="button" data-test="mouse" title="Проверка сценария: мышка и кот"><span class="tool-icon">🐭</span><span>Мышка</span></button>
       </div>
     </header>
@@ -1757,6 +1757,16 @@
         $('worker-limit').textContent = state.workerLimit;
         $('season-day').textContent = `${seasonName().toLocaleUpperCase('ru-RU')} · ДЕНЬ ${state.day}`;
         syncSeasonBackground();
+        const nextSeasonIconEl = $('season-next-icon');
+        if (nextSeasonIconEl) {
+          const nextIdx = (seasonIndex() + 1) % SEASONS.length;
+          nextSeasonIconEl.textContent = SEASON_ICONS[nextIdx];
+        }
+        const nextSeasonBtnEl = $('season-next-btn');
+        if (nextSeasonBtnEl) {
+          const nextIdx = (seasonIndex() + 1) % SEASONS.length;
+          nextSeasonBtnEl.title = `Следующее время года: ${SEASONS[nextIdx]} — переключить сезон`;
+        }
         $('year-label').textContent = `ГОД ${state.year}`;
         $('season-progress').textContent = currency(state.seasonHoney);
         $('season-target').textContent = fmt.format(state.seasonTarget);
@@ -1927,6 +1937,23 @@
           }
         }
         render();
+      }
+
+      // Кнопка «След. сезон»: переключает время года вручную,
+      // повторяя логику естественной смены сезона в игровых часах.
+      function advanceSeason() {
+        state.seasonIndex += 1;
+        if (state.seasonIndex % SEASONS.length === 0) state.year += 1;
+        state.day = 1;
+        state.minutesOfDay = 0;
+        minuteCarry = 0;
+        state.seasonHoney = 0;
+        state.seasonRewarded = false;
+        const idx = ((state.seasonIndex % SEASONS.length) + SEASONS.length) % SEASONS.length;
+        addLog(`Сезон переключён вручную: ${SEASONS[idx]}`);
+        showToast(`${SEASON_ICONS[idx]} Наступил сезон: ${SEASONS[idx]}`);
+        render();
+        save();
       }
 
       function tick() {
@@ -2104,19 +2131,11 @@
 
       function openTool(tool) {
         if (tool === 'help') {
-          openDialog('Справка пчеловода', '<p>Добро пожаловать на цветочную поляну! Щёлкайте мышкой по карте — пчеловод дойдёт туда прямо по тропинкам пасеки.</p><ul><li>Стройте ульи, чтобы увеличить количество пчелосемей.</li><li>Сажайте цветы: каждый медонос повышает выработку мёда.</li><li>Работники автоматически продают часть свежего урожая.</li><li>Нажмите «Собрать мёд», чтобы продать запас из хранилища.</li><li>Полив временно ускоряет производство, а ограждения повышают уют пасеки.</li><li>Зимой (с 1 декабря по 31 января) в правом нижнем углу появляется ящик сиропа — нажмите на него, и пчеловод подкормит пчёл у улья: сбор мёда ускорится на 20%.</li><li>🐭 Иногда к улью пробирается мышка. Пока она стоит у летка (10 секунд), внизу появляется кнопка «Позвать кота» — нажмите её, и кот прогонит воровку. Не успели — мышка унесёт часть мёда.</li></ul><p>Прогресс сохраняется в браузере автоматически.</p>', [{label:'Начать играть', onClick:closeDialog}]);
+          openDialog('Справка пчеловода', '<p>Добро пожаловать на цветочную поляну! Щёлкайте мышкой по карте — пчеловод дойдёт туда прямо по тропинкам пасеки.</p><ul><li>Стройте ульи, чтобы увеличить количество пчелосемей.</li><li>Сажайте цветы: каждый медонос повышает выработку мёда.</li><li>Работники автоматически продают часть свежего урожая.</li><li>Нажмите «Собрать мёд», чтобы продать запас из хранилища.</li><li>Полив временно ускоряет производство, а ограждения повышают уют пасеки.</li><li>Кнопка «След. сезон» в верхней панели переключает время года вручную: фон и вид ульев меняются сразу.</li><li>Зимой (с 1 декабря по 31 января) в правом нижнем углу появляется ящик сиропа — нажмите на него, и пчеловод подкормит пчёл у улья: сбор мёда ускорится на 20%.</li><li>🐭 Иногда к улью пробирается мышка. Пока она стоит у летка (10 секунд), внизу появляется кнопка «Позвать кота» — нажмите её, и кот прогонит воровку. Не успели — мышка унесёт часть мёда.</li></ul><p>Прогресс сохраняется в браузере автоматически.</p>', [{label:'Начать играть', onClick:closeDialog}]);
         } else if (tool === 'settings') {
           openDialog('Настройки', `<p>Сохранение: <span class="save-note">включено · прогресс в этом браузере</span></p><p>Скорость игры и состояние пасеки сохраняются автоматически.</p>`, [
             {label:'Сбросить прогресс', danger:true, onClick:() => { if (window.confirm('Сбросить сохранение и начать заново?')) { localStorage.removeItem(SAVE_KEY); localStorage.removeItem(LEGACY_KEY); stopWateringAnimation(); stopFeedingAnimation(); feedJobActive = false; resetCritters(); walkArrivalCb = null; state = cloneStart(); activeRoute = []; hivePollenStats.clear(); resetWorkerActors(); playerEl.classList.remove('walking'); applyPlayerVisual(); renderTrailPreview(); closeDialog(); render(); save(); showToast('Пасека обновлена — хорошего сезона!'); } }},
             {label:'Закрыть', secondary:true, onClick:closeDialog}
-          ]);
-        } else if (tool === 'exit') {
-          save();
-          state.speed = 0;
-          render();
-          openDialog('До новых встреч!', '<p>Игра поставлена на паузу, а прогресс сохранён.</p><p>Можно закрыть вкладку или вернуться на пасеку позже — всё останется на месте.</p>', [
-            {label:'Вернуться на пасеку', onClick:() => { state.speed = 1; render(); save(); closeDialog(); }},
-            {label:'Продолжить на паузе', secondary:true, onClick:closeDialog}
           ]);
         }
       }
@@ -3494,6 +3513,8 @@
       }
 
       if (catCallEl) catCallEl.addEventListener('click', callCat);
+      const seasonNextBtn = document.querySelector('[data-test="season"]');
+      if (seasonNextBtn) seasonNextBtn.addEventListener('click', advanceSeason);
       const mouseTestBtn = document.querySelector('[data-test="mouse"]');
       if (mouseTestBtn) {
         mouseTestBtn.addEventListener('click', () => {
