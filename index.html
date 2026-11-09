@@ -854,8 +854,19 @@
       animation: pop-in .28s cubic-bezier(.2,1.35,.5,1) both;
       pointer-events: none;
     }
-    .placed-object.flower-patch { width: 64px; height: 39px; }
+    .placed-object.flower-patch { width: 64px; height: 41px; }
     .placed-object svg { display: block; width: 100%; height: 100%; overflow: visible; }
+    .flower-patch .flower-sprite {
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
     .hive-object .hive-sprite {
       position: absolute;
       inset: 0;
@@ -1279,7 +1290,7 @@
       .action-cost { font-size: 6.5px; margin-top: 2px; }
       .foraging-bee { width: 22px; height: 21px; }
       .placed-object { width: 43px; height: 55px; }
-      .placed-object.flower-patch { width: 50px; height: 31px; }
+      .placed-object.flower-patch { width: 50px; height: 32px; }
     }
 
     @media (max-height: 720px) and (min-width: 981px) {
@@ -1547,6 +1558,8 @@
       const SEASON_MAPS = ['map_spring.png', 'map00.png', 'map_autumn.png', 'map_winter.png'];
       const SEASON_KEYS = ['spring', 'summer', 'autumn', 'winter'];
       const SEASON_ICONS = ['🌸', '☀️', '🍂', '❄️'];
+      // Два варианта спрайта клумбы: чередуются при посадке новых цветов.
+      const FLOWER_SPRITES = ['flowers1.png', 'flowers2.png'];
       // 1 игровой год (4 сезона × 30 дней = 120 дней = 172 800 игровых минут) проходит ровно за 10 реальных минут (600 с) на скорости 1×
       const DAYS_PER_SEASON = 30;
       const MINUTES_PER_DAY = 1440;
@@ -2036,8 +2049,11 @@
         return `<img class="hive-sprite hive-sprite-regular" src="hive.png" alt="" decoding="sync" draggable="false">
                 <img class="hive-sprite hive-sprite-winter" src="hive_winter.png" alt="" decoding="sync" draggable="false">`;
       }
-      function flowersSvg() {
-        return `<svg viewBox="0 0 100 54" aria-hidden="true"><ellipse cx="50" cy="49" rx="45" ry="4" fill="#32651e" opacity=".35"/><path d="M21 48q4-20 13-26M49 48q0-25 4-34M77 48q-5-21-12-28" fill="none" stroke="#39832b" stroke-width="3"/><g fill="#ffde4b" stroke="#d89116" stroke-width="1.5"><circle cx="34" cy="20" r="7"/><circle cx="53" cy="12" r="7"/><circle cx="66" cy="23" r="7"/></g><g fill="#fff7e7" stroke="#d979aa" stroke-width="1.4"><circle cx="18" cy="36" r="6"/><circle cx="82" cy="38" r="6"/></g><g fill="#a65320"><circle cx="34" cy="20" r="2.3"/><circle cx="53" cy="12" r="2.3"/><circle cx="66" cy="23" r="2.3"/></g><path d="M19 38q7-6 13-1M52 27q-8 1-12 8M72 32q8-6 13-2" fill="none" stroke="#58a734" stroke-width="3" stroke-linecap="round"/></svg>`;
+      // При посадке каждая новая клумба получает один из двух PNG-спрайтов,
+      // чтобы цветы на карте не выглядели одинаково.
+      function flowerSpriteMarkup(index) {
+        const src = FLOWER_SPRITES[index % FLOWER_SPRITES.length];
+        return `<img class="flower-sprite" src="${src}" alt="" decoding="sync" draggable="false">`;
       }
       const placedHiveNodes = [];
       const placedFlowerNodes = [];
@@ -2073,7 +2089,7 @@
           item.style.setProperty('--x', `${fx}%`);
           item.style.setProperty('--y', `${fy}%`);
           item.style.zIndex = String(Math.round(90 + fy * 2));
-          item.innerHTML = flowersSvg();
+          item.innerHTML = flowerSpriteMarkup(i);
           container.appendChild(item);
           window.setTimeout(() => item.classList.remove('spawning'), 620);
           placedFlowerNodes.push(item);
