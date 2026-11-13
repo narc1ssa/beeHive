@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#38200e">
   <title>Пасека — стратегия и управление</title>
+  <link rel="preload" as="image" href="flowers1.png">
+  <link rel="preload" as="image" href="flowers2.png">
   <style>
     :root {
       color-scheme: light;
@@ -854,7 +856,11 @@
       animation: pop-in .28s cubic-bezier(.2,1.35,.5,1) both;
       pointer-events: none;
     }
-    .placed-object.flower-patch { width: 64px; height: 41px; }
+    .placed-object.flower-patch {
+      width: 72px;
+      height: 46px;
+      filter: drop-shadow(0 2px 2px rgba(32, 20, 6, .36));
+    }
     .placed-object svg { display: block; width: 100%; height: 100%; overflow: visible; }
     .flower-patch .flower-sprite {
       position: absolute;
@@ -1290,7 +1296,7 @@
       .action-cost { font-size: 6.5px; margin-top: 2px; }
       .foraging-bee { width: 22px; height: 21px; }
       .placed-object { width: 43px; height: 55px; }
-      .placed-object.flower-patch { width: 50px; height: 32px; }
+      .placed-object.flower-patch { width: 54px; height: 35px; }
     }
 
     @media (max-height: 720px) and (min-width: 981px) {
@@ -1558,8 +1564,12 @@
       const SEASON_MAPS = ['map_spring.png', 'map00.png', 'map_autumn.png', 'map_winter.png'];
       const SEASON_KEYS = ['spring', 'summer', 'autumn', 'winter'];
       const SEASON_ICONS = ['🌸', '☀️', '🍂', '❄️'];
-      // Два варианта спрайта клумбы: чередуются при посадке новых цветов.
+      // Два варианта спрайта клумбы (лаванда и подсолнухи): используются при посадке цветов.
       const FLOWER_SPRITES = ['flowers1.png', 'flowers2.png'];
+      const MAX_FLOWERS = 50;
+      if (typeof Image === 'function') {
+        FLOWER_SPRITES.forEach(src => { const img = new Image(); img.src = src; });
+      }
       // 1 игровой год (4 сезона × 30 дней = 120 дней = 172 800 игровых минут) проходит ровно за 10 реальных минут (600 с) на скорости 1×
       const DAYS_PER_SEASON = 30;
       const MINUTES_PER_DAY = 1440;
@@ -1615,14 +1625,14 @@
         day: 14, year: 2, minutesOfDay: 14 * 60 + 32,
         totalTicks: 0, autoBuffer: 0, wateredUntil: 0, fedUntil: 0, feedReadyAt: 0,
         fenceLevel: 1, upgradeLevel: 0, happiness: 86,
-        taskIndex: 0, speed: 1, builtHives: 0, plantedFlowers: 0, flowerSpots: [],
+        taskIndex: 0, speed: 1, builtHives: 0, plantedFlowers: 0, flowerSpots: [], flowerVariants: [],
         playerX: 44.38, playerY: 67.91, playerFace: 1, hiredWorkers: []
       };
       const number = (value, fallback, min = 0, max = 1e9) => {
         const parsed = Number(value);
         return Number.isFinite(parsed) ? Math.max(min, Math.min(max, parsed)) : fallback;
       };
-      const cloneStart = () => ({ ...START, hiredWorkers: [] });
+      const cloneStart = () => ({ ...START, flowerSpots: [], flowerVariants: [], hiredWorkers: [] });
 
       function readSave() {
         try {
@@ -1657,7 +1667,7 @@
       state.coins = number(state.coins, START.coins);
       state.hives = number(state.hives, START.hives, 0, 12);
       state.hiveLimit = 10; // ровно столько мест под ульи размечено на карте (HIVE_SLOTS)
-      state.flowers = number(state.flowers, START.flowers, 0, 50);
+      state.flowers = number(state.flowers, START.flowers, 0, MAX_FLOWERS);
       state.workerLimit = 12;
       if (!Array.isArray(state.hiredWorkers)) {
         state.hiredWorkers = [];
@@ -1689,9 +1699,13 @@
       state.speed = [0, 1, 2].includes(Number(state.speed)) ? Number(state.speed) : 1;
       state.builtHives = number(state.builtHives, 0, 0, 10);
       state.builtHives = Math.min(state.builtHives, Math.min(state.hives, 10));
-      state.plantedFlowers = number(state.plantedFlowers, 0, 0, 40);
+      state.plantedFlowers = number(state.plantedFlowers, state.flowers, 0, MAX_FLOWERS);
+      state.plantedFlowers = Math.min(MAX_FLOWERS, Math.max(state.plantedFlowers, state.flowers));
       state.flowerSpots = Array.isArray(state.flowerSpots)
-        ? state.flowerSpots.filter(sp => Array.isArray(sp) && sp.length === 2).map(sp => [number(sp[0], 50, 1, 99), number(sp[1], 50, 25, 99)]).slice(0, 40)
+        ? state.flowerSpots.filter(sp => Array.isArray(sp) && sp.length === 2).map(sp => [number(sp[0], 50, 1, 99), number(sp[1], 50, 25, 99)]).slice(0, MAX_FLOWERS)
+        : [];
+      state.flowerVariants = Array.isArray(state.flowerVariants)
+        ? state.flowerVariants.map(v => (v === 1 ? 1 : 0)).slice(0, MAX_FLOWERS)
         : [];
       state.playerX = number(state.playerX, START.playerX, 2, 96);
       state.playerY = number(state.playerY, START.playerY, 28, 98);
@@ -1730,7 +1744,7 @@
         return seasonIndex() === 3 && currentMonthIndex() <= 1;
       }
       function productionPerHour() {
-        const flowerBoost = 1 + Math.min(state.flowers, 50) * 0.025;
+        const flowerBoost = 1 + Math.min(state.flowers, MAX_FLOWERS) * 0.025;
         const seasonBoost = seasonName() === 'Зима' ? 0.55 : 1;
         const waterBoost = state.totalTicks < state.wateredUntil ? 1.35 : 1;
         const feedBoost = state.totalTicks < state.fedUntil ? 1.2 : 1;
@@ -1811,7 +1825,7 @@
         $('collect-label').textContent = state.honey >= 1 ? `Продать ${currency(state.honey)} кг` : 'Запас пуст';
 
         document.querySelector('[data-action="hive"]').disabled = state.coins < buildCost || state.hives >= state.hiveLimit;
-        document.querySelector('[data-action="flower"]').disabled = state.coins < flowerCost || state.flowers >= 50;
+        document.querySelector('[data-action="flower"]').disabled = state.coins < flowerCost || state.flowers >= MAX_FLOWERS;
         document.querySelector('[data-action="worker"]').disabled = state.coins < workerCost || state.workers >= state.workerLimit;
         document.querySelector('[data-action="fire-worker"]').disabled = state.workers < 1;
         document.querySelector('[data-action="remove-hive"]').disabled = state.hives < 1;
@@ -1870,11 +1884,11 @@
           showToast('🏠 Улей убран с пасеки');
         } else if (action === 'flower') {
           const cost = 20 + state.plantedFlowers * 4;
-          if (state.flowers >= 50) return showToast('На поляне уже достаточно цветов');
+          if (state.flowers >= MAX_FLOWERS) return showToast('На поляне уже достаточно цветов');
           if (!spend(cost)) return;
           state.flowers++;
-          state.plantedFlowers++;
-          while (state.flowerSpots.length < state.plantedFlowers) state.flowerSpots.push(pickFlowerSpot());
+          state.plantedFlowers = Math.min(MAX_FLOWERS, Math.max(state.plantedFlowers + 1, state.flowers));
+          ensureFlowerPatches();
           state.happiness = Math.min(95, state.happiness + 1);
           addLog('Посажены медоносные цветы');
           showToast('🌼 Расцвела новая клумба — нектара стало больше!');
@@ -2043,16 +2057,36 @@
       function flowerSpotAt(index) {
         return state.flowerSpots[index] || FLOWER_SPOT_POOL[index % FLOWER_SPOT_POOL.length];
       }
+      function pickFlowerVariant(index) {
+        if (index === 0) return 0;
+        if (index === 1) return 1;
+        if (index % 2 === 1 && state.flowerVariants[index - 1] != null) {
+          return state.flowerVariants[index - 1] === 0 ? 1 : 0;
+        }
+        return Math.random() < 0.5 ? 0 : 1;
+      }
+      function ensureFlowerPatches() {
+        while (state.flowerSpots.length < state.plantedFlowers) {
+          state.flowerSpots.push(pickFlowerSpot());
+        }
+        while (state.flowerVariants.length < state.plantedFlowers) {
+          state.flowerVariants.push(pickFlowerVariant(state.flowerVariants.length));
+        }
+      }
+      ensureFlowerPatches();
       // Обычный и зимний спрайты лежат друг на друге; видимый слой переключает
       // атрибут data-hive-season на #world-viewport (см. syncSeasonBackground).
       function hiveSpriteMarkup() {
         return `<img class="hive-sprite hive-sprite-regular" src="hive.png" alt="" decoding="sync" draggable="false">
                 <img class="hive-sprite hive-sprite-winter" src="hive_winter.png" alt="" decoding="sync" draggable="false">`;
       }
-      // При посадке каждая новая клумба получает один из двух PNG-спрайтов,
-      // чтобы цветы на карте не выглядели одинаково.
+      // При посадке каждая новая клумба получает один из двух PNG-спрайтов
+      // (flowers1.png / flowers2.png), чтобы цветы на карте выглядели разнообразно.
       function flowerSpriteMarkup(index) {
-        const src = FLOWER_SPRITES[index % FLOWER_SPRITES.length];
+        const variant = state.flowerVariants[index] != null
+          ? state.flowerVariants[index]
+          : (index % FLOWER_SPRITES.length);
+        const src = FLOWER_SPRITES[variant % FLOWER_SPRITES.length];
         return `<img class="flower-sprite" src="${src}" alt="" decoding="sync" draggable="false">`;
       }
       const placedHiveNodes = [];
@@ -2080,7 +2114,7 @@
             window.setTimeout(() => { if (removed.parentNode) removed.remove(); }, 190);
           }
         }
-        const targetFlowers = Math.min(state.plantedFlowers, 40);
+        const targetFlowers = Math.min(state.plantedFlowers, MAX_FLOWERS);
         while (placedFlowerNodes.length < targetFlowers) {
           const i = placedFlowerNodes.length;
           const [fx, fy] = flowerSpotAt(i);
@@ -2824,7 +2858,7 @@
       function getAllFlowerTargets() {
         // Цветы на карте появляются только там, где игрок их посадил
         const list = [];
-        const plantedCount = Math.min(state.plantedFlowers, 40);
+        const plantedCount = Math.min(state.plantedFlowers, MAX_FLOWERS);
         for (let i = 0; i < plantedCount; i++) {
           const [sx, sy] = flowerSpotAt(i);
           list.push(mapLayerPctToViewport(sx, sy));
