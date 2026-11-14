@@ -679,13 +679,13 @@
       pointer-events: none;
       position: absolute;
       z-index: 43;
-      left: max(246px, calc(50% - 468px));
+      left: max(246px, calc(50% - 512px));
       bottom: 0;
-      width: min(948px, calc(100vw - var(--rail-width) - 256px));
+      width: min(1024px, calc(100vw - var(--rail-width) - 256px));
       height: var(--footer-height);
       display: grid;
-      grid-template-columns: repeat(8, minmax(0,1fr));
-      gap: 7px;
+      grid-template-columns: repeat(9, minmax(0,1fr));
+      gap: 6px;
       align-items: stretch;
       padding: 3px 0 0;
     }
@@ -712,7 +712,7 @@
     .action-button:disabled { cursor: not-allowed; filter: grayscale(.6) brightness(.73); opacity: .82; }
     .action-icon { display: flex; align-items: center; justify-content: center; width: 100%; height: 49px; font-size: 40px; line-height: 1; text-align: center; filter: drop-shadow(0 2px 2px rgba(22,10,1,.7)); }
     .action-icon svg { display: block; width: 47px; height: 47px; overflow: visible; }
-    .action-label { font-size: 11px; line-height: 1.03; font-weight: 1000; text-shadow: 1px 2px 1px #251303; }
+    .action-label { font-size: 10.5px; line-height: 1.03; font-weight: 1000; text-shadow: 1px 2px 1px #251303; }
     .action-cost { display: block; margin-top: 3px; color: #ffd250; font-size: 10px; line-height: 1; font-weight: 900; text-transform: none; }
     .action-cost img { vertical-align: -2px; }
 
@@ -1189,8 +1189,8 @@
       .wood-card { padding-left: 9px; padding-right: 9px; }
       .info-head { grid-template-columns: 88px 1fr; gap: 4px; }
       .beekeeper-portrait svg, .beekeeper-portrait img { width: 78px; }
-      .action-bar { left: max(244px, calc(50% - 420px)); width: min(860px, calc(100vw - var(--rail-width) - 256px)); gap: 6px; }
-      .action-label { font-size: 9.5px; }
+      .action-bar { left: max(244px, calc(50% - 455px)); width: min(910px, calc(100vw - var(--rail-width) - 254px)); gap: 5px; }
+      .action-label { font-size: 8.8px; }
     }
 
     @media (max-width: 980px) {
@@ -1237,12 +1237,12 @@
       .right-rail .status-copy strong { font-size: 11px; }
       .right-rail .status-icon { font-size: 21px; }
       .right-rail .apiary-button { min-height: 29px; font-size: 10px; margin-top: 4px; }
-      .action-bar { left: 50%; transform: translateX(-50%); width: min(880px, calc(100vw - 228px)); height: var(--footer-height); gap: 4px; }
+      .action-bar { left: 50%; transform: translateX(-50%); width: min(940px, calc(100vw - 16px)); height: var(--footer-height); gap: 4px; }
       .action-button { border-radius: 14px; }
       .action-icon { height: 43px; font-size: 34px; }
       .action-icon svg { width: 39px; height: 39px; }
-      .action-label { font-size: 8.5px; }
-      .action-cost { font-size: 8px; }
+      .action-label { font-size: 8px; }
+      .action-cost { font-size: 7.5px; }
     }
 
     @media (max-width: 650px) {
@@ -1287,13 +1287,13 @@
       .right-rail .speed-button { height: 29px; font-size: 17px; }
       .right-rail .clock { font-size: 15px; }
       .right-rail .time-note { font-size: 8px; }
-      .action-bar { width: calc(100vw - 8px); height: var(--footer-height); gap: 2.5px; }
+      .action-bar { width: calc(100vw - 8px); height: var(--footer-height); gap: 2px; }
       .action-button { padding: 3px 1px; border-radius: 11px; border-width: 1px; }
       .action-button::before { inset: 2px; }
       .action-icon { height: 35px; font-size: 24px; }
       .action-icon svg { width: 27px; height: 27px; }
-      .action-label { font-size: 6px; }
-      .action-cost { font-size: 6.5px; margin-top: 2px; }
+      .action-label { font-size: 5.5px; }
+      .action-cost { font-size: 6px; margin-top: 2px; }
       .foraging-bee { width: 22px; height: 21px; }
       .placed-object { width: 43px; height: 55px; }
       .placed-object.flower-patch { width: 54px; height: 35px; }
@@ -1510,6 +1510,9 @@
       </button>
       <button class="action-button" type="button" data-action="flower">
         <span class="action-icon" aria-hidden="true">🌼</span><span class="action-label">Посадить<br>цветы</span><span class="action-cost" id="flower-cost">20 <img class="coin-inline" src="coin.png" alt=""></span>
+      </button>
+      <button class="action-button" type="button" data-action="remove-flower">
+        <span class="action-icon" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M27 34v21" stroke="#3f8f29" stroke-width="4" stroke-linecap="round"/><path d="M27 47c-6-5-12-4-14 1 5 3 10 3 14-1Z" fill="#63bb35" stroke="#2c661b" stroke-width="2.2" stroke-linejoin="round"/><g fill="#ffdf4d" stroke="#8a520f" stroke-width="2.4"><circle cx="37" cy="24" r="6.6"/><circle cx="32" cy="32.7" r="6.6"/><circle cx="22" cy="32.7" r="6.6"/><circle cx="17" cy="24" r="6.6"/><circle cx="22" cy="15.3" r="6.6"/><circle cx="32" cy="15.3" r="6.6"/></g><circle cx="27" cy="24" r="6.4" fill="#e88918" stroke="#68380b" stroke-width="2.4"/><circle cx="25.2" cy="22.3" r="1.8" fill="#ffeaa0"/><circle cx="46" cy="45" r="12" fill="#d9452f" stroke="#52190c" stroke-width="2.8"/><path d="M40.5 45h11" stroke="#fff7df" stroke-width="4.2" stroke-linecap="round"/></svg></span><span class="action-label">Убрать<br>цветы</span><span class="action-cost" id="remove-flower-label">Нет цветов</span>
       </button>
       <button class="action-button" type="button" data-action="worker">
         <span class="action-icon" aria-hidden="true">🧑</span><span class="action-label">Нанять<br>работника</span><span class="action-cost" id="worker-cost">30 <img class="coin-inline" src="coin.png" alt=""></span>
@@ -1818,6 +1821,7 @@
         $('hive-cost').innerHTML = `${buildCost} <img class="coin-inline" src="coin.png" alt="">`;
         $('remove-hive-label').textContent = state.hives > 0 ? `Ульев: ${state.hives}` : 'Нет ульев';
         $('flower-cost').innerHTML = `${flowerCost} <img class="coin-inline" src="coin.png" alt="">`;
+        $('remove-flower-label').textContent = state.plantedFlowers > 0 ? `Клумб: ${state.plantedFlowers}` : 'Нет цветов';
         $('worker-cost').innerHTML = `${workerCost} <img class="coin-inline" src="coin.png" alt="">`;
         $('fire-worker-label').textContent = state.workers > 0 ? `В штате: ${state.workers}` : 'Нет рабочих';
         $('water-cost').innerHTML = '15 <img class="coin-inline" src="coin.png" alt="">';
@@ -1826,6 +1830,7 @@
 
         document.querySelector('[data-action="hive"]').disabled = state.coins < buildCost || state.hives >= state.hiveLimit;
         document.querySelector('[data-action="flower"]').disabled = state.coins < flowerCost || state.flowers >= MAX_FLOWERS;
+        document.querySelector('[data-action="remove-flower"]').disabled = state.plantedFlowers < 1 && state.flowers < 1;
         document.querySelector('[data-action="worker"]').disabled = state.coins < workerCost || state.workers >= state.workerLimit;
         document.querySelector('[data-action="fire-worker"]').disabled = state.workers < 1;
         document.querySelector('[data-action="remove-hive"]').disabled = state.hives < 1;
@@ -1892,6 +1897,18 @@
           state.happiness = Math.min(95, state.happiness + 1);
           addLog('Посажены медоносные цветы');
           showToast('🌼 Расцвела новая клумба — нектара стало больше!');
+        } else if (action === 'remove-flower') {
+          if (state.plantedFlowers < 1 && state.flowers < 1) return showToast('На пасеке нет посаженных цветов');
+          if (state.flowers > 0) state.flowers--;
+          if (state.plantedFlowers > 0) state.plantedFlowers--;
+          state.flowerSpots.length = Math.min(state.flowerSpots.length, state.plantedFlowers);
+          state.flowerVariants.length = Math.min(state.flowerVariants.length, state.plantedFlowers);
+          if (state.flowers < 1) {
+            state.wateredUntil = 0;
+            stopWateringAnimation();
+          }
+          addLog('Клумба убрана с пасеки');
+          showToast('🌼 Клумба убрана с пасеки');
         } else if (action === 'worker') {
           const cost = 30 + state.workers * 20;
           if (state.workers >= state.workerLimit) return showToast('В команде уже максимальное число работников');
@@ -2130,7 +2147,10 @@
         }
         while (placedFlowerNodes.length > targetFlowers) {
           const removed = placedFlowerNodes.pop();
-          if (removed && removed.parentNode) removed.remove();
+          if (removed) {
+            removed.classList.add('removing');
+            window.setTimeout(() => { if (removed.parentNode) removed.remove(); }, 190);
+          }
         }
       }
 
@@ -2999,6 +3019,7 @@
 
       function sendBeeToRandomFlower(bee) {
         const flowers = getAllFlowerTargets();
+        if (flowers.length === 0) return;
         const hives = getActiveBeeHives();
         const fIdx = pickRandomIndex(flowers.length, bee.flowerIdx);
         bee.flowerIdx = fIdx;
@@ -3157,6 +3178,17 @@
         while (beeActors.length > desired) {
           const removed = beeActors.pop();
           if (removed && removed.el && removed.el.parentNode) removed.el.remove();
+        }
+        if (beeActors.length > 0) {
+          const flowerCount = getAllFlowerTargets().length;
+          if (flowerCount > 0) {
+            for (let i = 0; i < beeActors.length; i++) {
+              const bee = beeActors[i];
+              if (bee.flowerIdx >= flowerCount && (bee.phase === 'to-flower' || bee.phase === 'gathering')) {
+                sendBeeToRandomFlower(bee);
+              }
+            }
+          }
         }
       }
 
